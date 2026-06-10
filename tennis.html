@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Tennis 3D - Retro Laser Arena</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #010103;
+            --glass-bg: rgba(6, 6, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* CRT scanlines */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Indicador Central de Turno/Saque */
+        #turn-announcer {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            color: var(--neon-yellow);
+            text-shadow: 0 0 8px rgba(255, 240, 0, 0.4);
+            transition: opacity 0.3s ease;
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 20px;
+            z-index: 20;
+            pointer-events: none;
+            width: 90%;
+            max-width: 400px;
+            justify-content: space-between;
+        }
+
+        .mobile-dpad {
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 5px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            touch-action: manipulation;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .mobile-action-zone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .mobile-action-btn {
+            width: 80px;
+            height: 80px;
+            background: var(--glass-bg);
+            border: 2px solid var(--neon-pink);
+            border-radius: 50%;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 10px rgba(255, 0, 127, 0.2);
+        }
+
+        .mobile-action-btn:active {
+            background: rgba(255, 0, 127, 0.2);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* TELAS DE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(6, 15, 20, 0.85) 0%, rgba(2, 5, 8, 0.98) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(8, 18, 26, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.04);
+            border-top: 3px solid var(--neon-cyan);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 60%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-pink);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--pink-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+            color: #030d09;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Painel de Placar Final */
+        .score-summary {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.winner-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 18px;
+        }
+
+        .score-row.winner-row .value {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        /* loader */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            background-color: var(--dark-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 240, 255, 0.1);
+            border-top-color: var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO LASER ARENA TENNIS...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <!-- Placar do Game Atual -->
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Jogador</div>
+                <div id="hud-player-score" class="hud-value cyan">0</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Oponente</div>
+                <div id="hud-cpu-score" class="hud-value pink">0</div>
+            </div>
+        </div>
+
+        <!-- Placar de Sets e Botões -->
+        <div class="hud-panel" style="gap: 15px;">
+            <div class="hud-group" style="border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;">
+                <div class="hud-label">Sets (J vs O)</div>
+                <div id="hud-sets" class="hud-value green">0 - 0</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anunciante de Saque/Turno -->
+    <div id="turn-announcer">SAQUE DO JOGADOR</div>
+
+    <!-- Controles Mobile -->
+    <div id="mobile-controls">
+        <div class="mobile-dpad">
+            <button id="btn-up" class="mobile-btn" style="grid-area: up;">▲</button>
+            <button id="btn-left" class="mobile-btn" style="grid-area: left;">◀</button>
+            <button id="btn-right" class="mobile-btn" style="grid-area: right;">▶</button>
+            <button id="btn-down" class="mobile-btn" style="grid-area: down;">▼</button>
+        </div>
+        <div class="mobile-action-zone">
+            <button id="btn-serve" class="mobile-action-btn">SAQUE</button>
+        </div>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">LASER TENNIS 3D</h1>
+            <div class="game-subtitle">Simulador de Tênis Cibernético</div>
+
+            <div class="instructions">
+                <h3>Diretrizes da Arena:</h3>
+                <ul>
+                    <li>Rebata a bola de energia sobre a rede de laser. Ela deve quicar no lado oposto ou ser rebatida no ar (voleio).</li>
+                    <li>Ganhe pontos quando a bola quicar duas vezes no lado do oponente ou se ele rebater para fora.</li>
+                    <li><strong>Pontuação de Tênis Clássica:</strong> Love (0) ➔ 15 ➔ 30 ➔ 40 ➔ Game. Em caso de empate em 40-40, dispute a Vantagem (AD).</li>
+                    <li>Vença **6 Games** com vantagem de 2 para conquistar o Set. O jogo termina ao vencer **1 Set**.</li>
+                    <li><strong>Movimentação:</strong> Setas do teclado (Esquerda/Direita/Cima/Baixo).</li>
+                    <li><strong>Sacar / Rebater Forte:</strong> Tecla **Espaço** (solta o saque ou aplica força extra).</li>
+                    <li><strong>Controles da Câmera:</strong> Teclas **A/D** (rotação orbital horizontal) e **W/S** (zoom da quadra).</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR ARENA NEON</button>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 id="gameover-title" class="game-title">FIM DE PARTIDA</h1>
+            <div id="gameover-subtitle" class="game-subtitle">Arena Encerrada</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Sets Vencidos (Jogador):</span>
+                    <span id="summary-player-sets" class="value">0</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Sets Vencidos (Oponente):</span>
+                    <span id="summary-cpu-sets" class="value">0</span>
+                </div>
+                <div class="score-row winner-row">
+                    <span class="label">RESULTADO FINAL:</span>
+                    <span id="summary-result" class="value">VÍTÓRIA</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR DESAFIO</button>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. GERENCIADOR DE ÁUDIO PROCEDURAL (Web Audio API)
+        // ============================================================================
+        class SomTennis {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Sequenciador de Trilha (Synthwave Minimalista de Fundo)
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som de raquetada / rebote (Bipe curto senoidal com pitch-up rápido)
+            playHit() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(380, t);
+                osc.frequency.exponentialRampToValueAtTime(750, t + 0.06);
+
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.09);
+            }
+
+            // Som de quique na quadra (Onda triangular grave filtrada passa-baixa)
+            playBounce() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, t);
+                osc.frequency.exponentialRampToValueAtTime(80, t + 0.12);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(280, t);
+
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.16);
+            }
+
+            // Som de ponto marcado (Arpejo pentatônico maior rápido ascendente)
+            playScore() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (Acorde Maior)
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.06);
+                    
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.15);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(t + idx * 0.06);
+                    osc.stop(t + idx * 0.06 + 0.18);
+                });
+            }
+
+            // Som de erro / fora (pitch-down rápido com ruído de falha)
+            playMiss() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, t);
+                osc.frequency.linearRampToValueAtTime(60, t + 0.28);
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, t);
+
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.31);
+            }
+
+            // Trilha de Fundo Sequenciada (Batida Synthwave Pulsante)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const step = 0.22; // BPM ~68 (Trilha de quadra cadenciada)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (this.musicActive && !this.muted) {
+                        // Bassline cyberpunk alternada
+                        const bassNotes = [55.00, 55.00, 65.41, 65.41, 48.99, 48.99, 58.27, 58.27];
+                        const note = bassNotes[Math.floor(this.musicBeat / 2) % bassNotes.length];
+
+                        const osc = this.ctx.createOscillator();
+                        const filter = this.ctx.createBiquadFilter();
+                        const gain = this.ctx.createGain();
+
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(note, t);
+
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(160, t);
+
+                        gain.gain.setValueAtTime(0.12, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.6);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.start(t);
+                        osc.stop(t + step * 1.8);
+
+                        // Kick Drum no passo 0 e 4
+                        if (this.musicBeat % 4 === 0) {
+                            const kick = this.ctx.createOscillator();
+                            const kickGain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(90, t);
+                            kick.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+
+                            kickGain.gain.setValueAtTime(0.2, t);
+                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.12);
+
+                            kick.connect(kickGain);
+                            kickGain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.13);
+                        }
+
+                        // Hi-hat metálico nos passos 2 e 6
+                        if (this.musicBeat % 4 === 2) {
+                            const bufferSize = this.ctx.sampleRate * 0.04;
+                            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                            const data = buffer.getChannelData(0);
+                            for (let i = 0; i < bufferSize; i++) {
+                                data[i] = Math.random() * 2 - 1;
+                            }
+                            const noise = this.ctx.createBufferSource();
+                            noise.buffer = buffer;
+
+                            const highpass = this.ctx.createBiquadFilter();
+                            highpass.type = 'highpass';
+                            highpass.frequency.setValueAtTime(7000, t);
+
+                            const noiseGain = this.ctx.createGain();
+                            noiseGain.gain.setValueAtTime(0.015, t);
+                            noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.03);
+
+                            noise.connect(highpass);
+                            highpass.connect(noiseGain);
+                            noiseGain.connect(this.masterGain);
+                            noise.start(t);
+                            noise.stop(t + 0.04);
+                        }
+                    }
+
+                    this.musicBeat++;
+                    nextTick += step;
+
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+
+                tickLoop();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+        }
+
+        const som = new SomTennis();
+
+        // ============================================================================
+        // 2. SISTEMA DE MOTOR DO JOGO E RENDERIZAÇÃO (Three.js)
+        // ============================================================================
+        let scene, camera, renderer, lastTime = 0;
+        let starfield;
+
+        // Entidades
+        let playerPaddle, cpuPaddle;
+        let tennisBall, ballLight;
+        let trailParticles = [];
+        const MAX_TRAIL_PARTICLES = 30;
+
+        // Estados de Jogo e Pontuação
+        const GAME_STATES = { MENU: 0, SERVE: 1, RALLY: 2, POINT_OVER: 3, GAMEOVER: 4 };
+        let gameState = GAME_STATES.MENU;
+
+        // Lógica do Tênis Clássico
+        let playerPoints = 0; // 0, 1, 2, 3, 4 (Vence game ou Advantage)
+        let cpuPoints = 0;
+        let playerGames = 0;  // Games vencidos no Set atual
+        let cpuGames = 0;
+        let playerSets = 0;   // Sets totais vencidos
+        let cpuSets = 0;
+
+        let lastHitter = 0;   // 0 = Jogador, 1 = CPU
+        let server = 0;       // 0 = Jogador, 1 = CPU (alterna a cada game)
+        let ballLandedCount = 0; // Quantas vezes a bola quicou neste rally
+        let ballLandedLado = -1;  // -1 = Nenhum, 0 = Lado do Jogador, 1 = Lado da CPU
+
+        // Configurações de Arena e Quadra
+        const COURT_WIDTH = 12.0;    // X varia de -6 a 6
+        const COURT_LENGTH = 24.0;   // Z varia de -12 a 12 (Metade Jogador: Z > 0, Metade CPU: Z < 0)
+        const NET_HEIGHT = 1.0;
+        const PADDLE_WIDTH = 2.0;
+        const PADDLE_SPEED = 9.0;
+        const BALL_RADIUS = 0.18;
+
+        // Limites de Movimento da Raquete
+        const PLAYER_Z_MIN = 3.0;     // Próximo da rede
+        const PLAYER_Z_MAX = 11.5;    // Fundo da quadra
+        const CPU_Z_MIN = -11.5;
+        const CPU_Z_MAX = -3.0;
+
+        // Bola Física
+        let ballPos = new THREE.Vector3();
+        let ballVel = new THREE.Vector3();
+        const GRAVITY = -13.0;
+
+        // Câmera Orbital (WASD)
+        let anguloCamera = 0;
+        let zoomCamera = 1.0;
+        let shakeAmount = 0;
+
+        // Teclado
+        const keys = { 
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            KeyW: false, KeyS: false, KeyA: false, KeyD: false, Space: false 
+        };
+        let isTouchDevice = false;
+
+        // Elementos DOM
+        const hudPlayerScore = document.getElementById('hud-player-score');
+        const hudCpuScore = document.getElementById('hud-cpu-score');
+        const hudSets = document.getElementById('hud-sets');
+        const turnAnnouncer = document.getElementById('turn-announcer');
+        const btnSound = document.getElementById('btn-sound');
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        // ============================================================================
+        // 3. CONSTRUÇÃO PROCEDURAL DE ELEMENTOS 3D
+        // ============================================================================
+        
+        // Cria Raquetes Drone voxeladas
+        function createPaddleMesh(colorHex) {
+            const paddleGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                roughness: 0.3,
+                metalness: 0.7,
+                emissive: colorHex,
+                emissiveIntensity: 0.25
+            });
+
+            // Corpo principal da raquete (Barra/Paddle)
+            const barGeo = new THREE.BoxGeometry(PADDLE_WIDTH, 0.2, 0.25);
+            const bar = new THREE.Mesh(barGeo, bodyMat);
+            bar.position.y = 0.1;
+            paddleGroup.add(bar);
+
+            // Pequenos "motores" ou propulsores nas extremidades
+            const engineMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const engineGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 8);
+            
+            const engineL = new THREE.Mesh(engineGeo, engineMat);
+            engineL.position.set(-PADDLE_WIDTH/2 - 0.05, 0.1, 0);
+            engineL.rotation.x = Math.PI / 2;
+            
+            const engineR = engineL.clone();
+            engineR.position.x = PADDLE_WIDTH/2 + 0.05;
+            
+            // Luzes nos propulsores
+            const propLightMat = new THREE.MeshBasicMaterial({ color: colorHex });
+            const propLightGeo = new THREE.BoxGeometry(0.15, 0.05, 0.15);
+            
+            const lightL = new THREE.Mesh(propLightGeo, propLightMat);
+            lightL.position.y = -0.16;
+            engineL.add(lightL);
+            
+            const lightR = lightL.clone();
+            engineR.add(lightR);
+
+            paddleGroup.add(engineL, engineR);
+
+            // Alças de suporte
+            const armGeo = new THREE.BoxGeometry(0.1, 0.1, 0.4);
+            const armL = new THREE.Mesh(armGeo, bodyMat);
+            armL.position.set(-0.5, 0.1, -0.2);
+            const armR = armL.clone();
+            armR.position.x = 0.5;
+            paddleGroup.add(armL, armR);
+
+            paddleGroup.castShadow = true;
+            return paddleGroup;
+        }
+
+        // Cria a Quadra de Tênis Cyberpunk
+        function buildTennisCourt() {
+            const courtGroup = new THREE.Group();
+
+            // 1. Chão principal (Plano da Quadra)
+            const floorGeo = new THREE.PlaneGeometry(COURT_WIDTH, COURT_LENGTH);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x03060c,
+                roughness: 0.6,
+                metalness: 0.4
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            courtGroup.add(floor);
+
+            // 2. Linhas Demarcatórias da Quadra (Tiras finas de MeshBasicMaterial)
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff }); // Linha ciano brilhante
+            const centerLineMat = new THREE.MeshBasicMaterial({ color: 0xff007f }); // Linha divisória rosa
+
+            // Linhas laterais externas
+            const sideLineGeo = new THREE.BoxGeometry(0.06, 0.015, COURT_LENGTH);
+            const lineLeft = new THREE.Mesh(sideLineGeo, lineMat);
+            lineLeft.position.set(-COURT_WIDTH/2, 0.008, 0);
+            
+            const lineRight = lineLeft.clone();
+            lineRight.position.x = COURT_WIDTH/2;
+            
+            courtGroup.add(lineLeft, lineRight);
+
+            // Linhas de fundo (Baseline)
+            const baseLineGeo = new THREE.BoxGeometry(COURT_WIDTH, 0.015, 0.06);
+            const lineBackPlayer = new THREE.Mesh(baseLineGeo, lineMat);
+            lineBackPlayer.position.set(0, 0.008, COURT_LENGTH/2);
+            
+            const lineBackCpu = lineBackPlayer.clone();
+            lineBackCpu.position.z = -COURT_LENGTH/2;
+            
+            courtGroup.add(lineBackPlayer, lineBackCpu);
+
+            // Linha central divisória de saque (vertical de Z = -6 a 6)
+            const serviceCenterGeo = new THREE.BoxGeometry(0.04, 0.015, 12);
+            const serviceCenterLine = new THREE.Mesh(serviceCenterGeo, lineMat);
+            serviceCenterLine.position.set(0, 0.008, 0);
+            courtGroup.add(serviceCenterLine);
+
+            // Linhas de saque horizontais (Z = 6 e Z = -6)
+            const serviceLineGeo = new THREE.BoxGeometry(COURT_WIDTH, 0.015, 0.05);
+            const serviceLinePlayer = new THREE.Mesh(serviceLineGeo, lineMat);
+            serviceLinePlayer.position.set(0, 0.008, 6.0);
+            
+            const serviceLineCpu = serviceLinePlayer.clone();
+            serviceLineCpu.position.z = -6.0;
+            
+            courtGroup.add(serviceLinePlayer, serviceLineCpu);
+
+            // Linha da rede (Chão central Z = 0)
+            const midLineGeo = new THREE.BoxGeometry(COURT_WIDTH, 0.015, 0.08);
+            const midLine = new THREE.Mesh(midLineGeo, centerLineMat);
+            midLine.position.set(0, 0.008, 0);
+            courtGroup.add(midLine);
+
+            // 3. Postes de Sustentação da Rede
+            const postGeo = new THREE.CylinderGeometry(0.08, 0.08, NET_HEIGHT * 1.1, 8);
+            const postMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            
+            const postL = new THREE.Mesh(postGeo, postMat);
+            postL.position.set(-COURT_WIDTH/2 - 0.1, NET_HEIGHT/2, 0);
+            
+            const postR = postL.clone();
+            postR.position.x = COURT_WIDTH/2 + 0.1;
+            
+            courtGroup.add(postL, postR);
+
+            // 4. Rede de Laser Central (Laser Grid translúcida)
+            const netGeo = new THREE.PlaneGeometry(COURT_WIDTH + 0.2, NET_HEIGHT);
+            const netMat = new THREE.MeshBasicMaterial({
+                color: 0x39ff14, // Laser Verde Neon
+                transparent: true,
+                opacity: 0.35,
+                side: THREE.DoubleSide
+            });
+            const net = new THREE.Mesh(netGeo, netMat);
+            net.position.set(0, NET_HEIGHT/2, 0);
+            courtGroup.add(net);
+
+            // Pequenos postes de iluminação neon nas bordas externas
+            const pillarGeo = new THREE.CylinderGeometry(0.06, 0.06, 3.0, 8);
+            const lampGeo = new THREE.BoxGeometry(0.25, 0.1, 0.25);
+            const lampMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+
+            for (let xOffset = -1; xOffset <= 1; xOffset += 2) {
+                for (let zOffset = -1; zOffset <= 1; zOffset += 2) {
+                    const pillar = new THREE.Mesh(pillarGeo, postMat);
+                    pillar.position.set(xOffset * (COURT_WIDTH/2 + 0.8), 1.5, zOffset * (COURT_LENGTH/2 - 2.0));
+                    
+                    const lamp = new THREE.Mesh(lampGeo, lampMat);
+                    lamp.position.y = 1.5;
+                    pillar.add(lamp);
+                    
+                    courtGroup.add(pillar);
+                }
+            }
+
+            return courtGroup;
+        }
+
+        // ============================================================================
+        // 4. SISTEMA DE PARTÍCULAS E RASTRO
+        // ============================================================================
+        function setupTrailParticles() {
+            const pGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+            
+            for (let i = 0; i < MAX_TRAIL_PARTICLES; i++) {
+                const pMat = new THREE.MeshBasicMaterial({
+                    color: 0xff5e00, // Amarelo/Laranja brilhante
+                    transparent: true,
+                    opacity: 0
+                });
+                const mesh = new THREE.Mesh(pGeo, pMat);
+                scene.add(mesh);
+                trailParticles.push({
+                    mesh: mesh,
+                    active: false,
+                    life: 0
+                });
+            }
+        }
+
+        function updateTrail(ballPosition) {
+            // Rotaciona partículas antigas e desvanece
+            trailParticles.forEach(p => {
+                if (p.active) {
+                    p.life -= 0.05;
+                    p.mesh.material.opacity = p.life;
+                    p.mesh.scale.multiplyScalar(0.92);
+                    if (p.life <= 0) {
+                        p.active = false;
+                        p.mesh.material.opacity = 0;
+                    }
+                }
+            });
+
+            // Adiciona nova partícula no rastro da bola
+            const inactiveParticle = trailParticles.find(p => !p.active);
+            if (inactiveParticle) {
+                inactiveParticle.mesh.position.copy(ballPosition);
+                inactiveParticle.mesh.scale.set(1, 1, 1);
+                inactiveParticle.mesh.material.opacity = 0.8;
+                inactiveParticle.active = true;
+                inactiveParticle.life = 0.8;
+            }
+        }
+
+        // ============================================================================
+        // 5. INICIALIZAÇÃO DA CENA E AMBIENTE
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x010103, 0.02);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Iluminação
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+            scene.add(ambientLight);
+
+            // Luz direcional simulando holofote cibernético
+            const dirLight = new THREE.DirectionalLight(0x00f0ff, 0.65);
+            dirLight.position.set(0, 18, 0);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Estrelas Neon flutuantes de fundo
+            const starCount = 100;
+            const starGeo = new THREE.BufferGeometry();
+            const starPositions = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount; i++) {
+                starPositions[i * 3] = (Math.random() - 0.5) * 80;
+                starPositions[i * 3 + 1] = (Math.random() * 25) + 3;
+                starPositions[i * 3 + 2] = (Math.random() - 0.5) * 80;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starMat = new THREE.PointsMaterial({
+                size: 0.25,
+                color: 0x39ff14,
+                transparent: true,
+                opacity: 0.35
+            });
+            starfield = new THREE.Points(starGeo, starMat);
+            scene.add(starfield);
+
+            // Monta a Quadra
+            const court = buildTennisCourt();
+            scene.add(court);
+
+            // Cria Raquetes (Jogador ciano, CPU rosa)
+            playerPaddle = createPaddleMesh(0x00f0ff);
+            playerPaddle.position.set(0, 0.4, 10.5);
+            scene.add(playerPaddle);
+
+            cpuPaddle = createPaddleMesh(0xff007f);
+            cpuPaddle.position.set(0, 0.4, -10.5);
+            scene.add(cpuPaddle);
+
+            // Cria a Bola
+            const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 12, 12);
+            const ballMat = new THREE.MeshStandardMaterial({
+                color: 0xff5e00,
+                emissive: 0xff5e00,
+                emissiveIntensity: 0.8,
+                roughness: 0.1
+            });
+            tennisBall = new THREE.Mesh(ballGeo, ballMat);
+            scene.add(tennisBall);
+
+            // Luz pontual acoplada à bola para iluminar o chão da quadra
+            ballLight = new THREE.PointLight(0xff5e00, 1.2, 5);
+            scene.add(ballLight);
+
+            // Rastro
+            setupTrailParticles();
+
+            // Oculta loader
+            loadingScreen.style.display = 'none';
+
+            window.addEventListener('resize', onWindowResize);
+
+            atualizarCamera(0);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 6. INTELIGÊNCIA ARTIFICIAL DA CPU (Oponente)
+        // ============================================================================
+        function updateCPU(deltaTime) {
+            if (gameState !== GAME_STATES.RALLY) return;
+
+            // Posição alvo padrão (rastrear bola)
+            let targetX = tennisBall.position.x;
+            let targetZ = cpuPaddle.position.z;
+
+            // Se a bola estiver se movendo para longe da CPU (zVel > 0), a CPU retorna lentamente ao centro
+            if (ballVel.z > 0) {
+                targetX = THREE.MathUtils.lerp(cpuPaddle.position.x, 0, 1.5 * deltaTime);
+                targetZ = THREE.MathUtils.lerp(cpuPaddle.position.z, -10.0, 1.5 * deltaTime);
+            } else {
+                // Rastreamento dinâmico se a bola vem em direção à CPU
+                // CPU tenta antecipar onde a bola vai quicar e se move para interceptar
+                const distZ = Math.abs(tennisBall.position.z - cpuPaddle.position.z);
+                const tempoChegada = distZ / Math.max(0.1, Math.abs(ballVel.z));
+
+                // Predição da coordenada X da bola
+                let predX = tennisBall.position.x + ballVel.x * tempoChegada;
+                // Clampa predX nos limites laterais
+                predX = Math.max(-COURT_WIDTH/2 + 0.6, Math.min(COURT_WIDTH/2 - 0.6, predX));
+
+                // CPU se move para a coordenada predita
+                targetX = predX;
+
+                // Ajuste de profundidade Z para rebater no tempo certo (voleio ou após quique)
+                const quiqueIdealZ = -9.0;
+                targetZ = THREE.MathUtils.lerp(cpuPaddle.position.z, quiqueIdealZ, 2 * deltaTime);
+            }
+
+            // Move a raquete da CPU suavemente
+            const cpuVelocityX = 6.8 + (playerGames * 0.4); // CPU acelera ligeiramente conforme a partida avança
+            const cpuVelocityZ = 4.0;
+
+            const diffX = targetX - cpuPaddle.position.x;
+            const diffZ = targetZ - cpuPaddle.position.z;
+
+            // Movimento no eixo X
+            if (Math.abs(diffX) > 0.05) {
+                cpuPaddle.position.x += Math.sign(diffX) * Math.min(Math.abs(diffX), cpuVelocityX * deltaTime);
+            }
+
+            // Movimento no eixo Z (limite de profundidade da CPU)
+            if (Math.abs(diffZ) > 0.05) {
+                cpuPaddle.position.z += Math.sign(diffZ) * Math.min(Math.abs(diffZ), cpuVelocityZ * deltaTime);
+            }
+
+            // Clampa posição da CPU
+            cpuPaddle.position.x = Math.max(-COURT_WIDTH/2 + PADDLE_WIDTH/2, Math.min(COURT_WIDTH/2 - PADDLE_WIDTH/2, cpuPaddle.position.x));
+            cpuPaddle.position.z = Math.max(CPU_Z_MIN, Math.min(CPU_Z_MAX, cpuPaddle.position.z));
+        }
+
+        // ============================================================================
+        // 7. MECÂNICA DE COLISÕES DA RAQUETE E QUADRA
+        // ============================================================================
+        
+        // Colisão com raquetes (AABB)
+        function checkPaddleCollision(paddle, ballPos, paddleWidth = PADDLE_WIDTH) {
+            const paddleHalfW = paddleWidth / 2;
+            const paddleHalfD = 0.16; // Profundidade da colisão
+
+            return (
+                ballPos.x >= paddle.position.x - paddleHalfW - BALL_RADIUS &&
+                ballPos.x <= paddle.position.x + paddleHalfW + BALL_RADIUS &&
+                ballPos.z >= paddle.position.z - paddleHalfD - BALL_RADIUS &&
+                ballPos.z <= paddle.position.z + paddleHalfD + BALL_RADIUS &&
+                ballPos.y >= paddle.position.y - 0.25 &&
+                ballPos.y <= paddle.position.y + 0.35
+            );
+        }
+
+        // ============================================================================
+        // 8. PROCESSAMENTO DA PONTUAÇÃO DE TÊNIS CLÁSSICO
+        // ============================================================================
+        
+        // Formata pontuação interna (0-4) no clássico do tênis
+        function getScoreString(points, oppPoints) {
+            if (points === 0) return '00';
+            if (points === 1) return '15';
+            if (points === 2) return '30';
+            if (points === 3) return '40';
+            
+            // Empate ou Vantagem
+            if (points >= 4) {
+                if (points === oppPoints) return '40'; // Deuce
+                if (points > oppPoints) return 'AD';   // Vantagem (Advantage)
+            }
+            return '00';
+        }
+
+        function atualizarHUDScore() {
+            hudPlayerScore.innerText = getScoreString(playerPoints, cpuPoints);
+            hudCpuScore.innerText = getScoreString(cpuPoints, playerPoints);
+            hudSets.innerText = `${playerGames} - ${cpuGames}  (Sets: ${playerSets}-${cpuSets})`;
+        }
+
+        function marcarPonto(ganhador) {
+            gameState = GAME_STATES.POINT_OVER;
+            
+            if (ganhador === 0) { // Jogador pontuou
+                som.playScore();
+                playerPoints++;
+                turnAnnouncer.innerText = "PONTO DO JOGADOR!";
+                turnAnnouncer.style.color = "var(--neon-cyan)";
+                shakeAmount = 0.28;
+            } else { // CPU pontuou
+                som.playMiss();
+                cpuPoints++;
+                turnAnnouncer.innerText = "PONTO DO OPONENTE!";
+                turnAnnouncer.style.color = "var(--neon-pink)";
+                shakeAmount = 0.4;
+            }
+
+            atualizarHUDScore();
+
+            // Checa vitória do Game atual
+            // Um game é vencido com pelo menos 4 pontos e vantagem de 2
+            if (playerPoints >= 4 && playerPoints - cpuPoints >= 2) {
+                playerGames++;
+                playerPoints = 0;
+                cpuPoints = 0;
+                server = 1; // Alterna saque
+                turnAnnouncer.innerText = "GAME DO JOGADOR!";
+                turnAnnouncer.style.color = "var(--neon-cyan)";
+            } else if (cpuPoints >= 4 && cpuPoints - playerPoints >= 2) {
+                cpuGames++;
+                playerPoints = 0;
+                cpuPoints = 0;
+                server = 0; // Alterna saque
+                turnAnnouncer.innerText = "GAME DO OPONENTE!";
+                turnAnnouncer.style.color = "var(--neon-pink)";
+            }
+
+            // Em caso de Deuce clássico (empate a partir de 40-40)
+            if (playerPoints >= 3 && cpuPoints >= 3) {
+                if (playerPoints === cpuPoints) {
+                    turnAnnouncer.innerText = "EMPATE (DEUCE)";
+                    turnAnnouncer.style.color = "var(--neon-yellow)";
+                } else if (playerPoints > cpuPoints) {
+                    turnAnnouncer.innerText = "VANTAGEM JOGADOR";
+                    turnAnnouncer.style.color = "var(--neon-cyan)";
+                } else {
+                    turnAnnouncer.innerText = "VANTAGEM OPONENTE";
+                    turnAnnouncer.style.color = "var(--neon-pink)";
+                }
+            }
+
+            atualizarHUDScore();
+
+            // Checa vitória do Set (Vence quem faz 6 games com diferença de 2)
+            if (playerGames >= 6 && playerGames - cpuGames >= 2) {
+                playerSets++;
+                playerGames = 0;
+                cpuGames = 0;
+                checarFimDePartida();
+            } else if (cpuGames >= 6 && cpuGames - playerGames >= 2) {
+                cpuSets++;
+                playerGames = 0;
+                cpuGames = 0;
+                checarFimDePartida();
+            }
+
+            // Se o jogo não acabou, prepara próximo saque após 2.2 segundos
+            if (gameState !== GAME_STATES.GAMEOVER) {
+                setTimeout(() => {
+                    prepararSaque();
+                }, 2200);
+            }
+        }
+
+        function checarFimDePartida() {
+            // Vence a partida quem ganha 1 Set
+            if (playerSets >= 1 || cpuSets >= 1) {
+                gameState = GAME_STATES.GAMEOVER;
+                som.stopMusic();
+                
+                document.getElementById('summary-player-sets').innerText = playerSets;
+                document.getElementById('summary-cpu-sets').innerText = cpuSets;
+
+                const resultText = document.getElementById('summary-result');
+                const titleText = document.getElementById('gameover-title');
+
+                if (playerSets > cpuSets) {
+                    titleText.innerText = "VITÓRIA DE SET!";
+                    resultText.innerText = "CAMPEÃO DA ARENA";
+                    resultText.style.color = "var(--neon-green)";
+                    resultText.style.textShadow = "var(--green-glow)";
+                } else {
+                    titleText.innerText = "VOCÊ PERDEU";
+                    resultText.innerText = "OPONENTE VENCEU";
+                    resultText.style.color = "var(--neon-pink)";
+                    resultText.style.textShadow = "var(--pink-glow)";
+                }
+
+                screenGameover.classList.remove('hidden');
+            }
+        }
+
+        // ============================================================================
+        // 9. LÓGICA DO SAQUE E MOVIMENTO DA BOLA
+        // ============================================================================
+        
+        function prepararSaque() {
+            gameState = GAME_STATES.SERVE;
+            ballLandedCount = 0;
+            ballLandedLado = -1;
+
+            // Centraliza raquetes
+            playerPaddle.position.set(0, 0.4, 10.5);
+            cpuPaddle.position.set(0, 0.4, -10.5);
+
+            if (server === 0) { // Jogador saca
+                turnAnnouncer.innerText = "SEU SAQUE - PRESSIONE ESPAÇO";
+                turnAnnouncer.style.color = "var(--neon-cyan)";
+                
+                // Cola a bola na raquete do jogador
+                ballPos.set(playerPaddle.position.x, 0.6, playerPaddle.position.z - 0.4);
+                ballVel.set(0, 0, 0);
+            } else { // CPU saca
+                turnAnnouncer.innerText = "SAQUE DO OPONENTE";
+                turnAnnouncer.style.color = "var(--neon-pink)";
+                
+                // Cola a bola na raquete da CPU
+                ballPos.set(cpuPaddle.position.x, 0.6, cpuPaddle.position.z + 0.4);
+                ballVel.set(0, 0, 0);
+
+                // Executa saque automático da CPU após 1.4 segundos
+                setTimeout(() => {
+                    if (gameState === GAME_STATES.SERVE && server === 1) {
+                        realizarSaqueCPU();
+                    }
+                }, 1400);
+            }
+
+            tennisBall.position.copy(ballPos);
+            ballLight.position.copy(ballPos);
+        }
+
+        function realizarSaquePlayer() {
+            if (gameState !== GAME_STATES.SERVE || server !== 0) return;
+
+            som.playHit();
+            gameState = GAME_STATES.RALLY;
+            lastHitter = 0;
+
+            // Velocidade inicial do saque
+            const saqueX = (Math.random() - 0.5) * 4.0; // Angulação lateral
+            const saqueZ = -13.5;                      // Velocidade em direção à CPU
+            const saqueY = 4.5;                        // Altura parabólica
+
+            ballVel.set(saqueX, saqueY, saqueZ);
+            turnAnnouncer.innerText = "RALLY EM CURSO!";
+            turnAnnouncer.style.color = "var(--neon-yellow)";
+        }
+
+        function realizarSaqueCPU() {
+            if (gameState !== GAME_STATES.SERVE || server !== 1) return;
+
+            som.playHit();
+            gameState = GAME_STATES.RALLY;
+            lastHitter = 1;
+
+            const saqueX = (Math.random() - 0.5) * 4.0;
+            const saqueZ = 13.5;
+            const saqueY = 4.5;
+
+            ballVel.set(saqueX, saqueY, saqueZ);
+            turnAnnouncer.innerText = "RALLY EM CURSO!";
+            turnAnnouncer.style.color = "var(--neon-yellow)";
+        }
+
+        // ============================================================================
+        // 10. LOOP DE ATUALIZAÇÃO DA LÓGICA
+        // ============================================================================
+        
+        function updatePhysics(deltaTime) {
+            if (gameState === GAME_STATES.SERVE) {
+                // Mantém a bola colada à raquete ativa antes do saque
+                if (server === 0) {
+                    ballPos.set(playerPaddle.position.x, 0.6, playerPaddle.position.z - 0.4);
+                } else {
+                    ballPos.set(cpuPaddle.position.x, 0.6, cpuPaddle.position.z + 0.4);
+                }
+                tennisBall.position.copy(ballPos);
+                ballLight.position.copy(ballPos);
+                return;
+            }
+
+            if (gameState !== GAME_STATES.RALLY) return;
+
+            // 1. Move a bola no espaço
+            ballPos.x += ballVel.x * deltaTime;
+            ballPos.y += ballVel.y * deltaTime;
+            ballPos.z += ballVel.z * deltaTime;
+
+            // Aplica gravidade vertical
+            ballVel.y += GRAVITY * deltaTime;
+
+            // 2. Colisão com as laterais da quadra (Paredes de laser invisíveis)
+            const limiteParedeX = COURT_WIDTH / 2 - BALL_RADIUS;
+            if (Math.abs(ballPos.x) > limiteParedeX) {
+                ballPos.x = Math.sign(ballPos.x) * limiteParedeX;
+                ballVel.x = -ballVel.x * 0.85; // Bate e perde pouca velocidade
+                som.playBounce();
+            }
+
+            // 3. Colisão da bola com o chão da quadra (Y = BALL_RADIUS)
+            if (ballPos.y <= BALL_RADIUS) {
+                ballPos.y = BALL_RADIUS;
+                ballVel.y = -ballVel.y * 0.76; // Elasticidade do quique
+
+                // Registra o quique
+                som.playBounce();
+                ballLandedCount++;
+                
+                // Identifica em qual metade a bola quicou
+                if (ballPos.z > 0) {
+                    ballLandedLado = 0; // Lado Jogador
+                } else {
+                    ballLandedLado = 1; // Lado CPU
+                }
+
+                // --- LÓGICA DE DUPLO QUIQUE OU ERRO DE OUT ---
+                
+                // Se a bola quicar FORA dos limites traseiros do lado correspondente
+                if (Math.abs(ballPos.z) > COURT_LENGTH / 2) {
+                    // Se foi out no primeiro toque, ponto de quem não bateu por último
+                    if (ballLandedCount === 1) {
+                        marcarPonto(lastHitter === 0 ? 1 : 0); // O outro ganha
+                    } else {
+                        // Se já havia quicado dentro e saiu depois, ponto de quem bateu por último
+                        marcarPonto(lastHitter);
+                    }
+                    return;
+                }
+
+                // Se a bola quicar duas vezes seguidas no mesmo lado sem ser devolvida
+                // Ou se quicar no lado correspondente após o rebote
+                if (ballLandedCount >= 2) {
+                    // Ponto de quem rebateu por último (vencedor do rally)
+                    marcarPonto(lastHitter);
+                    return;
+                }
+            }
+
+            // 4. Colisão com a Rede de Laser central (Z = 0, Y <= NET_HEIGHT)
+            // Se cruza o plano Z = 0 e a altura é menor que a rede de laser
+            const ballOldZ = tennisBall.position.z;
+            if (Math.sign(ballOldZ) !== Math.sign(ballPos.z)) {
+                // Cruzou a rede
+                if (ballPos.y <= NET_HEIGHT) {
+                    som.playMiss();
+                    // Colide com a rede: a bola cai e perde velocidade em Z
+                    ballPos.z = 0;
+                    ballVel.z = 0;
+                    ballVel.x = 0;
+                    ballVel.y = -2; // Cai reta
+                    
+                    // Ponto para quem estava defendendo (o outro errou na rede)
+                    setTimeout(() => {
+                        marcarPonto(lastHitter === 0 ? 1 : 0);
+                    }, 800);
+                    return;
+                } else {
+                    // Passagem limpa pela rede: reseta quiques daquela metade para a recepção
+                    ballLandedCount = 0;
+                }
+            }
+
+            // 5. Colisão com a Raquete do JOGADOR (Z > 0)
+            if (ballVel.z > 0 && checkPaddleCollision(playerPaddle, ballPos)) {
+                som.playHit();
+                lastHitter = 0;
+                ballLandedCount = 0;
+
+                // Inverte direção em Z
+                ballVel.z = -Math.abs(ballVel.z) - 0.45; // Acelera ligeiramente a bola
+
+                // Determina velocidade em X dependendo de onde bateu na raquete
+                const offset = (ballPos.x - playerPaddle.position.x) / (PADDLE_WIDTH / 2);
+                ballVel.x = offset * 5.8; // Efeito lateral
+
+                // Altura de subida
+                ballVel.y = 4.2 + Math.random() * 1.5;
+
+                // Força extra se segurar Espaço
+                if (keys.Space) {
+                    ballVel.z -= 1.8;
+                    ballVel.y += 1.2;
+                    shakeAmount = 0.2;
+                }
+
+                // Tremor leve
+                shakeAmount = Math.max(shakeAmount, 0.1);
+            }
+
+            // 6. Colisão com a Raquete da CPU (Z < 0)
+            if (ballVel.z < 0 && checkPaddleCollision(cpuPaddle, ballPos)) {
+                som.playHit();
+                lastHitter = 1;
+                ballLandedCount = 0;
+
+                ballVel.z = Math.abs(ballVel.z) + 0.45; // Acelera ligeiramente
+
+                const offset = (ballPos.x - cpuPaddle.position.x) / (PADDLE_WIDTH / 2);
+                ballVel.x = offset * 5.8;
+
+                ballVel.y = 4.2 + Math.random() * 1.5;
+            }
+
+            // 7. Checa se passou direto pelo fundo sem quicar (Out traseiro)
+            if (Math.abs(ballPos.z) > COURT_LENGTH / 2 + 1.5) {
+                // Ponto para quem não bateu por último
+                marcarPonto(lastHitter === 0 ? 1 : 0);
+                return;
+            }
+
+            // Atualiza posição da malha 3D
+            tennisBall.position.copy(ballPos);
+            ballLight.position.copy(ballPos);
+
+            // Atualiza rastro
+            updateTrail(ballPos);
+        }
+
+        // ============================================================================
+        // 11. CONTROLES E INPUTS
+        // ============================================================================
+        
+        function updatePlayerMovement(deltaTime) {
+            if (gameState === GAME_STATES.GAMEOVER) return;
+
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (keys.ArrowLeft) moveX = -1;
+            if (keys.ArrowRight) moveX = 1;
+            if (keys.ArrowUp) moveZ = -1;
+            if (keys.ArrowDown) moveZ = 1;
+
+            // Aplica velocidade
+            if (moveX !== 0) {
+                playerPaddle.position.x += moveX * PADDLE_SPEED * deltaTime;
+            }
+            if (moveZ !== 0) {
+                playerPaddle.position.z += moveZ * PADDLE_SPEED * deltaTime;
+            }
+
+            // Clampa limites da raquete na metade do jogador
+            playerPaddle.position.x = Math.max(-COURT_WIDTH/2 + PADDLE_WIDTH/2, Math.min(COURT_WIDTH/2 - PADDLE_WIDTH/2, playerPaddle.position.x));
+            playerPaddle.position.z = Math.max(PLAYER_Z_MIN, Math.min(PLAYER_Z_MAX, playerPaddle.position.z));
+        }
+
+        function setupControls() {
+            // Teclado
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
+                if (e.code === 'ArrowRight') keys.ArrowRight = true;
+                if (e.code === 'ArrowUp') keys.ArrowUp = true;
+                if (e.code === 'ArrowDown') keys.ArrowDown = true;
+                
+                if (e.code === 'KeyW') keys.KeyW = true;
+                if (e.code === 'KeyS') keys.KeyS = true;
+                if (e.code === 'KeyA') keys.KeyA = true;
+                if (e.code === 'KeyD') keys.KeyD = true;
+
+                if (e.code === 'Space') {
+                    keys.Space = true;
+                    if (gameState === GAME_STATES.SERVE && server === 0) {
+                        realizarSaquePlayer();
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
+                if (e.code === 'ArrowRight') keys.ArrowRight = false;
+                if (e.code === 'ArrowUp') keys.ArrowUp = false;
+                if (e.code === 'ArrowDown') keys.ArrowDown = false;
+                
+                if (e.code === 'KeyW') keys.KeyW = false;
+                if (e.code === 'KeyS') keys.KeyS = false;
+                if (e.code === 'KeyA') keys.KeyA = false;
+                if (e.code === 'KeyD') keys.KeyD = false;
+                if (e.code === 'Space') keys.Space = false;
+            });
+
+            // Toque (Mobile)
+            isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isTouchDevice) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+                
+                // Mapeamentos direcionais
+                const binds = [
+                    { id: 'btn-up', key: 'ArrowUp' },
+                    { id: 'btn-down', key: 'ArrowDown' },
+                    { id: 'btn-left', key: 'ArrowLeft' },
+                    { id: 'btn-right', key: 'ArrowRight' }
+                ];
+
+                binds.forEach(b => {
+                    const el = document.getElementById(b.id);
+                    el.addEventListener('touchstart', (e) => {
+                        keys[b.key] = true;
+                        e.preventDefault();
+                    });
+                    el.addEventListener('touchend', (e) => {
+                        keys[b.key] = false;
+                        e.preventDefault();
+                    });
+                });
+
+                // Botão de Saque
+                const btnServe = document.getElementById('btn-serve');
+                btnServe.addEventListener('touchstart', (e) => {
+                    keys.Space = true;
+                    if (gameState === GAME_STATES.SERVE && server === 0) {
+                        realizarSaquePlayer();
+                    }
+                    e.preventDefault();
+                });
+                btnServe.addEventListener('touchend', (e) => {
+                    keys.Space = false;
+                    e.preventDefault();
+                });
+            }
+        }
+
+        // ============================================================================
+        // 12. ATUALIZAÇÃO DA CÂMERA ORBITAL (WASD)
+        // ============================================================================
+        function atualizarCamera(dt) {
+            const velRotacao = 1.6;
+            const velZoom = 1.2;
+
+            if (keys.KeyA) anguloCamera += velRotacao * dt;
+            if (keys.KeyD) anguloCamera -= velRotacao * dt;
+            if (keys.KeyW) zoomCamera -= velZoom * dt;
+            if (keys.KeyS) zoomCamera += velZoom * dt;
+
+            // Limites de rotação e zoom
+            const limiteAngulo = Math.PI / 4.5;
+            anguloCamera = Math.max(-limiteAngulo, Math.min(limiteAngulo, anguloCamera));
+            zoomCamera = Math.max(0.6, Math.min(1.5, zoomCamera));
+
+            const focoX = 0;
+            const focoY = 0;
+            const focoZ = 0;
+
+            const distBase = 22;
+            const altBase = 12;
+
+            const distAtual = distBase * zoomCamera;
+            const altAtual = altBase * zoomCamera;
+
+            // Posição baseada no ângulo orbital e zoom
+            let camX = focoX + distAtual * Math.sin(anguloCamera);
+            let camZ = focoZ + distAtual * Math.cos(anguloCamera) + 4.0; // Puxa levemente para trás do jogador
+            let camY = focoY + altAtual;
+
+            // Efeito de tremor de câmera
+            let shakeX = 0, shakeY = 0, shakeZ = 0;
+            if (shakeAmount > 0) {
+                shakeX = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeY = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeZ = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeAmount -= dt * 2.5;
+            }
+
+            camera.position.set(camX + shakeX, camY + shakeY, camZ + shakeZ);
+            camera.lookAt(focoX, focoY, focoZ - 2.0); // Olha levemente à frente do centro
+        }
+
+        // ============================================================================
+        // 13. LOOP PRINCIPAL DE RENDERIZAÇÃO
+        // ============================================================================
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = Math.min(0.05, (timestamp - lastTime) * 0.001);
+            lastTime = timestamp;
+
+            // Atualiza inputs e posições
+            updatePlayerMovement(deltaTime);
+            updateCPU(deltaTime);
+            updatePhysics(deltaTime);
+
+            // Atualiza câmera
+            atualizarCamera(deltaTime);
+
+            // Rotaciona campo de estrelas
+            if (starfield) {
+                starfield.rotation.y += deltaTime * 0.012;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // ============================================================================
+        // 14. INICIALIZAÇÃO DE PARTIDA
+        // ============================================================================
+        function startNewGame() {
+            playerPoints = 0;
+            cpuPoints = 0;
+            playerGames = 0;
+            cpuGames = 0;
+            playerSets = 0;
+            cpuSets = 0;
+            server = 0; // Jogador saca primeiro
+
+            atualizarHUDScore();
+
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+
+            prepararSaque();
+
+            som.init();
+            som.startMusic();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+            setupControls();
+
+            btnStart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnRestart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnSound.addEventListener('click', () => {
+                const mutado = som.toggleMute();
+                if (mutado) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Silenciado';
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                }
+            });
+
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
