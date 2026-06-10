@@ -1456,10 +1456,10 @@
             gameState = GAME_STATES.RALLY;
             lastHitter = 0;
 
-            // Velocidade inicial do saque
+            // Velocidade inicial do saque calibrada
             const saqueX = (Math.random() - 0.5) * 4.0; // Angulação lateral
-            const saqueZ = -13.5;                      // Velocidade em direção à CPU
-            const saqueY = 4.5;                        // Altura parabólica
+            const saqueZ = -14.8;                      // Velocidade em direção à CPU
+            const saqueY = 5.8;                        // Altura parabólica para passar da rede
 
             ballVel.set(saqueX, saqueY, saqueZ);
             turnAnnouncer.innerText = "RALLY EM CURSO!";
@@ -1474,8 +1474,8 @@
             lastHitter = 1;
 
             const saqueX = (Math.random() - 0.5) * 4.0;
-            const saqueZ = 13.5;
-            const saqueY = 4.5;
+            const saqueZ = 14.8;
+            const saqueY = 5.8;
 
             ballVel.set(saqueX, saqueY, saqueZ);
             turnAnnouncer.innerText = "RALLY EM CURSO!";
@@ -1586,25 +1586,21 @@
                 lastHitter = 0;
                 ballLandedCount = 0;
 
-                // Inverte direção em Z
-                ballVel.z = -Math.abs(ballVel.z) - 0.45; // Acelera ligeiramente a bola
-
                 // Determina velocidade em X dependendo de onde bateu na raquete
                 const offset = (ballPos.x - playerPaddle.position.x) / (PADDLE_WIDTH / 2);
                 ballVel.x = offset * 5.8; // Efeito lateral
 
-                // Altura de subida
-                ballVel.y = 4.2 + Math.random() * 1.5;
-
-                // Força extra se segurar Espaço
                 if (keys.Space) {
-                    ballVel.z -= 1.8;
-                    ballVel.y += 1.2;
-                    shakeAmount = 0.2;
+                    // Smash/Corte rápido (rasante e veloz)
+                    ballVel.z = -Math.max(18.0, Math.abs(ballVel.z) + 3.0);
+                    ballVel.y = 5.2 + Math.random() * 0.8;
+                    shakeAmount = 0.22;
+                } else {
+                    // Rebatida normal automática (segura e alta sobre a rede)
+                    ballVel.z = -Math.max(14.8, Math.abs(ballVel.z) + 0.5);
+                    ballVel.y = 6.0 + Math.random() * 1.5;
+                    shakeAmount = 0.1;
                 }
-
-                // Tremor leve
-                shakeAmount = Math.max(shakeAmount, 0.1);
             }
 
             // 6. Colisão com a Raquete da CPU (Z < 0)
@@ -1613,12 +1609,18 @@
                 lastHitter = 1;
                 ballLandedCount = 0;
 
-                ballVel.z = Math.abs(ballVel.z) + 0.45; // Acelera ligeiramente
-
                 const offset = (ballPos.x - cpuPaddle.position.x) / (PADDLE_WIDTH / 2);
                 ballVel.x = offset * 5.8;
 
-                ballVel.y = 4.2 + Math.random() * 1.5;
+                // CPU aplica smash aleatório se rebater próxima da rede
+                const podeDarSmash = cpuPaddle.position.z > -8.5 && Math.random() < 0.25;
+                if (podeDarSmash) {
+                    ballVel.z = Math.max(18.0, Math.abs(ballVel.z) + 3.0);
+                    ballVel.y = 5.2 + Math.random() * 0.8;
+                } else {
+                    ballVel.z = Math.max(14.8, Math.abs(ballVel.z) + 0.5);
+                    ballVel.y = 6.0 + Math.random() * 1.5;
+                }
             }
 
             // 7. Checa se passou direto pelo fundo sem quicar (Out traseiro)
