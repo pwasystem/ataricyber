@@ -926,6 +926,7 @@
                 swinging: false,
                 swingRefVine: null,
                 swingTime: 0,
+                swingCooldown: 0,
                 grounded: true,
                 facing: 1, // 1: direita, -1: esquerda
                 respawnX: -16,
@@ -1820,6 +1821,7 @@
                 p.vx = p.facing * CONFIG.playerSpeed * 1.2;
                 p.vy = 6.0; // pequeno impulso para cima ao soltar
                 p.swingRefVine = null;
+                p.swingCooldown = 0.75; // Evita agarrar instantaneamente após soltar
                 som.playJump();
             } else if (p.grounded && !p.climbing) {
                 // Pular normal
@@ -1937,6 +1939,7 @@
             state.player.invincible = 0;
             state.player.stumbleTime = 0;
             state.player.respawnX = -16;
+            state.player.swingCooldown = 0;
 
             // Reseta câmera para lateral clássica e zoom padrão
             state.camera.theta = 0;
@@ -1972,6 +1975,7 @@
 
             // Invencibilidade e Atordoamento por dano
             if (p.invincible > 0) p.invincible -= dt;
+            if (p.swingCooldown > 0) p.swingCooldown -= dt;
             if (p.stumbleTime > 0) {
                 p.stumbleTime -= dt;
                 // Se estiver atordoado, não processa comandos, apenas aplica gravidade
@@ -2062,6 +2066,7 @@
                 p.vx = p.facing * CONFIG.playerSpeed * 0.8;
                 p.vy = 0.5;
                 p.swingRefVine = null;
+                p.swingCooldown = 0.75; // Evita agarrar instantaneamente após soltar
             }
 
             // 2. FÍSICA E MOVIMENTAÇÃO
@@ -2072,10 +2077,13 @@
                     state.player.swingTime += dt;
                     
                     const angle = vine.rotation.z;
-                    // O Harry se pendura na ponta da liana (comprimento 9.8)
                     const vineLen = 9.8;
-                    p.x = vine.position.x - Math.sin(angle) * vineLen;
-                    p.y = vine.position.y - Math.cos(angle) * vineLen;
+                    const tipX = vine.position.x - Math.sin(angle) * vineLen;
+                    const tipY = vine.position.y - Math.cos(angle) * vineLen;
+                    
+                    // Coloca o Harry pendurado pelas mãos (Y da mão ~= 1.55 do modelo)
+                    p.x = tipX;
+                    p.y = tipY - 1.55;
                     p.vy = 0;
                     p.vx = 0;
                     
@@ -2102,14 +2110,40 @@
                 const time = performance.now() * 0.0017;
                 activeVine.rotation.z = Math.sin(time) * 0.65; // balanço de amplitude
                 
-                // Checar se o jogador no ar colide com a ponta da liana para se agarrar
-                if (!p.swinging && !p.grounded && !p.climbing) {
+                // Checar se o jogador no ar colide com a liana para se agarrar (se não estiver em cooldown e não estiver tentando soltar)
+                const isReleasing = climbDownInput || state.keys[' '] || state.keys['Spacebar'] || state.touchControls.down || state.touchControls.jump;
+                if (!p.swinging && !p.grounded && !p.climbing && p.swingCooldown <= 0 && !isReleasing) {
                     const vineLen = 9.8;
-                    const tipX = activeVine.position.x - Math.sin(activeVine.rotation.z) * vineLen;
-                    const tipY = activeVine.position.y - Math.cos(activeVine.rotation.z) * vineLen;
+                    const groupX = roomGroupOld.position.x;
+                    const ax = groupX + activeVine.position.x;
+                    const ay = activeVine.position.y;
                     
-                    const dist = Math.hypot(p.x - tipX, p.y - tipY);
-                    if (dist < 2.0) {
+                    const tipX = ax - Math.sin(activeVine.rotation.z) * vineLen;
+                    const tipY = ay - Math.cos(activeVine.rotation.z) * vineLen;
+                    
+                    const bx = tipX;
+                    const by = tipY;
+                    
+                    const px = p.x;
+                    const py = p.y + 0.9; // Centro do corpo de Harry (y é a base dos pés)
+                    
+                    // Vetores para distância ao segmento
+                    const vx = bx - ax;
+                    const vy = by - ay;
+                    
+                    const wx = px - ax;
+                    const wy = py - ay;
+                    
+                    const vDotV = vx * vx + vy * vy;
+                    let t = (wx * vx + wy * vy) / vDotV;
+                    // Restringe a colisão aos 30% inferiores da liana (t entre 0.7 e 1.0) para evitar colidir no alto
+                    t = Math.max(0.7, Math.min(1, t));
+                    
+                    const cx = ax + t * vx;
+                    const cy = ay + t * vy;
+                    
+                    const dist = Math.hypot(px - cx, py - cy);
+                    if (dist < 0.75) { // Colisão real e precisa com a parte de baixo da liana
                         p.swinging = true;
                         p.swingRefVine = activeVine;
                         state.player.swingTime = 0;
