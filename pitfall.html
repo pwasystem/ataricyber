@@ -1,0 +1,2719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Pitfall 3D - Neon Jungle Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #020208;
+            --glass-bg: rgba(6, 6, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+            --orange-glow: 0 0 10px rgba(255, 94, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Efeitos Visuais CRT Retro */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.3) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        .hud-value.orange {
+            color: var(--neon-orange);
+            text-shadow: var(--orange-glow);
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            width: 92%;
+            max-width: 500px;
+            justify-content: space-between;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mobile-dpad {
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 55px;
+            height: 55px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            touch-action: manipulation;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            outline: none;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.25);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+        }
+
+        .mobile-action-zone {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .mobile-action-btn {
+            width: 75px;
+            height: 75px;
+            background: var(--glass-bg);
+            border: 2px solid var(--neon-pink);
+            border-radius: 50%;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 10px rgba(255, 0, 127, 0.2);
+            outline: none;
+            touch-action: manipulation;
+        }
+
+        .mobile-action-btn:active {
+            background: rgba(255, 0, 127, 0.3);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* TELAS DE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(4, 4, 15, 0.88) 0%, rgba(1, 1, 3, 0.99) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(8, 8, 22, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px 40px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.04);
+            border-top: 3px solid var(--neon-cyan);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 60%, var(--neon-orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-pink);
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--pink-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-orange));
+            color: #020208;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.15);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Painel de Placar Final */
+        .score-summary {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.winner-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 18px;
+        }
+
+        .score-row.winner-row .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Loader */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            background-color: var(--dark-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 240, 255, 0.1);
+            border-top-color: var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            .hud-panel {
+                padding: 8px 12px;
+                gap: 12px;
+            }
+            .hud-value {
+                font-size: 16px;
+            }
+            .game-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO CYBER PITFALL 3D...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <!-- Status do Jogador -->
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Pontos</div>
+                <div id="hud-score" class="hud-value cyan">20000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Vidas</div>
+                <div id="hud-lives" class="hud-value pink">❤❤❤</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Tempo</div>
+                <div id="hud-timer" class="hud-value orange">20:00</div>
+            </div>
+        </div>
+
+        <!-- Tela Atual e Controles -->
+        <div class="hud-panel" style="gap: 15px;">
+            <div class="hud-group" style="border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;">
+                <div class="hud-label">Localização</div>
+                <div id="hud-location" class="hud-value green">TELA 000</div>
+            </div>
+            <div class="hud-group" style="border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;">
+                <div class="hud-label">Tesouros</div>
+                <div id="hud-treasures" class="hud-value orange">0 / 32</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Mobile -->
+    <div id="mobile-controls">
+        <div class="mobile-dpad">
+            <button id="btn-up" class="mobile-btn" style="grid-area: up;">▲</button>
+            <button id="btn-left" class="mobile-btn" style="grid-area: left;">◀</button>
+            <button id="btn-right" class="mobile-btn" style="grid-area: right;">▶</button>
+            <button id="btn-down" class="mobile-btn" style="grid-area: down;">▼</button>
+        </div>
+        <div class="mobile-action-zone">
+            <button id="btn-jump" class="mobile-action-btn">PULAR</button>
+        </div>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER PITFALL 3D</h1>
+            <div class="game-subtitle">Neon Jungle Explorer</div>
+
+            <div class="instructions">
+                <h3>Instruções de Exploração:</h3>
+                <ul>
+                    <li>Você tem **20 minutos** para resgatar todos os **32 tesouros** perdidos na selva cibernética.</li>
+                    <li><strong>Mundo da Superfície:</strong> Desvie dos troncos de neon rolando, pule cobras estáticas e cruze os pântanos.</li>
+                    <li><strong>Lianas (Cipós):</strong> Pule em direção a uma liana pendurada para agarrar-se nela automaticamente. Pressione **Espaço** ou **Seta para Baixo** para soltar.</li>
+                    <li><strong>Jacarés:</strong> Você pode pular nas cabeças deles para atravessar o lago, mas apenas se a boca estiver fechada!</li>
+                    <li><strong>Mundo Subterrâneo:</strong> Desça por escadas para acessar atalhos. Avançar no subterrâneo pula 3 telas da superfície de uma vez, mas cuidado com escorpiões e becos sem saída!</li>
+                    <li><strong>Controles:</strong> **Setas do Teclado** para correr e subir/descer escadas. Tecla **Espaço** para saltar.</li>
+                    <li><strong>Câmera 3D:</strong> Teclas **A / D** giram a câmera orbitalmente, **W / S** ajustam a altura/distância.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR SIMULAÇÃO</button>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 id="gameover-title" class="game-title">FIM DE JOGO</h1>
+            <div id="gameover-subtitle" class="game-subtitle">Harry foi desintegrado</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Pontuação Final:</span>
+                    <span id="summary-score" class="value">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Tesouros Resgatados:</span>
+                    <span id="summary-treasures" class="value">0 / 32</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Tempo Restante:</span>
+                    <span id="summary-time" class="value">00:00</span>
+                </div>
+                <div class="score-row winner-row">
+                    <span class="label">STATUS DA MISSÃO:</span>
+                    <span id="summary-result" class="value">FALHA</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR NÚCLEO</button>
+        </div>
+    </div>
+
+    <!-- Biblioteca Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. COMPATIBILIDADE DE AUDIO E GERENCIADOR PROCEDURAL
+        // ============================================================================
+        class SomPitfall {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.muted = false;
+                
+                // Sequenciador
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+            }
+            
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+                
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+            }
+            
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+            
+            playJump() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(250, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.15);
+                
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(t);
+                osc.stop(t + 0.16);
+            }
+            
+            playSwing() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, t);
+                osc.frequency.linearRampToValueAtTime(300, t + 0.7);
+                
+                const mod = this.ctx.createOscillator();
+                const modGain = this.ctx.createGain();
+                mod.frequency.setValueAtTime(7, t);
+                modGain.gain.setValueAtTime(25, t);
+                
+                mod.connect(modGain);
+                modGain.connect(osc.frequency);
+                
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.7);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                
+                mod.start(t);
+                osc.start(t);
+                mod.stop(t + 0.7);
+                osc.stop(t + 0.7);
+            }
+            
+            playHurt() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, t);
+                osc.frequency.linearRampToValueAtTime(40, t + 0.25);
+                
+                gain.gain.setValueAtTime(0.18, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(t);
+                osc.stop(t + 0.26);
+            }
+            
+            playTreasure() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.06);
+                    
+                    gain.gain.setValueAtTime(0.08, t + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.18);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.06);
+                    osc.stop(t + idx * 0.06 + 0.2);
+                });
+            }
+            
+            playGameOver() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                const notes = [330, 294, 261, 196];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.2);
+                    
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.2 + 0.5);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.2);
+                    osc.stop(t + idx * 0.2 + 0.52);
+                });
+            }
+            
+            playVictory() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50, 1318.51];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.1);
+                    
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.1 + 0.3);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.1);
+                    osc.stop(t + idx * 0.1 + 0.32);
+                });
+            }
+
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                
+                const step = 0.22;
+                let nextTick = this.ctx.currentTime;
+                
+                const tickLoop = () => {
+                    const t = nextTick;
+                    if (this.musicActive && !this.muted) {
+                        const notes = [65.41, 65.41, 73.42, 73.42, 58.27, 58.27, 48.99, 55.00];
+                        const note = notes[Math.floor(this.musicBeat / 2) % notes.length];
+                        
+                        const osc = this.ctx.createOscillator();
+                        const filter = this.ctx.createBiquadFilter();
+                        const gain = this.ctx.createGain();
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note, t);
+                        
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(150, t);
+                        
+                        gain.gain.setValueAtTime(0.08, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.8);
+                        
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.masterGain);
+                        
+                        osc.start(t);
+                        osc.stop(t + step * 2.0);
+                        
+                        if (this.musicBeat % 4 === 0) {
+                            const kick = this.ctx.createOscillator();
+                            const kickGain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(90, t);
+                            kick.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+                            
+                            kickGain.gain.setValueAtTime(0.15, t);
+                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.12);
+                            
+                            kick.connect(kickGain);
+                            kickGain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.13);
+                        }
+                        
+                        if (this.musicBeat % 4 === 2) {
+                            const bufferSize = this.ctx.sampleRate * 0.04;
+                            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                            const data = buffer.getChannelData(0);
+                            for (let i = 0; i < bufferSize; i++) {
+                                data[i] = Math.random() * 2 - 1;
+                            }
+                            const noise = this.ctx.createBufferSource();
+                            noise.buffer = buffer;
+                            
+                            const highpass = this.ctx.createBiquadFilter();
+                            highpass.type = 'highpass';
+                            highpass.frequency.setValueAtTime(7000, t);
+                            
+                            const noiseGain = this.ctx.createGain();
+                            noiseGain.gain.setValueAtTime(0.015, t);
+                            noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.04);
+                            
+                            noise.connect(highpass);
+                            highpass.connect(noiseGain);
+                            noiseGain.connect(this.masterGain);
+                            noise.start(t);
+                            noise.stop(t + 0.05);
+                        }
+                    }
+                    this.musicBeat++;
+                    nextTick += step;
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+                tickLoop();
+            }
+            
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+        }
+
+        const som = new SomPitfall();
+
+        // ============================================================================
+        // 2. SEEDED RNG (GERADOR PSEUDO-ALEATÓRIO DETERMINÍSTICO)
+        // ============================================================================
+        class SeededRNG {
+            constructor(seed) {
+                this.seed = seed;
+            }
+            next() {
+                this.seed = (this.seed * 1664525 + 1013904223) % 4294967296;
+                return this.seed / 4294967296;
+            }
+            range(min, max) {
+                return min + this.next() * (max - min);
+            }
+            choose(arr) {
+                return arr[Math.floor(this.next() * arr.length)];
+            }
+        }
+
+        // ============================================================================
+        // 3. ENGINE DE JOGO E CONFIGURAÇÕES
+        // ============================================================================
+        const CONFIG = {
+            width: 44, // Largura total de uma tela (-22 a 22)
+            groundY: 0,
+            undergroundY: -9.5,
+            playerSpeed: 8.5,
+            playerClimbSpeed: 5,
+            jumpForce: 13.5,
+            gravity: 35,
+            colors: {
+                cyan: 0x00f0ff,
+                pink: 0xff007f,
+                green: 0x39ff14,
+                orange: 0xff5e00,
+                yellow: 0xffff00,
+                blue: 0x0022cc,
+                darkBlue: 0x0a0a20,
+                trunk: 0x8b5a2b
+            }
+        };
+
+        // Estado do Jogo
+        const state = {
+            screenIndex: 0, // 0 a 255
+            level: 'surface', // 'surface' ou 'underground'
+            score: 20000,
+            lives: 3,
+            timeRemaining: 1200, // 20 minutos em segundos
+            treasuresCollected: 0,
+            maxTreasures: 32,
+            collectedIndices: new Set(), // Quais telas já tiveram tesouro coletado
+            
+            // Controle do Jogador
+            player: {
+                x: -16,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                climbing: false,
+                climbRefX: 0,
+                swinging: false,
+                swingRefVine: null,
+                swingTime: 0,
+                grounded: true,
+                facing: 1, // 1: direita, -1: esquerda
+                invincible: 0, // tempo restante
+                stumbleTime: 0, // tempo travado de dor
+                width: 0.8,
+                height: 1.8,
+                depth: 0.8
+            },
+
+            // Câmera Orbital
+            camera: {
+                radius: 28,
+                theta: Math.PI / 2, // 90 graus (vista de lado)
+                phi: 0.22, // levemente acima do plano
+                targetYOffset: 1.0
+            },
+
+            // Transição de tela
+            transition: {
+                active: false,
+                direction: 0, // 1 para a direita, -1 para a esquerda
+                progress: 0,
+                duration: 0.45, // em segundos
+                oldIndex: 0,
+                newIndex: 0
+            },
+
+            activeRoom: null, // dados da sala atual
+            nextRoom: null, // dados da sala temporária na transição
+            
+            playing: false,
+            keys: {},
+            touchControls: {
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                jump: false
+            }
+        };
+
+        // ============================================================================
+        // 4. MODELAGEM 3D PROCEDURAL (Geometrias Primitivas)
+        // ============================================================================
+        let scene, camera, renderer;
+        let mainGroup; // Contém tudo que se move na cena principal
+        let roomGroupOld, roomGroupNew; // Grupos para efeito de transição slide
+        let playerMeshGroup;
+        let playerPointLight;
+        let lastTime = 0;
+
+        // Geradores de Modelos 3D Procedurais
+        const ModelBuilder = {
+            // Cria o personagem Harry (Estilo Voxel Cyberpunk)
+            createPlayer() {
+                const group = new THREE.Group();
+                
+                // Material neon
+                const bodyMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.orange, roughness: 0.4, metalness: 0.2 });
+                const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0b2, roughness: 0.8 }); // Pele
+                const visorMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.cyan, emissive: CONFIG.colors.cyan, emissiveIntensity: 1.5 });
+                const pantsMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.7 });
+                const shoesMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.9 });
+                const hairMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+
+                // Cabeça
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), headMat);
+                head.position.y = 1.55;
+                group.add(head);
+
+                // Cabelo
+                const hair = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.18, 0.54), hairMat);
+                hair.position.set(0, 1.74, 0.02);
+                group.add(hair);
+
+                // Visor Cyber
+                const visor = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.12, 0.15), visorMat);
+                visor.position.set(0, 1.58, 0.22);
+                group.add(visor);
+
+                // Tronco (Mochila integrada)
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.4), bodyMat);
+                torso.position.y = 0.95;
+                group.add(torso);
+
+                const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.2), pantsMat);
+                backpack.position.set(0, 0.95, -0.28);
+                group.add(backpack);
+
+                // Pernas
+                const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), pantsMat);
+                legL.position.set(-0.16, 0.3, 0);
+                group.add(legL);
+
+                const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), pantsMat);
+                legR.position.set(0.16, 0.3, 0);
+                group.add(legR);
+
+                // Sapatos
+                const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.3), shoesMat);
+                shoeL.position.set(-0.16, 0.05, 0.05);
+                group.add(shoeL);
+
+                const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.3), shoesMat);
+                shoeR.position.set(0.16, 0.05, 0.05);
+                group.add(shoeR);
+
+                // Braços
+                const armL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.6, 0.18), bodyMat);
+                armL.position.set(-0.38, 0.9, 0);
+                group.add(armL);
+
+                const armR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.6, 0.18), bodyMat);
+                armR.position.set(0.38, 0.9, 0);
+                group.add(armR);
+
+                // Guardar referências para animar membros
+                group.userData = { legL, legR, shoeL, shoeR, armL, armR };
+
+                // Habilitar sombras
+                group.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                return group;
+            },
+
+            // Árvores da Selva Cibernética
+            createCyberTree(rng) {
+                const group = new THREE.Group();
+                const trunkHeight = rng.range(6, 10);
+                
+                // Tronco
+                const trunkGeo = new THREE.BoxGeometry(0.8, trunkHeight, 0.8);
+                const trunkMat = new THREE.MeshStandardMaterial({
+                    color: 0x1a110a,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = trunkHeight / 2;
+                group.add(trunk);
+
+                // Folhas (Neon Wireframe + Box Transparente)
+                const foliageHeight = rng.range(3, 5);
+                const foliageWidth = rng.range(3, 5.5);
+                
+                const folGeo = new THREE.BoxGeometry(foliageWidth, foliageHeight, foliageWidth);
+                const folMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.green,
+                    emissive: CONFIG.colors.green,
+                    emissiveIntensity: 0.15,
+                    transparent: true,
+                    opacity: 0.45,
+                    roughness: 0.5,
+                    metalness: 0.1
+                });
+                const foliage = new THREE.Mesh(folGeo, folMat);
+                foliage.position.y = trunkHeight + (foliageHeight / 2) - 0.5;
+                group.add(foliage);
+
+                // Adiciona contorno wireframe brilhante nas folhas
+                const wireGeo = new THREE.EdgesGeometry(folGeo);
+                const wireMat = new THREE.LineBasicMaterial({
+                    color: CONFIG.colors.green,
+                    linewidth: 2
+                });
+                const wire = new THREE.LineSegments(wireGeo, wireMat);
+                foliage.add(wire);
+
+                group.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                return group;
+            },
+
+            // Crocodilo
+            createCrocodile(xPos) {
+                const group = new THREE.Group();
+                group.position.set(xPos, -0.6, 0);
+
+                const greenMat = new THREE.MeshStandardMaterial({ color: 0x1b4d3e, roughness: 0.7 });
+                const bellyMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.yellow, roughness: 0.8 });
+                const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1 });
+
+                // Corpo
+                const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 0.8), greenMat);
+                body.position.y = 0.2;
+                group.add(body);
+
+                // Cauda
+                const tail = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 0.6), greenMat);
+                tail.position.set(-1.6, 0.1, 0);
+                tail.rotation.z = -0.1;
+                group.add(tail);
+
+                // Olhos Vermelhos
+                const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), eyeMat);
+                eyeL.position.set(0.9, 0.45, 0.28);
+                group.add(eyeL);
+
+                const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), eyeMat);
+                eyeR.position.set(0.9, 0.45, -0.28);
+                group.add(eyeR);
+
+                // Mandíbula Inferior
+                const lowerJaw = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.18, 0.7), greenMat);
+                lowerJaw.position.set(1.4, 0.09, 0);
+                group.add(lowerJaw);
+
+                // Mandíbula Superior articulada (gira no ponto de encaixe)
+                const jawGroup = new THREE.Group();
+                jawGroup.position.set(0.8, 0.2, 0); // Ponto de rotação da dobradiça
+                
+                const upperMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.18, 0.7), greenMat);
+                upperMesh.position.set(0.6, 0.09, 0); // Desloca para que a rotação ocorra na base
+                jawGroup.add(upperMesh);
+
+                // Dentes brancos neon
+                const teethMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const teeth = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.08, 0.68), teethMat);
+                teeth.position.set(0.6, -0.05, 0);
+                upperMesh.add(teeth);
+
+                group.add(jawGroup);
+
+                // Salvando referências de controle de colisão e animação
+                group.userData = {
+                    jawPivot: jawGroup,
+                    x: xPos,
+                    width: 3.2,
+                    open: false,
+                    timer: Math.random() * 2 // Deslocamento de tempo para não abrirem juntos
+                };
+
+                group.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                return group;
+            },
+
+            // Escorpião Subterrâneo
+            createScorpion() {
+                const group = new THREE.Group();
+                const bodyMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.pink,
+                    emissive: CONFIG.colors.pink,
+                    emissiveIntensity: 0.3,
+                    roughness: 0.5
+                });
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+                // Corpo
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.3, 0.6), bodyMat);
+                body.position.y = 0.25;
+                group.add(body);
+
+                // Garras
+                const clawL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.4), bodyMat);
+                clawL.position.set(0.6, 0.2, 0.25);
+                group.add(clawL);
+
+                const clawR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.4), bodyMat);
+                clawR.position.set(0.6, 0.2, -0.25);
+                group.add(clawR);
+
+                // Cauda com ferrão em curva (voxelizado)
+                const tail1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), bodyMat);
+                tail1.position.set(-0.6, 0.35, 0);
+                group.add(tail1);
+
+                const tail2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.2), bodyMat);
+                tail2.position.set(-0.7, 0.55, 0);
+                group.add(tail2);
+
+                const tail3 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.2), bodyMat);
+                tail3.position.set(-0.5, 0.7, 0);
+                group.add(tail3);
+
+                // Patas simples
+                const legG = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+                for(let i = -1; i <= 1; i++) {
+                    const l = new THREE.Mesh(legG, bodyMat);
+                    l.position.set(i*0.25, 0.1, 0.35);
+                    l.rotation.z = 0.2;
+                    group.add(l);
+
+                    const r = new THREE.Mesh(legG, bodyMat);
+                    r.position.set(i*0.25, 0.1, -0.35);
+                    r.rotation.z = -0.2;
+                    group.add(r);
+                }
+
+                group.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                    }
+                });
+
+                return group;
+            },
+
+            // Cobra Coral Retro
+            createSnake() {
+                const group = new THREE.Group();
+                const matCyan = new THREE.MeshStandardMaterial({ color: CONFIG.colors.cyan, emissive: CONFIG.colors.cyan, emissiveIntensity: 0.5 });
+                const matPink = new THREE.MeshStandardMaterial({ color: CONFIG.colors.pink, emissive: CONFIG.colors.pink, emissiveIntensity: 0.5 });
+
+                // Corpo enrolado em camadas
+                const geoRing = new THREE.BoxGeometry(0.8, 0.15, 0.8);
+                const rings = [];
+                for(let i = 0; i < 4; i++) {
+                    const ring = new THREE.Mesh(geoRing, (i % 2 === 0) ? matCyan : matPink);
+                    ring.position.y = 0.08 + (i * 0.15);
+                    ring.scale.set(1 - i * 0.12, 1, 1 - i * 0.12);
+                    ring.rotation.y = i * 0.4;
+                    group.add(ring);
+                    rings.push(ring);
+                }
+
+                // Cabeça da cobra
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.4), matPink);
+                head.position.set(0.18, 0.65, 0.18);
+                group.add(head);
+
+                const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.04), new THREE.MeshBasicMaterial({color: 0xff0000}));
+                tongue.position.set(0.32, 0.6, 0.18);
+                group.add(tongue);
+
+                group.userData = { rings, tongue };
+                return group;
+            },
+
+            // Tesouros
+            createTreasure(type) {
+                const group = new THREE.Group();
+                let mesh;
+
+                if (type === 'gold') {
+                    // Barra de Ouro
+                    const geo = new THREE.BoxGeometry(0.8, 0.3, 0.4);
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.yellow,
+                        roughness: 0.1,
+                        metalness: 0.95,
+                        emissive: CONFIG.colors.yellow,
+                        emissiveIntensity: 0.4
+                    });
+                    mesh = new THREE.Mesh(geo, mat);
+                } else if (type === 'silver') {
+                    // Barra de Prata
+                    const geo = new THREE.BoxGeometry(0.8, 0.3, 0.4);
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: 0xdddddd,
+                        roughness: 0.1,
+                        metalness: 0.95,
+                        emissive: 0xcccccc,
+                        emissiveIntensity: 0.2
+                    });
+                    mesh = new THREE.Mesh(geo, mat);
+                } else if (type === 'ring') {
+                    // Anel (Torus com Diamante)
+                    mesh = new THREE.Group();
+                    const ringGeo = new THREE.TorusGeometry(0.35, 0.09, 8, 24);
+                    const ringMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.orange,
+                        roughness: 0.1,
+                        metalness: 0.9,
+                        emissive: CONFIG.colors.orange,
+                        emissiveIntensity: 0.3
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    mesh.add(ringMesh);
+
+                    const gemGeo = new THREE.OctahedronGeometry(0.15, 0);
+                    const gemMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.cyan,
+                        emissive: CONFIG.colors.cyan,
+                        emissiveIntensity: 0.8,
+                        roughness: 0.1
+                    });
+                    const gemMesh = new THREE.Mesh(gemGeo, gemMat);
+                    gemMesh.position.y = 0.38;
+                    mesh.add(gemMesh);
+                } else {
+                    // Diamante Gigante (Octaedro)
+                    const geo = new THREE.OctahedronGeometry(0.5, 0);
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.pink,
+                        emissive: CONFIG.colors.pink,
+                        emissiveIntensity: 0.8,
+                        roughness: 0.05,
+                        metalness: 0.9
+                    });
+                    mesh = new THREE.Mesh(geo, mat);
+                }
+
+                group.add(mesh);
+                group.userData = { type, mesh };
+
+                return group;
+            }
+        };
+
+        // ============================================================================
+        // 5. GERAÇÃO PROCEDURAL DA SALA (1 das 255 salas)
+        // ============================================================================
+        function generateRoomData(index) {
+            const rng = new SeededRNG(index + 555); // Semente fixa por tela
+
+            // Tipos de sala:
+            // 0: Vazia / Segura
+            // 1: Piche central grande
+            // 2: Lagoa de Crocodilos com liana
+            // 3: 3 pequenos buracos
+            // 4: Buraco que aparece/desaparece (Quicksand)
+            let type = 0;
+            if (index === 0) {
+                type = 0; // Primeira sala sempre segura para iniciar
+            } else {
+                const roll = rng.next();
+                if (roll < 0.22) type = 0;
+                else if (roll < 0.44) type = 1; // Tar Pit
+                else if (roll < 0.66) type = 2; // Crocodile swamp
+                else if (roll < 0.85) type = 3; // 3 holes
+                else type = 4; // Quicksand
+            }
+
+            // Presença de Escada para o Subterrâneo (apenas em salas sem buraco gigante no meio)
+            const hasLadder = (type === 0 || type === 3) && rng.next() < 0.45;
+
+            // Troncos rolando na superfície (só na superfície e se não for lagoa de jacaré)
+            const hasLogs = (type !== 2) && rng.next() < 0.55;
+            const logCount = hasLogs ? Math.floor(rng.range(1, 4)) : 0;
+
+            // Presença de cobra na superfície (só em salas sem logs, e com 40% de chance)
+            const hasSnake = (!hasLogs && type === 0) && rng.next() < 0.35;
+
+            // Determinar se há tesouro nesta tela
+            // Apenas 32 tesouros no total do jogo (espalhados deterministicamente)
+            const isTreasureScreen = (index * 7 + 13) % 8 === 0; // Fórmula determinística para espalhar
+            let treasureType = null;
+            if (isTreasureScreen) {
+                const trRoll = rng.next();
+                if (trRoll < 0.5) treasureType = 'gold';
+                else if (trRoll < 0.8) treasureType = 'silver';
+                else if (trRoll < 0.95) treasureType = 'ring';
+                else treasureType = 'diamond';
+            }
+
+            // Subterrâneo
+            // Cuidado com escorpiões
+            const hasScorpion = rng.next() < 0.6;
+            
+            // Paredes no subterrâneo que bloqueiam o caminho (becos sem saída)
+            const wallRoll = rng.next();
+            let subWallX = null; // null: sem parede, ou valor de X (-10, 0, 10)
+            if (wallRoll < 0.35) {
+                subWallX = rng.choose([-11, 0, 11]);
+            }
+
+            return {
+                index,
+                type,
+                hasLadder,
+                hasLogs,
+                logCount,
+                hasSnake,
+                treasureType,
+                hasScorpion,
+                subWallX,
+                rng
+            };
+        }
+
+        // Constrói os objetos 3D reais na cena com base no RoomData
+        function buildRoom3D(roomData, parentGroup) {
+            const rng = new SeededRNG(roomData.index + 999);
+            
+            // 1. CHÃO DO MUNDO DA SUPERFÍCIE (Luzes neon verdes)
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x051d08,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const borderMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.green });
+
+            // Construir o chão com base no tipo da sala
+            if (roomData.type === 0 || roomData.hasLadder) {
+                // Chão Contínuo
+                const ground = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 3, 6), floorMat);
+                ground.position.set(0, -1.5, 0);
+                ground.receiveShadow = true;
+                parentGroup.add(ground);
+
+                // Bordas Neon
+                const edgeL = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
+                edgeL.position.set(0, 0.01, 3);
+                parentGroup.add(edgeL);
+
+                const edgeR = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
+                edgeR.position.set(0, 0.01, -3);
+                parentGroup.add(edgeR);
+
+                if (roomData.hasLadder) {
+                    // Recortar abertura da escada (esculpindo visualmente)
+                    // Vamos apenas desenhar a escada atravessando o solo
+                    const ladderGeo = new THREE.BoxGeometry(1.6, 12.5, 0.2);
+                    const ladderMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.green,
+                        emissive: CONFIG.colors.green,
+                        emissiveIntensity: 0.3
+                    });
+                    const ladder = new THREE.Mesh(ladderGeo, ladderMat);
+                    ladder.position.set(0, -4.75, -1.0);
+                    parentGroup.add(ladder);
+
+                    // Adicionar degraus da escada
+                    for(let h = -9.5; h <= 0; h += 0.8) {
+                        const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8), ladderMat);
+                        rung.rotation.z = Math.PI / 2;
+                        rung.position.set(0, h, -0.9);
+                        parentGroup.add(rung);
+                    }
+                    
+                    // Marcar a posição da escada para o Harry
+                    parentGroup.userData.ladderX = 0;
+                }
+            } 
+            else if (roomData.type === 1 || roomData.type === 4) {
+                // Tar Pit / Quicksand (Buraco no meio de x=-6 a x=6)
+                const groundLeft = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
+                groundLeft.position.set(-14, -1.5, 0);
+                groundLeft.receiveShadow = true;
+                parentGroup.add(groundLeft);
+
+                const groundRight = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
+                groundRight.position.set(14, -1.5, 0);
+                groundRight.receiveShadow = true;
+                parentGroup.add(groundRight);
+
+                // Bordas Neon com Gaps
+                const edgeL1 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeL1.position.set(-14, 0.01, 3);
+                parentGroup.add(edgeL1);
+                const edgeL2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeL2.position.set(14, 0.01, 3);
+                parentGroup.add(edgeL2);
+
+                const edgeR1 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeR1.position.set(-14, 0.01, -3);
+                parentGroup.add(edgeR1);
+                const edgeR2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeR2.position.set(14, 0.01, -3);
+                parentGroup.add(edgeR2);
+
+                // Fluido de Piche / Areia Movediça (Rosa Neon / Roxo)
+                const pitGeo = new THREE.BoxGeometry(12.4, 2.5, 5.8);
+                const pitMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.pink,
+                    emissive: CONFIG.colors.pink,
+                    emissiveIntensity: roomData.type === 4 ? 0.2 : 0.4,
+                    roughness: 0.3,
+                    metalness: 0.8,
+                    transparent: true,
+                    opacity: 0.85
+                });
+                const pit = new THREE.Mesh(pitGeo, pitMat);
+                pit.position.set(0, -1.5, 0);
+                parentGroup.add(pit);
+                parentGroup.userData.pitMesh = pit; // para animar o quicksand
+
+                // Adiciona cipó/liana para travessia
+                const vinePivot = new THREE.Group();
+                vinePivot.position.set(0, 11, 0); // Ponto de ancoragem no céu
+                
+                const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
+                const vineMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.cyan,
+                    emissive: CONFIG.colors.cyan,
+                    emissiveIntensity: 0.5
+                });
+                const vineMesh = new THREE.Mesh(vineGeo, vineMat);
+                vineMesh.position.y = -4.9; // Metade do tamanho
+                vinePivot.add(vineMesh);
+                
+                parentGroup.add(vinePivot);
+                parentGroup.userData.vine = vinePivot;
+            } 
+            else if (roomData.type === 2) {
+                // Crocodile Swamp (Água + Crocodilos + Cipó)
+                const groundLeft = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
+                groundLeft.position.set(-14, -1.5, 0);
+                groundLeft.receiveShadow = true;
+                parentGroup.add(groundLeft);
+
+                const groundRight = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
+                groundRight.position.set(14, -1.5, 0);
+                groundRight.receiveShadow = true;
+                parentGroup.add(groundRight);
+
+                // Bordas
+                const edgeL1 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeL1.position.set(-14, 0.01, 3);
+                parentGroup.add(edgeL1);
+                const edgeL2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.08), borderMat);
+                edgeL2.position.set(14, 0.01, 3);
+                parentGroup.add(edgeL2);
+
+                // Água Azul
+                const waterGeo = new THREE.BoxGeometry(12.4, 2.0, 5.8);
+                const waterMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.blue,
+                    emissive: CONFIG.colors.blue,
+                    emissiveIntensity: 0.3,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const water = new THREE.Mesh(waterGeo, waterMat);
+                water.position.set(0, -1.3, 0);
+                parentGroup.add(water);
+
+                // 3 Jacarés neon
+                const crocPositions = [-3.2, 0, 3.2];
+                const crocs = [];
+                crocPositions.forEach(x => {
+                    const croc = ModelBuilder.createCrocodile(x);
+                    parentGroup.add(croc);
+                    crocs.push(croc);
+                });
+                parentGroup.userData.crocs = crocs;
+
+                // Cipó para travessia
+                const vinePivot = new THREE.Group();
+                vinePivot.position.set(0, 11, 0);
+                
+                const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
+                const vineMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.cyan,
+                    emissive: CONFIG.colors.cyan,
+                    emissiveIntensity: 0.5
+                });
+                const vineMesh = new THREE.Mesh(vineGeo, vineMat);
+                vineMesh.position.y = -4.9;
+                vinePivot.add(vineMesh);
+                
+                parentGroup.add(vinePivot);
+                parentGroup.userData.vine = vinePivot;
+            } 
+            else if (roomData.type === 3) {
+                // Três pequenos buracos perigosos no chão
+                // Chão feito em 4 pedaços
+                const segmentW = 8.5;
+                const gapW = 3.0;
+                
+                // Segmento 1
+                const s1 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s1.position.set(-17.75, -1.5, 0);
+                parentGroup.add(s1);
+                // Segmento 2
+                const s2 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s2.position.set(-5.75, -1.5, 0);
+                parentGroup.add(s2);
+                // Segmento 3
+                const s3 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s3.position.set(5.75, -1.5, 0);
+                parentGroup.add(s3);
+                // Segmento 4
+                const s4 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s4.position.set(17.75, -1.5, 0);
+                parentGroup.add(s4);
+
+                // Bordas
+                for (let xOffset of [-17.75, -5.75, 5.75, 17.75]) {
+                    const eL = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
+                    eL.position.set(xOffset, 0.01, 3);
+                    parentGroup.add(eL);
+                    const eR = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
+                    eR.position.set(xOffset, 0.01, -3);
+                    parentGroup.add(eR);
+                }
+
+                // Aberturas em X: -12.5, 0, 12.5
+                parentGroup.userData.threePits = [-12.5, 0, 12.5];
+            }
+
+            // 2. ELEMENTOS CÊNICOS: Árvores da Selva (Apenas no fundo)
+            const treeCount = Math.floor(rng.range(3, 7));
+            for(let i = 0; i < treeCount; i++) {
+                const tree = ModelBuilder.createCyberTree(rng);
+                // Posicionar fora da trilha do jogador
+                const zPos = rng.choose([-4.2, -3.4]);
+                const xPos = rng.range(-20, 20);
+                // Não colocar árvore em cima dos buracos
+                if ((roomData.type === 1 || roomData.type === 2 || roomData.type === 4) && Math.abs(xPos) < 7.5) {
+                    continue; 
+                }
+                if (roomData.type === 3 && (Math.abs(xPos - 12.5) < 2 || Math.abs(xPos) < 2 || Math.abs(xPos + 12.5) < 2)) {
+                    continue;
+                }
+                tree.position.set(xPos, 0, zPos);
+                parentGroup.add(tree);
+            }
+
+            // 3. COBRA (Inimigo Estático)
+            if (roomData.hasSnake) {
+                const snake = ModelBuilder.createSnake();
+                snake.position.set(rng.range(1, 8), 0, 0); // Lado direito
+                parentGroup.add(snake);
+                parentGroup.userData.snake = snake;
+            }
+
+            // 4. CHÃO DO SUBTERRÂNEO (Túnel Metálico)
+            const subFloorMat = new THREE.MeshStandardMaterial({
+                color: CONFIG.colors.darkBlue,
+                roughness: 0.5,
+                metalness: 0.8
+            });
+            const subBorderMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.pink });
+
+            const subGround = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 1.5, 6), subFloorMat);
+            subGround.position.set(0, CONFIG.undergroundY - 0.75, 0);
+            subGround.receiveShadow = true;
+            parentGroup.add(subGround);
+
+            // Teto do subterrâneo (placa preta)
+            const subCeil = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 1, 6), subFloorMat);
+            subCeil.position.set(0, CONFIG.undergroundY + 3.8, 0);
+            parentGroup.add(subCeil);
+
+            // Borda do trilho subterrâneo
+            const subEdge = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.06, 0.06), subBorderMat);
+            subEdge.position.set(0, CONFIG.undergroundY + 0.01, 2.5);
+            parentGroup.add(subEdge);
+
+            // Parede de tijolos (obstáculo bloqueante) no subterrâneo
+            if (roomData.subWallX !== null) {
+                const wallGeo = new THREE.BoxGeometry(1.5, 3.8, 4.8);
+                const wallMat = new THREE.MeshStandardMaterial({
+                    color: 0x990022,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const wall = new THREE.Mesh(wallGeo, wallMat);
+                // Posiciona encaixado entre teto e chão
+                wall.position.set(roomData.subWallX, CONFIG.undergroundY + 1.9, 0);
+                parentGroup.add(wall);
+
+                // Grade neon contornando o obstáculo
+                const wallWireGeo = new THREE.EdgesGeometry(wallGeo);
+                const wallWireMat = new THREE.LineBasicMaterial({ color: 0xff0044 });
+                const wire = new THREE.LineSegments(wallWireGeo, wallWireMat);
+                wall.add(wire);
+
+                parentGroup.userData.subWallX = roomData.subWallX;
+            }
+
+            // 5. ESCORPIÃO SUBTERRÂNEO (Patrulhando)
+            if (roomData.hasScorpion) {
+                const scorpion = ModelBuilder.createScorpion();
+                scorpion.position.set(rng.range(-8, 8), CONFIG.undergroundY, 0);
+                parentGroup.add(scorpion);
+                parentGroup.userData.scorpion = scorpion;
+                parentGroup.userData.scorpDir = rng.choose([-1, 1]);
+                parentGroup.userData.scorpLeft = -12;
+                parentGroup.userData.scorpRight = 12;
+                
+                // Se houver uma parede, limita o escorpião para não atravessar
+                if (roomData.subWallX !== null) {
+                    if (roomData.subWallX < 0) {
+                        parentGroup.userData.scorpLeft = roomData.subWallX + 1.2;
+                    } else if (roomData.subWallX > 0) {
+                        parentGroup.userData.scorpRight = roomData.subWallX - 1.2;
+                    } else {
+                        // Parede no meio
+                        parentGroup.userData.scorpLeft = -10;
+                        parentGroup.userData.scorpRight = -1.2;
+                        scorpion.position.x = -5; // Força início seguro
+                    }
+                }
+            }
+
+            // 6. TESOUROS
+            if (roomData.treasureType && !state.collectedIndices.has(roomData.index)) {
+                const treasure = ModelBuilder.createTreasure(roomData.treasureType);
+                // Posiciona um pouco flutuando
+                const trX = rng.range(6, 12);
+                treasure.position.set(trX, 0.7, 0);
+                parentGroup.add(treasure);
+                parentGroup.userData.treasure = treasure;
+            }
+
+            // Troncos de neon rolando
+            if (roomData.logCount > 0) {
+                const logs = [];
+                for(let k = 0; k < roomData.logCount; k++) {
+                    const logGeo = new THREE.CylinderGeometry(0.28, 0.28, 2.2, 8);
+                    const logMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.orange,
+                        emissive: CONFIG.colors.orange,
+                        emissiveIntensity: 0.4,
+                        roughness: 0.3
+                    });
+                    const log = new THREE.Mesh(logGeo, logMat);
+                    log.rotation.x = Math.PI / 2;
+                    // Espalhar o ponto de partida do spawn na direita
+                    log.position.set(22 + (k * 14) + rng.range(0, 6), 0.28, 0);
+                    parentGroup.add(log);
+                    logs.push(log);
+                }
+                parentGroup.userData.logs = logs;
+            }
+        }
+
+        // ============================================================================
+        // 6. CONTROLES DE CÂMERA E DE ENTRADA DO USUÁRIO
+        // ============================================================================
+        function initInput() {
+            window.addEventListener('keydown', (e) => {
+                state.keys[e.key] = true;
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault(); // Evita scroll do navegador
+                    processJumpInput();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                state.keys[e.key] = false;
+            });
+
+            // Controles de Toque Mobile
+            const bindTouchBtn = (id, stateKey) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                
+                const setTouch = (val, e) => {
+                    e.preventDefault();
+                    state.touchControls[stateKey] = val;
+                };
+
+                el.addEventListener('touchstart', (e) => setTouch(true, e), {passive: false});
+                el.addEventListener('touchend', (e) => setTouch(false, e), {passive: false});
+                el.addEventListener('touchcancel', (e) => setTouch(false, e), {passive: false});
+            };
+
+            bindTouchBtn('btn-left', 'left');
+            bindTouchBtn('btn-right', 'right');
+            bindTouchBtn('btn-up', 'up');
+            bindTouchBtn('btn-down', 'down');
+
+            const jumpBtn = document.getElementById('btn-jump');
+            if (jumpBtn) {
+                jumpBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    processJumpInput();
+                }, {passive: false});
+            }
+
+            // Som Mute no HUD
+            const soundBtn = document.getElementById('btn-sound');
+            soundBtn.addEventListener('click', () => {
+                const mutado = som.toggleMute();
+                if (mutado) {
+                    soundBtn.classList.remove('active');
+                    soundBtn.innerText = '🔇 Silenciado';
+                } else {
+                    soundBtn.classList.add('active');
+                    soundBtn.innerText = '🔊 Som';
+                }
+            });
+        }
+
+        function processJumpInput() {
+            if (!state.playing || state.transition.active || state.player.stumbleTime > 0) return;
+            
+            const p = state.player;
+            if (p.swinging) {
+                // Solta da liana com impulso
+                p.swinging = false;
+                p.vx = p.facing * CONFIG.playerSpeed * 1.2;
+                p.vy = 6.0; // pequeno impulso para cima ao soltar
+                p.swingRefVine = null;
+                som.playJump();
+            } else if (p.grounded && !p.climbing) {
+                // Pular normal
+                p.vy = CONFIG.jumpForce;
+                p.grounded = false;
+                som.playJump();
+            }
+        }
+
+        // ============================================================================
+        // 7. INICIALIZAÇÃO DO THREE.JS E MUNDO
+        // ============================================================================
+        function initEngine() {
+            const container = document.getElementById("canvas-container");
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(CONFIG.colors.darkBlue, 0.015);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Adiciona Luzes
+            const ambientLight = new THREE.AmbientLight(0x111133, 1.2);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xff00aa, 0.6);
+            dirLight.position.set(-15, 25, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 80;
+            dirLight.shadow.camera.left = -25;
+            dirLight.shadow.camera.right = 25;
+            dirLight.shadow.camera.top = 25;
+            dirLight.shadow.camera.bottom = -10;
+            scene.add(dirLight);
+
+            // Grupo Principal
+            mainGroup = new THREE.Group();
+            scene.add(mainGroup);
+
+            // Jogador Harry
+            playerMeshGroup = ModelBuilder.createPlayer();
+            mainGroup.add(playerMeshGroup);
+
+            // Luz do próprio jogador (lanterna neon cyan)
+            playerPointLight = new THREE.PointLight(CONFIG.colors.cyan, 2.5, 12, 1.2);
+            playerPointLight.position.set(0, 1.2, 0);
+            playerMeshGroup.add(playerPointLight);
+
+            // Retro Sun (Estrela cibernética no fundo bem distante)
+            const sunGeo = new THREE.CircleGeometry(40, 32);
+            const sunMat = new THREE.MeshBasicMaterial({
+                color: CONFIG.colors.pink,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.DoubleSide
+            });
+            const sun = new THREE.Mesh(sunGeo, sunMat);
+            sun.position.set(0, 20, -80);
+            scene.add(sun);
+
+            // Grades de chão distantes para ambientação
+            const bgGrid = new THREE.GridHelper(300, 30, CONFIG.colors.cyan, 0x111122);
+            bgGrid.position.set(0, -15, -60);
+            bgGrid.rotation.x = Math.PI / 8;
+            scene.add(bgGrid);
+
+            // Criar salas
+            roomGroupOld = new THREE.Group();
+            mainGroup.add(roomGroupOld);
+
+            roomGroupNew = new THREE.Group();
+            mainGroup.add(roomGroupNew);
+
+            // Redimensionamento
+            window.addEventListener('resize', onWindowResize);
+            
+            // Ocultar tela de loading
+            document.getElementById('loading-screen').style.display = 'none';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 8. CICLO DE FÍSICA E LÓGICA DO JOGO (UPDATE LOOP)
+        // ============================================================================
+        function setupGameStart() {
+            state.score = 20000;
+            state.lives = 3;
+            state.timeRemaining = 1200;
+            state.screenIndex = 0;
+            state.level = 'surface';
+            state.treasuresCollected = 0;
+            state.collectedIndices.clear();
+
+            state.player.x = -16;
+            state.player.y = 0;
+            state.player.vx = 0;
+            state.player.vy = 0;
+            state.player.grounded = true;
+            state.player.climbing = false;
+            state.player.swinging = false;
+            state.player.invincible = 0;
+            state.player.stumbleTime = 0;
+
+            state.transition.active = false;
+
+            // Gerar a sala 0
+            state.activeRoom = generateRoomData(0);
+            
+            // Limpa grupos
+            while(roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
+            while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+            
+            roomGroupOld.position.set(0,0,0);
+            buildRoom3D(state.activeRoom, roomGroupOld);
+
+            updateHUD();
+        }
+
+        function updateGame(dt) {
+            if (!state.playing) return;
+
+            // Atualiza tempo
+            state.timeRemaining = Math.max(0, state.timeRemaining - dt);
+            if (state.timeRemaining <= 0) {
+                endGame(false, "TEMPO ESGOTADO");
+                return;
+            }
+
+            const p = state.player;
+
+            // Invencibilidade e Atordoamento por dano
+            if (p.invincible > 0) p.invincible -= dt;
+            if (p.stumbleTime > 0) {
+                p.stumbleTime -= dt;
+                // Se estiver atordoado, não processa comandos, apenas aplica gravidade
+                p.vx = 0;
+                applyGravity(dt);
+                resolveCollisionsAndMove(dt);
+                animatePlayerModel(dt, true);
+                updateVisuals(dt);
+                return;
+            }
+
+            if (state.transition.active) {
+                processTransition(dt);
+                updateVisuals(dt);
+                return;
+            }
+
+            // 1. PROCESSAR ENTRADA DE MOVIMENTO
+            let moveDir = 0;
+            if (state.keys['ArrowLeft'] || state.keys['Left'] || state.touchControls.left) {
+                moveDir = -1;
+            } else if (state.keys['ArrowRight'] || state.keys['Right'] || state.touchControls.right) {
+                moveDir = 1;
+            }
+
+            // Direção de olhada
+            if (moveDir !== 0 && !p.climbing && !p.swinging) {
+                p.facing = moveDir;
+                p.vx = moveDir * CONFIG.playerSpeed;
+            } else if (!p.swinging) {
+                // Parada suave no ar ou no chão
+                p.vx = 0;
+            }
+
+            // Escada / Escalada
+            const nearLadder = state.activeRoom.hasLadder && Math.abs(p.x - 0) < 1.0;
+            const climbUpInput = state.keys['ArrowUp'] || state.keys['Up'] || state.touchControls.up;
+            const climbDownInput = state.keys['ArrowDown'] || state.keys['Down'] || state.touchControls.down;
+
+            if (nearLadder && !p.swinging) {
+                if (p.climbing) {
+                    if (climbUpInput) {
+                        p.vy = CONFIG.playerClimbSpeed;
+                    } else if (climbDownInput) {
+                        p.vy = -CONFIG.playerClimbSpeed;
+                    } else {
+                        p.vy = 0;
+                    }
+
+                    // Prende no X da escada
+                    p.x = 0;
+
+                    // Sai da escada ao tocar o chão do subterrâneo ou o chão da superfície
+                    if (p.y <= CONFIG.undergroundY && climbDownInput) {
+                        p.climbing = false;
+                        p.vy = 0;
+                        p.y = CONFIG.undergroundY;
+                        state.level = 'underground';
+                        updateHUD();
+                    } else if (p.y >= 0 && climbUpInput) {
+                        p.climbing = false;
+                        p.vy = 0;
+                        p.y = 0;
+                        state.level = 'surface';
+                        updateHUD();
+                    }
+                } else {
+                    // Inicia escalada se pressionar Cima na superfície ou Baixo no subterrâneo
+                    if (state.level === 'surface' && climbDownInput && Math.abs(p.y) < 0.1) {
+                        p.climbing = true;
+                        p.grounded = false;
+                        p.vx = 0;
+                        p.vy = -CONFIG.playerClimbSpeed;
+                    } else if (state.level === 'underground' && climbUpInput && Math.abs(p.y - CONFIG.undergroundY) < 0.1) {
+                        p.climbing = true;
+                        p.grounded = false;
+                        p.vx = 0;
+                        p.vy = CONFIG.playerClimbSpeed;
+                    }
+                }
+            } else {
+                p.climbing = false;
+            }
+
+            // Soltar cipó com seta para baixo
+            if (p.swinging && climbDownInput) {
+                p.swinging = false;
+                p.vx = p.facing * CONFIG.playerSpeed * 0.8;
+                p.vy = 0.5;
+                p.swingRefVine = null;
+            }
+
+            // 2. FÍSICA E MOVIMENTAÇÃO
+            if (p.swinging) {
+                // Preso à oscilação da liana
+                const vine = roomGroupOld.userData.vine;
+                if (vine) {
+                    state.player.swingTime += dt;
+                    
+                    const angle = vine.rotation.z;
+                    // O Harry se pendura na ponta da liana (comprimento 9.8)
+                    const vineLen = 9.8;
+                    p.x = vine.position.x - Math.sin(angle) * vineLen;
+                    p.y = vine.position.y - Math.cos(angle) * vineLen;
+                    p.vy = 0;
+                    p.vx = 0;
+                    
+                    // Som de vento periódico
+                    if (Math.floor(state.player.swingTime * 4) % 12 === 0 && Math.abs(angle) < 0.1) {
+                        som.playSwing();
+                    }
+                } else {
+                    p.swinging = false;
+                }
+            } else if (!p.climbing) {
+                // Aplicar Gravidade
+                applyGravity(dt);
+                resolveCollisionsAndMove(dt);
+            } else {
+                // Movimento da escada
+                p.y += p.vy * dt;
+                p.x = 0;
+            }
+
+            // 3. ANIMAÇÃO DO CIPÓ (VINE) PENDULAR
+            const activeVine = roomGroupOld.userData.vine;
+            if (activeVine) {
+                const time = performance.now() * 0.0017;
+                activeVine.rotation.z = Math.sin(time) * 0.65; // balanço de amplitude
+                
+                // Checar se o jogador no ar colide com a ponta da liana para se agarrar
+                if (!p.swinging && !p.grounded && !p.climbing && p.vy < 2.0) {
+                    const vineLen = 9.8;
+                    const tipX = activeVine.position.x - Math.sin(activeVine.rotation.z) * vineLen;
+                    const tipY = activeVine.position.y - Math.cos(activeVine.rotation.z) * vineLen;
+                    
+                    const dist = Math.hypot(p.x - tipX, p.y - tipY);
+                    if (dist < 1.6) {
+                        p.swinging = true;
+                        p.swingRefVine = activeVine;
+                        state.player.swingTime = 0;
+                    }
+                }
+            }
+
+            // 4. ANIMAÇÃO DE OUTROS OBJETOS (Crocodilos, Cobras)
+            animateActiveRoomElements(dt);
+
+            // 5. TRATAMENTO DE BORDAS E TRANSIÇÃO DE TELA
+            const limit = CONFIG.width / 2;
+            if (p.x > limit && !state.transition.active) {
+                // Transicionar para a direita
+                initiateTransition(1);
+            } else if (p.x < -limit && !state.transition.active) {
+                // Transicionar para a esquerda
+                initiateTransition(-1);
+            }
+
+            // 6. DETECÇÃO DE DANO E COLETAS (COLISÕES COM HAZARDS / TREASURES)
+            checkGameplayCollisions();
+
+            // 7. ANIMAR MODELO DO JOGADOR
+            animatePlayerModel(dt, false);
+
+            // 8. ATUALIZAR POSIÇÃO DA CENA 3D
+            updateVisuals(dt);
+        }
+
+        function applyGravity(dt) {
+            const p = state.player;
+            p.vy -= CONFIG.gravity * dt;
+            p.vy = Math.max(-25, p.vy); // Limit velocity
+        }
+
+        function resolveCollisionsAndMove(dt) {
+            const p = state.player;
+            let targetFloorY = CONFIG.groundY;
+            if (state.level === 'underground') {
+                targetFloorY = CONFIG.undergroundY;
+            }
+
+            // Mover jogador no X
+            p.x += p.vx * dt;
+            
+            // Bloqueio de Paredes no Subterrâneo
+            if (state.level === 'underground' && state.activeRoom.subWallX !== null) {
+                const wallX = state.activeRoom.subWallX;
+                // Largura do bloco de tijolo ~ 1.5
+                if (Math.abs(p.x - wallX) < 1.1) {
+                    // Empurra de volta
+                    if (p.x < wallX) p.x = wallX - 1.1;
+                    else p.x = wallX + 1.1;
+                }
+            }
+
+            // Mover jogador no Y
+            p.y += p.vy * dt;
+
+            // Colisão com o solo básico
+            let isOverPit = false;
+            
+            if (state.level === 'surface') {
+                const type = state.activeRoom.type;
+                if (type === 1 || type === 4) {
+                    // Piche / Areia Movediça de x=-6 a x=6
+                    // Se for tipo 4, ela aparece/desaparece de forma cíclica
+                    let activePit = true;
+                    if (type === 4) {
+                        const pitMesh = roomGroupOld.userData.pitMesh;
+                        if (pitMesh) {
+                            // Escala Y oscila de 1 a 0.05
+                            activePit = pitMesh.scale.y > 0.45;
+                        }
+                    }
+                    if (activePit && p.x > -5.7 && p.x < 5.7) {
+                        isOverPit = true;
+                    }
+                } 
+                else if (type === 2) {
+                    // Crocodile swamp. Pântano de x=-5.8 a x=5.8
+                    if (p.x > -5.7 && p.x < 5.7) {
+                        isOverPit = true;
+                        
+                        // Mas pode estar em cima da cabeça de um jacaré!
+                        const crocs = roomGroupOld.userData.crocs || [];
+                        crocs.forEach(croc => {
+                            const cData = croc.userData;
+                            // Se Harry pousar na cabeça (do nariz x ao centro)
+                            // Jacaré está virado para a direita, a cabeça fica na ponta direita (x + 1.2)
+                            const headX = croc.position.x + 0.8;
+                            if (Math.abs(p.x - headX) < 0.75 && p.y >= -0.5 && p.vy <= 0.1) {
+                                // Se a boca estiver aberta, cai e morre!
+                                if (cData.open) {
+                                    isOverPit = true;
+                                } else {
+                                    // Pousa no jacaré!
+                                    isOverPit = false;
+                                    p.y = -0.15;
+                                    p.vy = 0;
+                                    p.grounded = true;
+                                }
+                            }
+                        });
+                    }
+                } 
+                else if (type === 3) {
+                    // Gaps de queda física em x: [-13.5, -10], [-1.5, 1.5], [10, 13.5]
+                    if ((p.x > -13.5 && p.x < -10) || (p.x > -1.5 && p.x < 1.5) || (p.x > 10 && p.x < 13.5)) {
+                        isOverPit = true;
+                    }
+                }
+            }
+
+            if (isOverPit) {
+                // Sem chão! Se não estiver pulando/cipó, cai!
+                if (p.y <= 0) {
+                    if (state.activeRoom.type === 3 || (state.activeRoom.type === 0 && state.activeRoom.hasLadder)) {
+                        // Queda em buraco de escada comum: cai no subterrâneo
+                        if (p.y < -3.5) {
+                            state.level = 'underground';
+                            p.y = CONFIG.undergroundY;
+                            p.vy = 0;
+                            p.grounded = true;
+                            // Perda de 100 pontos
+                            state.score = Math.max(0, state.score - 100);
+                            som.playHurt();
+                            updateHUD();
+                        }
+                    } else {
+                        // Queda em areia movediça / piche / água do pântano: Morre
+                        if (p.y < -0.8) {
+                            handleDeath();
+                        }
+                    }
+                }
+            } else {
+                // Pousa no chão
+                if (p.y <= targetFloorY) {
+                    p.y = targetFloorY;
+                    p.vy = 0;
+                    p.grounded = true;
+                }
+            }
+        }
+
+        function initiateTransition(direction) {
+            state.transition.active = true;
+            state.transition.direction = direction;
+            state.transition.progress = 0;
+            state.transition.oldIndex = state.screenIndex;
+
+            // Calcula novo índice de sala de forma cíclica (0-255)
+            // Se estiver no subterrâneo, o clássico é pular 3 telas!
+            let step = 1;
+            if (state.level === 'underground') {
+                step = 3;
+            }
+            state.transition.newIndex = (state.screenIndex + (direction * step) + 256) % 256;
+            
+            // Carrega a sala temporária no grupo New
+            state.nextRoom = generateRoomData(state.transition.newIndex);
+            
+            while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+            
+            // Posiciona a nova sala ao lado
+            roomGroupNew.position.set(direction * CONFIG.width, 0, 0);
+            buildRoom3D(state.nextRoom, roomGroupNew);
+        }
+
+        function processTransition(dt) {
+            const t = state.transition;
+            t.progress += dt / t.duration;
+            
+            if (t.progress >= 1.0) {
+                // Finaliza transição
+                t.active = false;
+                state.screenIndex = t.newIndex;
+                state.activeRoom = state.nextRoom;
+                
+                // O grupo New vira o Old
+                // Move os objetos do grupo New para o Old e limpa o New
+                while(roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
+                
+                // Reconstrói a sala atual no grupo antigo centrado
+                roomGroupOld.position.set(0, 0, 0);
+                buildRoom3D(state.activeRoom, roomGroupOld);
+                
+                // Limpa o temporário
+                while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+
+                // Ajusta Harry
+                state.player.x = -t.direction * (CONFIG.width / 2 - 1.2);
+                if (state.player.climbing) {
+                    state.player.climbing = false;
+                }
+                
+                updateHUD();
+            } else {
+                // Desloca ambos os grupos no eixo X
+                const offset = -t.direction * CONFIG.width * t.progress;
+                roomGroupOld.position.x = offset;
+                roomGroupNew.position.x = (t.direction * CONFIG.width) + offset;
+                
+                // Harry acompanha a transição
+                const harryTargetX = -t.direction * (CONFIG.width / 2 - 1.2);
+                const harryStartX = t.direction * (CONFIG.width / 2);
+                state.player.x = THREE.MathUtils.lerp(harryStartX, harryTargetX, t.progress);
+                
+                // Mantém altura travada durante transição
+                state.player.vy = 0;
+            }
+        }
+
+        function checkGameplayCollisions() {
+            const p = state.player;
+            if (p.invincible > 0 || state.transition.active) return;
+
+            // 1. COLISÃO COM TRONCOS DE NEON (SURFE / DESVIO)
+            const activeLogs = roomGroupOld.userData.logs || [];
+            activeLogs.forEach(log => {
+                const dist = Math.hypot(p.x - log.position.x, p.y - log.position.y);
+                if (dist < 0.95 && state.level === 'surface') {
+                    // Colidiu! Perda de pontos e atordoamento
+                    state.score = Math.max(0, state.score - 200);
+                    p.invincible = 1.6; // Segundos de imunidade
+                    p.stumbleTime = 0.55; // Travado na dor
+                    p.vy = 5.0; // Pulo de ricochete
+                    p.vx = -p.facing * CONFIG.playerSpeed * 0.4; // empurrão para trás
+                    p.grounded = false;
+                    
+                    som.playHurt();
+                    updateHUD();
+                }
+            });
+
+            // 2. COLISÃO COM COBRA DE NEON (MORTE)
+            const snake = roomGroupOld.userData.snake;
+            if (snake && state.level === 'surface') {
+                const dist = Math.hypot(p.x - snake.position.x, p.y - snake.position.y);
+                if (dist < 1.1) {
+                    handleDeath();
+                }
+            }
+
+            // 3. COLISÃO COM ESCORPIÃO (SUBTERRÂNEO - MORTE)
+            const scorpion = roomGroupOld.userData.scorpion;
+            if (scorpion && state.level === 'underground') {
+                const dist = Math.hypot(p.x - scorpion.position.x, p.y - scorpion.position.y);
+                if (dist < 1.1) {
+                    handleDeath();
+                }
+            }
+
+            // 4. COLETA DE TESOUROS
+            const treasure = roomGroupOld.userData.treasure;
+            if (treasure) {
+                // Checa proximidade no mesmo nível
+                const levelY = (state.level === 'surface') ? 0.7 : (CONFIG.undergroundY + 0.7);
+                const dist = Math.hypot(p.x - treasure.position.x, p.y - levelY);
+                if (dist < 1.2) {
+                    // Coleta!
+                    state.collectedIndices.add(state.screenIndex);
+                    
+                    let points = 1000;
+                    const type = treasure.userData.type;
+                    if (type === 'silver') points = 2000;
+                    else if (type === 'ring') points = 3000;
+                    else if (type === 'diamond') points = 4000;
+
+                    state.score += points;
+                    state.treasuresCollected++;
+                    
+                    // Apaga o modelo
+                    roomGroupOld.remove(treasure);
+                    roomGroupOld.userData.treasure = null;
+
+                    som.playTreasure();
+                    updateHUD();
+
+                    // Condição de Vitória (Todos os 32 coletados)
+                    if (state.treasuresCollected >= state.maxTreasures) {
+                        endGame(true, "PERFEITO! TODOS OS TESOUROS COLETADOS!");
+                    }
+                }
+            }
+        }
+
+        function handleDeath() {
+            som.playHurt();
+            state.lives--;
+            updateHUD();
+
+            if (state.lives <= 0) {
+                endGame(false, "HARRY FOI DESINTEGRADO");
+                return;
+            }
+
+            // Respawn seguro no início da sala atual
+            state.player.x = -16;
+            state.player.y = (state.level === 'surface') ? 0 : CONFIG.undergroundY;
+            state.player.vx = 0;
+            state.player.vy = 0;
+            state.player.invincible = 2.0; // Piscar
+            state.player.stumbleTime = 0.8;
+            state.player.swinging = false;
+            state.player.climbing = false;
+        }
+
+        function animateActiveRoomElements(dt) {
+            // Animação dos Troncos (rolando para a esquerda)
+            const activeLogs = roomGroupOld.userData.logs || [];
+            activeLogs.forEach(log => {
+                log.position.x -= 7.5 * dt; // velocidade constante
+                log.rotation.y -= 8.0 * dt; // rotação do rolo
+                
+                // Loop de spawn infinito para a direita se sumir
+                if (log.position.x < -24) {
+                    log.position.x = 24 + Math.random() * 8;
+                }
+            });
+
+            // Animação dos Crocodilos (Abrir/Fechar Boca)
+            const crocs = roomGroupOld.userData.crocs || [];
+            crocs.forEach(croc => {
+                const cData = croc.userData;
+                cData.timer += dt;
+                
+                // Ciclo de 3 segundos
+                const cycle = cData.timer % 3.0;
+                if (cycle < 1.3) {
+                    // Fechado
+                    cData.open = false;
+                    cData.jawPivot.rotation.z = THREE.MathUtils.lerp(cData.jawPivot.rotation.z, 0, 8 * dt);
+                } else {
+                    // Aberto
+                    cData.open = true;
+                    // Rotação negativa no eixo Z abre a boca (mandíbula superior sobe)
+                    cData.jawPivot.rotation.z = THREE.MathUtils.lerp(cData.jawPivot.rotation.z, -0.65, 8 * dt);
+                }
+            });
+
+            // Animação da Cobra Coral (Sacudida cibernética)
+            const snake = roomGroupOld.userData.snake;
+            if (snake) {
+                const time = performance.now() * 0.01;
+                // Faz os anéis vibrarem
+                snake.userData.rings.forEach((ring, idx) => {
+                    ring.rotation.y = Math.sin(time + idx) * 0.25;
+                });
+                snake.userData.tongue.scale.x = 0.5 + Math.sin(time * 2) * 0.5;
+            }
+
+            // Animação do Escorpião (Patrulha subterrânea)
+            const scorpion = roomGroupOld.userData.scorpion;
+            if (scorpion) {
+                const sSpeed = 3.5;
+                const dir = roomGroupOld.userData.scorpDir;
+                scorpion.position.x += dir * sSpeed * dt;
+                
+                // Rotaciona para a direção correta
+                scorpion.rotation.y = (dir > 0) ? Math.PI / 2 : -Math.PI / 2;
+
+                // Troca de direção nas bordas
+                if (scorpion.position.x < roomGroupOld.userData.scorpLeft) {
+                    roomGroupOld.userData.scorpDir = 1;
+                    scorpion.position.x = roomGroupOld.userData.scorpLeft;
+                } else if (scorpion.position.x > roomGroupOld.userData.scorpRight) {
+                    roomGroupOld.userData.scorpDir = -1;
+                    scorpion.position.x = roomGroupOld.userData.scorpRight;
+                }
+            }
+
+            // Animação do Piche Oscilante (Areia Movediça)
+            if (state.activeRoom.type === 4) {
+                const pit = roomGroupOld.userData.pitMesh;
+                if (pit) {
+                    // A escala Y oscila de forma senoidal de quase zero a 1
+                    const time = performance.now() * 0.0022;
+                    const scaleY = 0.5 + Math.sin(time) * 0.52; // valor de 0 a 1.02
+                    pit.scale.y = scaleY;
+                    
+                    // Muda de cor neon de acordo com a proximidade de sumir (Rosa para Roxo)
+                    pit.material.emissiveIntensity = 0.15 + (scaleY * 0.35);
+                }
+            }
+
+            // Animação dos tesouros flutuantes
+            const treasure = roomGroupOld.userData.treasure;
+            if (treasure) {
+                const time = performance.now() * 0.003;
+                treasure.userData.mesh.rotation.y += 1.8 * dt;
+                // Flutua senoidalmente
+                treasure.position.y = 0.65 + Math.sin(time * 5.0) * 0.15;
+            }
+        }
+
+        function animatePlayerModel(dt, isHurt) {
+            const p = state.player;
+            const userData = playerMeshGroup.userData;
+            if (!userData.legL) return;
+
+            const time = performance.now() * 0.001;
+
+            if (p.invincible > 0) {
+                // Efeito visual de piscar
+                playerMeshGroup.visible = Math.floor(time * 28) % 2 === 0;
+            } else {
+                playerMeshGroup.visible = true;
+            }
+
+            if (p.climbing) {
+                // Pernas e braços simulam escalada
+                const angle = Math.sin(time * 18) * 0.45;
+                userData.legL.rotation.x = angle;
+                userData.legR.rotation.x = -angle;
+                userData.armL.rotation.x = -angle;
+                userData.armR.rotation.x = angle;
+                
+                userData.legL.rotation.z = 0;
+                userData.legR.rotation.z = 0;
+                userData.armL.rotation.z = 0;
+                userData.armR.rotation.z = 0;
+            } 
+            else if (p.swinging) {
+                // Pendurado, pernas encolhidas, braços para cima
+                userData.armL.rotation.z = Math.PI - 0.3;
+                userData.armR.rotation.z = -Math.PI + 0.3;
+                userData.legL.rotation.z = -0.25;
+                userData.legR.rotation.z = 0.25;
+                
+                userData.legL.rotation.x = 0;
+                userData.legR.rotation.x = 0;
+            } 
+            else if (!p.grounded) {
+                // No ar (pulo)
+                userData.legL.rotation.z = -0.3;
+                userData.legR.rotation.z = 0.3;
+                userData.armL.rotation.z = 0.5;
+                userData.armR.rotation.z = -0.5;
+                
+                userData.legL.rotation.x = 0;
+                userData.legR.rotation.x = 0;
+            } 
+            else if (Math.abs(p.vx) > 0.1) {
+                // Correndo
+                const angle = Math.sin(time * 20) * 0.55;
+                userData.legL.rotation.z = angle;
+                userData.legR.rotation.z = -angle;
+                userData.armL.rotation.z = -angle * 0.8;
+                userData.armR.rotation.z = angle * 0.8;
+                
+                userData.legL.rotation.x = 0;
+                userData.legR.rotation.x = 0;
+            } 
+            else {
+                // Parado (Idle)
+                userData.legL.rotation.z = 0;
+                userData.legR.rotation.z = 0;
+                userData.armL.rotation.z = 0;
+                userData.armR.rotation.z = 0;
+                
+                userData.legL.rotation.x = 0;
+                userData.legR.rotation.x = 0;
+            }
+
+            // Gira o personagem inteiro para a direção em que está olhando
+            // 1: olhando para a direita, -1: para a esquerda
+            playerMeshGroup.rotation.y = (p.facing > 0) ? 0 : Math.PI;
+        }
+
+        function updateVisuals(dt) {
+            // Sincroniza posição do modelo 3D com a lógica física
+            playerMeshGroup.position.set(state.player.x, state.player.y, 0);
+
+            // Ajusta o canal de áudio da música
+            // Processa comandos orbitais da câmera (WASD)
+            const cKeys = state.keys;
+            if (cKeys['a'] || cKeys['A']) {
+                state.camera.theta -= 1.8 * dt;
+            }
+            if (cKeys['d'] || cKeys['D']) {
+                state.camera.theta += 1.8 * dt;
+            }
+            if (cKeys['w'] || cKeys['W']) {
+                state.camera.phi = Math.min(Math.PI / 2.8, state.camera.phi + 1.2 * dt);
+            }
+            if (cKeys['s'] || cKeys['S']) {
+                state.camera.phi = Math.max(0.02, state.camera.phi - 1.2 * dt);
+            }
+
+            // A câmera orbita em torno de Harry
+            const tX = state.player.x;
+            const tY = state.player.y + state.camera.targetYOffset;
+            const tZ = 0;
+
+            const camX = tX + state.camera.radius * Math.sin(state.camera.theta) * Math.cos(state.camera.phi);
+            const camY = tY + state.camera.radius * Math.sin(state.camera.phi);
+            const camZ = tZ + state.camera.radius * Math.cos(state.camera.theta) * Math.cos(state.camera.phi);
+
+            camera.position.set(camX, camY, camZ);
+            camera.lookAt(tX, tY, tZ);
+        }
+
+        // ============================================================================
+        // 9. EVENTOS DE UI, HUD E TELAS OVERLAY
+        // ============================================================================
+        function updateHUD() {
+            document.getElementById("hud-score").innerText = String(state.score).padStart(5, '0');
+            document.getElementById("hud-lives").innerText = "❤".repeat(Math.max(0, state.lives));
+            document.getElementById("hud-location").innerText = `TELA ${String(state.screenIndex).padStart(3, '0')}`;
+            document.getElementById("hud-treasures").innerText = `${state.treasuresCollected} / ${state.maxTreasures}`;
+
+            // Minutos e segundos
+            const mins = Math.floor(state.timeRemaining / 60);
+            const secs = Math.floor(state.timeRemaining % 60);
+            document.getElementById("hud-timer").innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Timer de Atualização da HUD
+        setInterval(() => {
+            if (state.playing && !state.transition.active) {
+                updateHUD();
+            }
+        }, 500);
+
+        function endGame(victory, message) {
+            state.playing = false;
+            som.stopMusic();
+            
+            // Placar Final
+            document.getElementById("summary-score").innerText = String(state.score).padStart(5, '0');
+            document.getElementById("summary-treasures").innerText = `${state.treasuresCollected} / ${state.maxTreasures}`;
+            
+            const mins = Math.floor(state.timeRemaining / 60);
+            const secs = Math.floor(state.timeRemaining % 60);
+            document.getElementById("summary-time").innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const res = document.getElementById("summary-result");
+            const title = document.getElementById("gameover-title");
+            const sub = document.getElementById("gameover-subtitle");
+
+            if (victory) {
+                title.innerText = "VITÓRIA DE HARRY";
+                title.style.background = `linear-gradient(135deg, #ffffff, ${CONFIG.colors.green})`;
+                sub.innerText = "Simulação Concluída!";
+                sub.style.color = CONFIG.colors.green;
+                res.innerText = "SUCESSO COMPLETO";
+                res.style.color = CONFIG.colors.green;
+                som.playVictory();
+            } else {
+                title.innerText = "FIM DE JOGO";
+                title.style.background = `linear-gradient(135deg, #ffffff, ${CONFIG.colors.pink})`;
+                sub.innerText = message;
+                sub.style.color = CONFIG.colors.pink;
+                res.innerText = "FALHA NA MISSÃO";
+                res.style.color = CONFIG.colors.pink;
+                som.playGameOver();
+            }
+
+            document.getElementById("screen-gameover").classList.remove("hidden");
+        }
+
+        // ============================================================================
+        // 10. LOOP E INICIALIZAÇÃO GERAL
+        // ============================================================================
+        function mainLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            let dt = (timestamp - lastTime) * 0.001;
+            lastTime = timestamp;
+
+            // Limita saltos gigantescos de lag
+            dt = Math.min(0.1, dt);
+
+            updateGame(dt);
+            
+            renderer.render(scene, camera);
+            requestAnimationFrame(mainLoop);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initInput();
+            initEngine();
+
+            // Botão Iniciar no Menu
+            document.getElementById("btn-start").addEventListener('click', () => {
+                som.init();
+                som.startMusic();
+                
+                setupGameStart();
+                state.playing = true;
+                
+                document.getElementById("screen-menu").classList.add("hidden");
+                lastTime = performance.now();
+            });
+
+            // Botão Reiniciar no Game Over
+            document.getElementById("btn-restart").addEventListener('click', () => {
+                som.startMusic();
+                
+                setupGameStart();
+                state.playing = true;
+                
+                document.getElementById("screen-gameover").classList.add("hidden");
+                lastTime = performance.now();
+            });
+
+            // Inicia loop de quadros
+            requestAnimationFrame(mainLoop);
+        });
+    </script>
+</body>
+</html>
