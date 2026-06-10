@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders 3D - Cyber Invaders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #020206;
+            --glass-bg: rgba(6, 6, 15, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Linhas de Varredura Estilo CRT */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Efeito de Vinheta Retro */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        /* Vidas do Jogador */
+        .lives-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .life-ship {
+            width: 20px;
+            height: 15px;
+            background-color: var(--neon-green);
+            clip-path: polygon(50% 0%, 0% 100%, 15% 100%, 50% 70%, 85% 100%, 100% 100%);
+            box-shadow: var(--green-glow);
+            filter: drop-shadow(0 0 4px var(--neon-green));
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .life-ship.lost {
+            opacity: 0.2;
+            transform: scale(0.8);
+        }
+
+        /* Botões de Controle e Áudio */
+        .control-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* TELAS DE INTERFACE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(6, 6, 18, 0.85) 0%, rgba(2, 2, 5, 0.98) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(8, 8, 22, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.05);
+            border-top: 3px solid var(--neon-pink);
+        }
+
+        .menu-card.cyan-border {
+            border-top-color: var(--neon-cyan);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-pink) 60%, var(--neon-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(255, 0, 127, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-cyan);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--text-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+            color: #ffffff;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 0, 127, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Resumo da Pontuação */
+        .score-summary {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: none;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            pointer-events: auto;
+            touch-action: manipulation;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: background 0.1s, border-color 0.1s;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .mobile-btn.shoot-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 0, 127, 0.25);
+            border-color: var(--neon-pink);
+            box-shadow: 0 8px 24px rgba(255, 0, 127, 0.2);
+        }
+
+        .mobile-btn.shoot-btn:active {
+            background: rgba(255, 0, 127, 0.5);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 18px rgba(255, 0, 127, 0.6);
+        }
+
+        .dir-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background-color: #010103;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(255, 0, 127, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-pink);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Linhas CRT e Vignette -->
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO SISTEMA CYBER INVADERS...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Pontos</div>
+                <div id="hud-score" class="hud-value cyan">00000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Recorde</div>
+                <div id="hud-highscore" class="hud-value">00000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Onda</div>
+                <div id="hud-wave" class="hud-value pink">1</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div class="hud-group">
+                <div class="hud-label">Vidas</div>
+                <div class="lives-container" id="lives-display">
+                    <div class="life-ship"></div>
+                    <div class="life-ship"></div>
+                    <div class="life-ship"></div>
+                </div>
+            </div>
+            <div class="control-btns">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Mobile -->
+    <div id="mobile-controls">
+        <div class="dir-btns">
+            <button id="btn-left" class="mobile-btn">◀</button>
+            <button id="btn-right" class="mobile-btn">▶</button>
+        </div>
+        <button id="btn-shoot" class="mobile-btn shoot-btn">🔥</button>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER INVADERS 3D</h1>
+            <div class="game-subtitle">Rede de Defesa Planetária</div>
+
+            <div class="instructions">
+                <h3>Diretrizes Táticas:</h3>
+                <ul>
+                    <li>Invasores alienígenas marcham em direção ao grid inferior de defesa. Destrua-os antes que atinjam sua base.</li>
+                    <li>Use os <strong>4 escudos cibernéticos</strong> para se proteger dos tiros inimigos. Cuidado: os escudos sofrem desgaste contínuo e se desintegram.</li>
+                    <li>Uma **Nave-Mãe (UFO)** vermelha cruza o topo esporadicamente, dando bônus de pontuação massivos ao ser destruída.</li>
+                    <li><strong>Controles (Teclado):</strong> Use as setas ou **A** / **D** para mover a nave. Pressione **Espaço** para disparar.</li>
+                    <li><strong>Controles (Mouse/Touch):</strong> Clique e segure para arrastar a nave lateralmente. Clique no lado direito ou toque no botão virtual para atirar.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">CONECTAR E DEFENDER</button>
+        </div>
+    </div>
+
+    <!-- Fim de Jogo (Game Over) -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">SISTEMA COMPROMETIDO</h1>
+            <div class="game-subtitle">A grade de defesa caiu</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Ondas Resistidas:</span>
+                    <span id="summary-wave" class="value">1</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Pontos Conquistados:</span>
+                    <span id="summary-score" class="value">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Recorde do Sistema:</span>
+                    <span id="summary-highscore" class="value">00000</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">PONTUAÇÃO FINAL:</span>
+                    <span id="summary-total" class="value">00000</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR DIRETRIZ</button>
+        </div>
+    </div>
+
+    <!-- Carrega a biblioteca Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. GERENCIADOR DE ÁUDIO SINTETIZADO (Web Audio API)
+        // ============================================================================
+        class SomSpaceInvaders {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Sequenciador da Trilha Sonora (Batida Aceleratória Clássica)
+                this.musicActive = false;
+                this.musicTimeout = null;
+                this.musicBeat = 0;
+                
+                // Variável para controlar a velocidade da batida (em segundos por passo)
+                this.beatInterval = 0.8; 
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som de disparo do jogador (onda senoidal curta com variação de frequência rápida)
+            playLaserPlayer() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(250, t);
+                osc.frequency.exponentialRampToValueAtTime(1600, t + 0.14);
+
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.15);
+            }
+
+            // Som de disparo do alienígena (onda dente de serra descendente)
+            playLaserInvader() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.linearRampToValueAtTime(100, t + 0.18);
+
+                gain.gain.setValueAtTime(0.06, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+                // Passa por filtro de passa-baixas para não soar muito estridente
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, t);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.19);
+            }
+
+            // Explosão de alienígena (ruído de passa-faixas rápido)
+            playExplosionInvader() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.15; // 0.15s
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(500, t);
+                filter.Q.setValueAtTime(3, t);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 0.15);
+            }
+
+            // Explosão do escudo (impacto de ruído curto)
+            playExplosionShield() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.08;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(2000, t);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.15, t);
+                gain.gain.linearRampToValueAtTime(0.01, t + 0.07);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 0.08);
+            }
+
+            // Explosão do jogador (ruído prolongado grave + queda de pitch senoidal)
+            playExplosionPlayer() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 1.5;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, t);
+                filter.frequency.exponentialRampToValueAtTime(10, t + 1.4);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.8, t);
+                gain.gain.exponentialRampToValueAtTime(0.005, t + 1.4);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                // Adiciona oscilador grave sintetizando o desmoronamento elétrico
+                const osc = this.ctx.createOscillator();
+                const oscGain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, t);
+                osc.frequency.linearRampToValueAtTime(30, t + 1.0);
+
+                const oscFilter = this.ctx.createBiquadFilter();
+                oscFilter.type = 'lowpass';
+                oscFilter.frequency.setValueAtTime(150, t);
+
+                oscGain.gain.setValueAtTime(0.4, t);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+
+                osc.connect(oscFilter);
+                oscFilter.connect(oscGain);
+                oscGain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 1.5);
+                osc.start(t);
+                osc.stop(t + 1.02);
+            }
+
+            // Cria um som contínuo para o UFO que pode ser iniciado/parado
+            startUFOSound() {
+                this.init();
+                if (!this.ctx || this.muted || this.ufoOsc) return;
+
+                const t = this.ctx.currentTime;
+                this.ufoOsc = this.ctx.createOscillator();
+                this.ufoLfo = this.ctx.createOscillator();
+                this.ufoLfoGain = this.ctx.createGain();
+                this.ufoGain = this.ctx.createGain();
+
+                // LFO modula a frequência da nave mãe criativamente para dar som oscilante
+                this.ufoLfo.frequency.setValueAtTime(16, t); // Frequência do vibrato rápida
+                this.ufoLfoGain.gain.setValueAtTime(120, t); // Intensidade da oscilação
+
+                this.ufoOsc.type = 'sine';
+                this.ufoOsc.frequency.setValueAtTime(600, t); // Frequência base
+
+                this.ufoGain.gain.setValueAtTime(0.08, t);
+
+                // Conecta o LFO ao parâmetro de frequência do oscilador
+                this.ufoLfo.connect(this.ufoLfoGain);
+                this.ufoLfoGain.connect(this.ufoOsc.frequency);
+
+                this.ufoOsc.connect(this.ufoGain);
+                this.ufoGain.connect(this.sfxGain);
+
+                this.ufoLfo.start(t);
+                this.ufoOsc.start(t);
+            }
+
+            stopUFOSound() {
+                if (this.ufoOsc) {
+                    try {
+                        this.ufoOsc.stop();
+                        this.ufoLfo.stop();
+                    } catch(e) {}
+                    this.ufoOsc = null;
+                    this.ufoLfo = null;
+                }
+            }
+
+            // Batida rítmica clássica (4 notas baixas repetitivas e acelerantes)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const playBeat = () => {
+                    if (!this.musicActive || this.muted) {
+                        scheduleNext();
+                        return;
+                    }
+
+                    const t = this.ctx.currentTime;
+                    const notes = [65.41, 61.74, 58.27, 55.00]; // Dó, Si, Si bemol, Lá super graves (Oitava 1)
+                    const nota = notes[this.musicBeat % 4];
+
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const filter = this.ctx.createBiquadFilter();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(nota, t);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(180, t);
+
+                    gain.gain.setValueAtTime(0.25, t);
+                    // Decaimento rápido para soar percussivo e tenso
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t);
+                    osc.stop(t + 0.2);
+
+                    this.musicBeat++;
+                    scheduleNext();
+                };
+
+                const scheduleNext = () => {
+                    if (this.musicActive) {
+                        this.musicTimeout = setTimeout(playBeat, this.beatInterval * 1000);
+                    }
+                };
+
+                playBeat();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicTimeout) {
+                    clearTimeout(this.musicTimeout);
+                    this.musicTimeout = null;
+                }
+            }
+
+            // Melodia triste descendente de Game Over
+            playGameOverMelodia() {
+                this.stopMusic();
+                this.stopUFOSound();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 164.81, 146.83, 110.00, 82.41]; // Descendo pela melodia triste
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(220, t + idx * 0.18);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.18);
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.18 + 0.5);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.18);
+                    osc.stop(t + idx * 0.18 + 0.52);
+                });
+            }
+
+            // Fanfarra alegre cibernética ao vencer onda
+            playVictoryMelodia() {
+                this.stopMusic();
+                this.stopUFOSound();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // Arpejo de Dó Maior ascendente brilhante
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+                    gain.gain.setValueAtTime(0.18, t + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.08);
+                    osc.stop(t + idx * 0.08 + 0.38);
+                });
+            }
+        }
+
+        const som = new SomSpaceInvaders();
+
+        // ============================================================================
+        // 2. SISTEMA DE MOTOR E JOGO 3D (Three.js)
+        // ============================================================================
+        let scene, camera, renderer;
+        let starfield, spaceGrid;
+        
+        // Elementos do Jogo
+        let playerShip;
+        let invaders = [];
+        let playerLasers = [];
+        let invaderLasers = [];
+        let shields = [];
+        let ufo = null;
+        let explosionParticles = [];
+
+        // Estados e Variáveis do Jogo
+        const GAME_STATES = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
+        let gameState = GAME_STATES.MENU;
+        
+        let score = 0;
+        let highscore = parseInt(localStorage.getItem('cyber_invaders_highscore') || '0');
+        let wave = 1;
+        let lives = 3;
+        
+        // Configurações do Grid de Jogo
+        const BOUNDS_X = 14;     // Limites laterais da nave e inimigos
+        const PLAYER_Z = 9.5;    // Posição Z fixa do jogador
+        const SHIELD_Z = 6.5;    // Posição Z fixa dos escudos
+        const INVADERS_START_Z = -12; // Onde os aliens começam
+        const INVADERS_MAX_Z = 7.5;   // Se chegarem aqui, é Game Over direto
+
+        // Marcha dos Invasores
+        let invaderDirection = 1; // 1 = Direita, -1 = Esquerda
+        let invaderMoveTimer = 0;
+        let invaderMoveInterval = 0.8; // Segundos entre passos. Diminui conforme restam menos.
+        let invaderStepsDown = 0;      // Quantas linhas desceu nesta onda
+        let ufoSpawnTimer = 0;
+
+        // Entradas do Usuário
+        const keys = { a: false, d: false, ArrowLeft: false, ArrowRight: false, Space: false };
+        let isTouchDevice = false;
+        let touchMoveX = 0;
+        let touchDragging = false;
+        let shootCooldown = 0;
+        let isPointerLocked = false;
+        let targetPlayerX = 0; // Usado para suavização de movimento com drag
+
+        // Inicialização de Elementos DOM
+        const hudScore = document.getElementById('hud-score');
+        const hudHighscore = document.getElementById('hud-highscore');
+        const hudWave = document.getElementById('hud-wave');
+        const livesDisplay = document.getElementById('lives-display');
+        const btnSound = document.getElementById('btn-sound');
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        hudHighscore.innerText = String(highscore).padStart(5, '0');
+
+        // ============================================================================
+        // 3. CRIAÇÃO DE GEOMETRIAS PROCEDURAIS NEON
+        // ============================================================================
+        
+        // Cria Nave do Jogador em 3D
+        function createPlayerShipMesh() {
+            const shipGroup = new THREE.Group();
+
+            // Corpo Central
+            const bodyGeo = new THREE.BoxGeometry(1.6, 0.4, 1.2);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: 0x00f0ff, // Ciano Neon
+                emissive: 0x004455,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            shipGroup.add(body);
+
+            // Cabine Superior
+            const cockpitGeo = new THREE.BoxGeometry(0.5, 0.35, 0.6);
+            const cockpitMat = new THREE.MeshStandardMaterial({ 
+                color: 0xff007f, // Rosa Neon
+                emissive: 0x440022,
+                roughness: 0.1
+            });
+            const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+            cockpit.position.y = 0.35;
+            cockpit.position.z = -0.1;
+            shipGroup.add(cockpit);
+
+            // Canhão Laser Central
+            const gunGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
+            const gunMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const gun = new THREE.Mesh(gunGeo, gunMat);
+            gun.rotation.x = Math.PI / 2;
+            gun.position.y = 0.1;
+            gun.position.z = -0.7;
+            shipGroup.add(gun);
+
+            // Asas Laterais
+            const wingGeo = new THREE.BoxGeometry(0.4, 0.15, 0.8);
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff });
+            
+            const leftWing = new THREE.Mesh(wingGeo, wingMat);
+            leftWing.position.set(-1.0, -0.05, 0.2);
+            shipGroup.add(leftWing);
+
+            const rightWing = leftWing.clone();
+            rightWing.position.x = 1.0;
+            shipGroup.add(rightWing);
+
+            // Turbinas Neon (Fogo traseiro simulado)
+            const engineGeo = new THREE.ConeGeometry(0.2, 0.5, 8);
+            const engineMat = new THREE.MeshBasicMaterial({ color: 0xff5e00 });
+            const engine = new THREE.Mesh(engineGeo, engineMat);
+            engine.rotation.x = -Math.PI / 2;
+            engine.position.set(0, -0.05, 0.75);
+            shipGroup.add(engine);
+
+            // Armazena a turbina no objeto para animar seu tamanho depois
+            shipGroup.userData = { engineCone: engine };
+
+            // Habilita sombras
+            shipGroup.castShadow = true;
+            shipGroup.receiveShadow = true;
+
+            return shipGroup;
+        }
+
+        // Cria Mesh de Invasores baseado no Tipo
+        // Tipo 0 (Polvo - Linha inferior, Verde)
+        // Tipo 1 (Caranguejo - Linhas médias, Amarelo)
+        // Tipo 2 (Lula - Linha superior, Rosa)
+        function createInvaderMesh(type) {
+            const invaderGroup = new THREE.Group();
+            let color, emissive, points;
+
+            if (type === 0) {
+                color = 0x39ff14; // Verde
+                emissive = 0x0a3304;
+                points = 10;
+            } else if (type === 1) {
+                color = 0xffff00; // Amarelo
+                emissive = 0x333300;
+                points = 20;
+            } else {
+                color = 0xff007f; // Rosa
+                emissive = 0x33001a;
+                points = 30;
+            }
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: emissive,
+                roughness: 0.3,
+                metalness: 0.5
+            });
+
+            // Corpo principal voxelizado
+            const coreGeo = new THREE.BoxGeometry(1.2, 0.8, 0.8);
+            const core = new THREE.Mesh(coreGeo, mat);
+            invaderGroup.add(core);
+
+            // Olhos Brilhantes
+            const eyeGeo = new THREE.BoxGeometry(0.18, 0.18, 0.1);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.35, 0.1, -0.41);
+            const rightEye = leftEye.clone();
+            rightEye.position.x = 0.35;
+            invaderGroup.add(leftEye, rightEye);
+
+            // Apêndices/Membros Procedurais dependendo do Tipo
+            const limbMat = mat.clone();
+            const limbs = [];
+
+            if (type === 0) { // Polvo - Tentáculos pendendo nas laterais inferiores
+                const legGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+                for (let i = 0; i < 4; i++) {
+                    const leg = new THREE.Mesh(legGeo, limbMat);
+                    leg.position.set(-0.45 + (i * 0.3), -0.55, 0);
+                    invaderGroup.add(leg);
+                    limbs.push(leg);
+                }
+            } else if (type === 1) { // Caranguejo - Garras superiores e pernas abertas
+                // Garras
+                const armGeo = new THREE.BoxGeometry(0.2, 0.4, 0.2);
+                const leftArm = new THREE.Mesh(armGeo, limbMat);
+                leftArm.position.set(-0.7, 0.3, -0.1);
+                const rightArm = leftArm.clone();
+                rightArm.position.x = 0.7;
+                invaderGroup.add(leftArm, rightArm);
+                limbs.push(leftArm, rightArm);
+
+                // Pernas inferiores curtas
+                const legGeo = new THREE.BoxGeometry(0.25, 0.3, 0.2);
+                const leftLeg = new THREE.Mesh(legGeo, limbMat);
+                leftLeg.position.set(-0.4, -0.5, 0);
+                const rightLeg = leftLeg.clone();
+                rightLeg.position.x = 0.4;
+                invaderGroup.add(leftLeg, rightLeg);
+                limbs.push(leftLeg, rightLeg);
+            } else { // Lula - Orelhas pontudas superiores e pernas verticais finas
+                // Tentáculos finos
+                const legGeo = new THREE.BoxGeometry(0.15, 0.6, 0.15);
+                const leftLeg = new THREE.Mesh(legGeo, limbMat);
+                leftLeg.position.set(-0.25, -0.6, 0);
+                const rightLeg = leftLeg.clone();
+                rightLeg.position.x = 0.25;
+                invaderGroup.add(leftLeg, rightLeg);
+                limbs.push(leftLeg, rightLeg);
+
+                // Antenas/Orelhas
+                const earGeo = new THREE.BoxGeometry(0.2, 0.3, 0.2);
+                const leftEar = new THREE.Mesh(earGeo, limbMat);
+                leftEar.position.set(-0.4, 0.5, 0);
+                const rightEar = leftEar.clone();
+                rightEar.position.x = 0.4;
+                invaderGroup.add(leftEar, rightEar);
+                limbs.push(leftEar, rightEar);
+            }
+
+            // Atribui pontos e membros no userdata para animação procedural de passos
+            invaderGroup.userData = {
+                type: type,
+                points: points,
+                limbs: limbs,
+                originalY: 0,
+                pulseSpeed: 3 + Math.random() * 2
+            };
+
+            return invaderGroup;
+        }
+
+        // Cria Escudo Bunker voxelizado
+        // Cada escudo é um aglomerado de vários pequenos blocos 3D destrutíveis
+        function createShieldBunker(startX) {
+            const bunkerGroup = new THREE.Group();
+            bunkerGroup.position.set(startX, 0.2, SHIELD_Z);
+
+            const blockGeo = new THREE.BoxGeometry(0.45, 0.45, 0.45);
+            const blockMat = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                emissive: 0x002233,
+                roughness: 0.4,
+                metalness: 0.1
+            });
+
+            // Layout do escudo (formato de arco/U invertido clássico)
+            // 5 colunas x 4 linhas de blocos
+            const layout = [
+                [1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1],
+                [1, 1, 0, 1, 1],
+                [1, 0, 0, 0, 1]
+            ];
+
+            for (let row = 0; row < layout.length; row++) {
+                for (let col = 0; col < layout[row].length; col++) {
+                    if (layout[row][col] === 1) {
+                        const block = new THREE.Mesh(blockGeo, blockMat.clone());
+                        // Espaçamento de blocos
+                        block.position.set(
+                            (col - 2) * 0.47, 
+                            (3 - row) * 0.47, 
+                            0
+                        );
+                        bunkerGroup.add(block);
+                    }
+                }
+            }
+
+            scene.add(bunkerGroup);
+            shields.push(bunkerGroup);
+        }
+
+        // Cria a Nave-Mãe (UFO) em 3D
+        function createUFOMesh() {
+            const ufoGroup = new THREE.Group();
+
+            // Prato Principal
+            const discGeo = new THREE.CylinderGeometry(1.6, 1.8, 0.4, 12);
+            const discMat = new THREE.MeshStandardMaterial({
+                color: 0xff0000, // Vermelho/Rosa Neon
+                emissive: 0x440000,
+                roughness: 0.1,
+                metalness: 0.9
+            });
+            const disc = new THREE.Mesh(discGeo, discMat);
+            ufoGroup.add(disc);
+
+            // Cúpula superior
+            const domeGeo = new THREE.SphereGeometry(0.8, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+            const domeMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                emissive: 0x222222,
+                roughness: 0.05
+            });
+            const dome = new THREE.Mesh(domeGeo, domeMat);
+            dome.position.y = 0.2;
+            ufoGroup.add(dome);
+
+            // Luzes Neon Inferiores
+            const lightGeo = new THREE.BoxGeometry(0.2, 0.1, 0.2);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const light = new THREE.Mesh(lightGeo, lightMat);
+                light.position.set(
+                    Math.cos(angle) * 1.3,
+                    -0.2,
+                    Math.sin(angle) * 1.3
+                );
+                ufoGroup.add(light);
+            }
+
+            ufoGroup.position.y = 6.0; // Voa acima dos invasores ordinários
+            ufoGroup.userData = { points: [50, 100, 150, 300][Math.floor(Math.random() * 4)] };
+
+            return ufoGroup;
+        }
+
+        // ============================================================================
+        // 4. SISTEMA DE PARTÍCULAS DE EXPLOSÃO
+        // ============================================================================
+        function spawnExplosionParticles(position, color, count = 12) {
+            const particleGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+            const particleMat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 1.0
+            });
+
+            for (let i = 0; i < count; i++) {
+                const mesh = new THREE.Mesh(particleGeo, particleMat);
+                mesh.position.copy(position);
+                
+                // Vetor de velocidade 3D randômico
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() * 3) + 1, // Impulso vertical para cima
+                    (Math.random() - 0.5) * 6
+                );
+
+                scene.add(mesh);
+                explosionParticles.push({
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0, // Vai decaindo de 1.0 a 0.0
+                    decay: (Math.random() * 1.5) + 1.2
+                });
+            }
+        }
+
+        // ============================================================================
+        // 5. INICIALIZAÇÃO DA CENA 3D E AMBIENTE (Three.js)
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById("canvas-container");
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020206, 0.025);
+
+            // Câmera inclinada estilo Gabinete de Arcade Retro / 3D Isométrico
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(0, 13, 22);
+            camera.lookAt(0, 3, -4);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            container.appendChild(renderer.domElement);
+
+            // Luzes Neon
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+            scene.add(ambientLight);
+
+            // Luz Direcional Principal (Gera Sombras)
+            const dirLight = new THREE.DirectionalLight(0xff00ff, 0.8); // Luz Direcional Magenta
+            dirLight.position.set(0, 20, 10);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 40;
+            dirLight.shadow.camera.left = -16;
+            dirLight.shadow.camera.right = 16;
+            dirLight.shadow.camera.top = 20;
+            dirLight.shadow.camera.bottom = -10;
+            scene.add(dirLight);
+
+            // Luz de Fundo Azul/Ciano vinda do topo/trás do grid
+            const gridLight = new THREE.PointLight(0x00f0ff, 1.2, 50);
+            gridLight.position.set(0, 6, -15);
+            scene.add(gridLight);
+
+            // Grid Retro de Fundo (Piso Neon)
+            const gridGeo = new THREE.PlaneGeometry(32, 36, 16, 18);
+            const gridMat = new THREE.MeshBasicMaterial({
+                color: 0x330044, // Roxo Escuro
+                wireframe: true,
+                transparent: true,
+                opacity: 0.4
+            });
+            spaceGrid = new THREE.Mesh(gridGeo, gridMat);
+            spaceGrid.rotation.x = -Math.PI / 2;
+            spaceGrid.position.set(0, -0.5, -3);
+            scene.add(spaceGrid);
+
+            // Linha Vermelha de Limite Máximo dos Invasores (Neon Perigo)
+            const dangerLineGeo = new THREE.BoxGeometry(32, 0.05, 0.1);
+            const dangerLineMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
+            const dangerLine = new THREE.Mesh(dangerLineGeo, dangerLineMat);
+            dangerLine.position.set(0, -0.4, INVADERS_MAX_Z);
+            scene.add(dangerLine);
+
+            // Paredes Neon Laterais
+            const borderGeo = new THREE.BoxGeometry(0.15, 0.3, 36);
+            const borderMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            
+            const leftBorder = new THREE.Mesh(borderGeo, borderMat);
+            leftBorder.position.set(-BOUNDS_X - 1.0, -0.35, -3);
+            
+            const rightBorder = leftBorder.clone();
+            rightBorder.position.x = BOUNDS_X + 1.0;
+            
+            scene.add(leftBorder, rightBorder);
+
+            // Sistema de Estrelas Neon Estáticas de Fundo (Starfield)
+            const starCount = 300;
+            const starGeo = new THREE.BufferGeometry();
+            const starPositions = new Float32Array(starCount * 3);
+            const starColors = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount; i++) {
+                // Espalha no fundo do espaço profundo
+                starPositions[i * 3] = (Math.random() - 0.5) * 80;
+                starPositions[i * 3 + 1] = (Math.random() * 30) - 2;
+                starPositions[i * 3 + 2] = (Math.random() - 0.5) * 100 - 30;
+
+                // Cores mescladas entre Ciano e Rosa
+                const isCyan = Math.random() > 0.4;
+                starColors[i * 3] = isCyan ? 0.0 : 1.0;
+                starColors[i * 3 + 1] = isCyan ? 0.94 : 0.0;
+                starColors[i * 3 + 2] = isCyan ? 1.0 : 0.5;
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+            const starMat = new THREE.PointsMaterial({
+                size: 0.25,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.5
+            });
+
+            starfield = new THREE.Points(starGeo, starMat);
+            scene.add(starfield);
+
+            // Cria o Jogador
+            playerShip = createPlayerShipMesh();
+            playerShip.position.set(0, 0, PLAYER_Z);
+            scene.add(playerShip);
+
+            // Oculta Tela de Carregamento
+            loadingScreen.style.display = 'none';
+
+            // Registra redimensionamento
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 6. GERENCIAMENTO E SPAWN DAS ENTIDADES DE JOGO
+        // ============================================================================
+
+        // Spawna a grade de 55 invasores (5 linhas x 11 colunas)
+        function spawnInvadersGrid() {
+            // Remove invasores velhos da cena
+            invaders.forEach(inv => scene.remove(inv));
+            invaders = [];
+
+            const cols = 11;
+            const rows = 5;
+            const spacingX = 1.8;
+            const spacingZ = 1.6;
+
+            for (let r = 0; r < rows; r++) {
+                // Linha superior: Tipo 2 (Rosa). Linhas médias: Tipo 1 (Amarelo). Linha inferior: Tipo 0 (Verde).
+                let type = 0;
+                if (r === 0) type = 2; // Rosa
+                else if (r === 1 || r === 2) type = 1; // Amarelo
+                else type = 0; // Verde
+
+                for (let c = 0; c < cols; c++) {
+                    const invMesh = createInvaderMesh(type);
+                    
+                    // Alinha centralizado na tela
+                    const posX = (c - (cols - 1) / 2) * spacingX;
+                    const posZ = INVADERS_START_Z + (r * spacingZ);
+                    
+                    invMesh.position.set(posX, 0.4, posZ);
+                    scene.add(invMesh);
+                    invaders.push(invMesh);
+                }
+            }
+
+            // Define velocidade inicial baseado na onda
+            invaderDirection = 1;
+            invaderStepsDown = 0;
+            updateInvaderSpeed();
+        }
+
+        // Calcula velocidade de passos baseada em quantos invasores restam e na Onda atual
+        function updateInvaderSpeed() {
+            const count = invaders.length;
+            if (count === 0) return;
+
+            // Fórmula: Mais invasores = mais lento. Menos invasores = muito mais rápido.
+            // Conforme a onda avança, a base da velocidade aumenta.
+            const ratio = count / 55; // 1.0 a ~0.02
+            const waveModifier = Math.max(0.3, 1.0 - (wave - 1) * 0.15); // Aceleração a cada onda
+            
+            // Tempo limite de passos variando de 0.8s (cheio) a 0.06s (último sobrevivente)
+            invaderMoveInterval = (0.05 + 0.75 * ratio) * waveModifier;
+            invaderMoveInterval = Math.max(0.06, invaderMoveInterval); // Clampa velocidade máxima tolerável
+
+            // Atualiza o tempo do sintetizador de áudio sincronizadamente
+            som.beatInterval = invaderMoveInterval;
+        }
+
+        // Inicializa ou regenera os 4 Escudos Bunker
+        function setupShields() {
+            // Remove escudos velhos
+            shields.forEach(sh => {
+                // Remove cada bloco do Three.js
+                sh.children.forEach(c => scene.remove(c));
+                scene.remove(sh);
+            });
+            shields = [];
+
+            // Spawna 4 barreiras espaçadas
+            const spacing = 7.5;
+            createShieldBunker(-1.5 * spacing);
+            createShieldBunker(-0.5 * spacing);
+            createShieldBunker(0.5 * spacing);
+            createShieldBunker(1.5 * spacing);
+        }
+
+        // ============================================================================
+        // 7. MECÂNICA DE COLISÕES (AABB / CAIXAS DELIMITADORAS)
+        // ============================================================================
+        
+        // Verifica colisão entre dois objetos Three.js usando aproximação por caixa delimitadora (AABB 2D em X e Z)
+        function checkCollision(objA, objB, sizeA = 0.5, sizeB = 0.5) {
+            const posA = new THREE.Vector3();
+            const posB = new THREE.Vector3();
+
+            objA.getWorldPosition(posA);
+            objB.getWorldPosition(posB);
+
+            // AABB em duas dimensões (eixo X e Z)
+            return (Math.abs(posA.x - posB.x) < (sizeA + sizeB) &&
+                    Math.abs(posA.z - posB.z) < (sizeA + sizeB));
+        }
+
+        // ============================================================================
+        // 8. LOOP PRINCIPAL DE ATUALIZAÇÃO DA LÓGICA DO JOGO
+        // ============================================================================
+        let lastTime = 0;
+
+        function updateGame(deltaTime) {
+            if (gameState !== GAME_STATES.PLAYING) return;
+
+            // ------------------------------------------------------------------------
+            // 8.1. MOVIMENTO DO JOGADOR
+            // ------------------------------------------------------------------------
+            let moveDir = 0;
+            
+            if (isTouchDevice) {
+                // Em celulares/drag, interpola suavemente até o ponto tocado
+                const diff = targetPlayerX - playerShip.position.x;
+                if (Math.abs(diff) > 0.05) {
+                    playerShip.position.x += diff * 15 * deltaTime;
+                }
+            } else {
+                // Teclado
+                if (keys.a || keys.ArrowLeft) moveDir = -1;
+                if (keys.d || keys.ArrowRight) moveDir = 1;
+
+                const playerSpeed = 12.0; // Velocidade de locomoção
+                playerShip.position.x += moveDir * playerSpeed * deltaTime;
+            }
+
+            // Limita a nave aos limites da arena
+            playerShip.position.x = Math.max(-BOUNDS_X, Math.min(BOUNDS_X, playerShip.position.x));
+
+            // Anima visualmente a inclinação lateral da nave conforme a direção de movimento
+            if (moveDir !== 0) {
+                playerShip.rotation.z = THREE.MathUtils.lerp(playerShip.rotation.z, -moveDir * 0.3, 10 * deltaTime);
+            } else if (isTouchDevice && touchDragging) {
+                const diff = targetPlayerX - playerShip.position.x;
+                playerShip.rotation.z = THREE.MathUtils.lerp(playerShip.rotation.z, THREE.MathUtils.clamp(diff * 0.1, -0.3, 0.3), 10 * deltaTime);
+            } else {
+                playerShip.rotation.z = THREE.MathUtils.lerp(playerShip.rotation.z, 0, 8 * deltaTime);
+            }
+
+            // Oscilação pulsante do cone de fogo da turbina traseira do jogador
+            if (playerShip.userData.engineCone) {
+                const pulse = 1.0 + Math.sin(performance.now() * 0.05) * 0.25;
+                playerShip.userData.engineCone.scale.set(pulse, pulse, pulse);
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.2. RECARGA DE DISPARO DO JOGADOR
+            // ------------------------------------------------------------------------
+            if (shootCooldown > 0) {
+                shootCooldown -= deltaTime;
+            } else if (keys.Space && playerLasers.length === 0) {
+                // No Space Invaders original, você só pode ter 1 tiro ativo na tela
+                firePlayerLaser();
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.3. PROCESSAMENTO DE LASERS DO JOGADOR
+            // ------------------------------------------------------------------------
+            const laserSpeed = 24.0;
+            for (let i = playerLasers.length - 1; i >= 0; i--) {
+                const laser = playerLasers[i];
+                laser.position.z -= laserSpeed * deltaTime; // Move para o topo da tela
+
+                // Remove se sair da arena visível
+                if (laser.position.z < -18) {
+                    scene.remove(laser);
+                    playerLasers.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão de Projétil do Jogador com Invasores
+                let laserDestroyed = false;
+                for (let j = invaders.length - 1; j >= 0; j--) {
+                    const inv = invaders[j];
+                    if (checkCollision(laser, inv, 0.3, 0.6)) {
+                        // Explode alien
+                        const pts = inv.userData.points;
+                        score += pts;
+                        hudScore.innerText = String(score).padStart(5, '0');
+
+                        // Sons e partículas
+                        som.playExplosionInvader();
+                        spawnExplosionParticles(inv.position, inv.children[0].material.color, 12);
+
+                        // Remove ambos da cena
+                        scene.remove(inv);
+                        invaders.splice(j, 1);
+
+                        scene.remove(laser);
+                        playerLasers.splice(i, 1);
+                        laserDestroyed = true;
+
+                        // Recalcula velocidade e áudio da marcha
+                        updateInvaderSpeed();
+                        break;
+                    }
+                }
+
+                if (laserDestroyed) continue;
+
+                // Colisão com Nave-Mãe (UFO)
+                if (ufo && checkCollision(laser, ufo, 0.3, 1.3)) {
+                    const bonusScore = ufo.userData.points;
+                    score += bonusScore;
+                    hudScore.innerText = String(score).padStart(5, '0');
+
+                    // Sons e partículas do UFO
+                    som.playExplosionPlayer();
+                    spawnExplosionParticles(ufo.position, 0xff0000, 30);
+
+                    // Remove UFO
+                    som.stopUFOSound();
+                    scene.remove(ufo);
+                    ufo = null;
+
+                    // Remove laser
+                    scene.remove(laser);
+                    playerLasers.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão com Escudos (Bunkers)
+                for (let b = 0; b < shields.length; b++) {
+                    const bunker = shields[b];
+                    for (let bl = bunker.children.length - 1; bl >= 0; bl--) {
+                        const block = bunker.children[bl];
+                        if (checkCollision(laser, block, 0.25, 0.23)) {
+                            // Destrói o bloco do bunker individualmente
+                            som.playExplosionShield();
+                            
+                            const absPos = new THREE.Vector3();
+                            block.getWorldPosition(absPos);
+                            spawnExplosionParticles(absPos, 0x00f0ff, 4);
+
+                            bunker.remove(block);
+                            scene.remove(laser);
+                            playerLasers.splice(i, 1);
+                            laserDestroyed = true;
+                            break;
+                        }
+                    }
+                    if (laserDestroyed) break;
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.4. PROCESSAMENTO DE LASERS DOS INVASORES
+            // ------------------------------------------------------------------------
+            const invaderLaserSpeed = 11.0 + (wave * 0.8);
+            for (let i = invaderLasers.length - 1; i >= 0; i--) {
+                const laser = invaderLasers[i];
+                laser.position.z += invaderLaserSpeed * deltaTime; // Viaja em direção ao jogador
+
+                // Se passar do jogador
+                if (laser.position.z > PLAYER_Z + 4) {
+                    scene.remove(laser);
+                    invaderLasers.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão com Jogador (Perda de Vida)
+                if (checkCollision(laser, playerShip, 0.25, 0.75)) {
+                    som.playExplosionPlayer();
+                    spawnExplosionParticles(playerShip.position, 0x00f0ff, 25);
+                    
+                    scene.remove(laser);
+                    invaderLasers.splice(i, 1);
+
+                    // Dedução de vida
+                    handlePlayerHit();
+                    continue;
+                }
+
+                // Colisão com Escudos
+                let laserDestroyed = false;
+                for (let b = 0; b < shields.length; b++) {
+                    const bunker = shields[b];
+                    for (let bl = bunker.children.length - 1; bl >= 0; bl--) {
+                        const block = bunker.children[bl];
+                        if (checkCollision(laser, block, 0.25, 0.23)) {
+                            som.playExplosionShield();
+                            
+                            const absPos = new THREE.Vector3();
+                            block.getWorldPosition(absPos);
+                            spawnExplosionParticles(absPos, 0x00f0ff, 4);
+
+                            bunker.remove(block);
+                            scene.remove(laser);
+                            invaderLasers.splice(i, 1);
+                            laserDestroyed = true;
+                            break;
+                        }
+                    }
+                    if (laserDestroyed) break;
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.5. MARCHA E DESLOCAMENTO DOS INVASORES (Relógio de Passo)
+            // ------------------------------------------------------------------------
+            invaderMoveTimer += deltaTime;
+            if (invaderMoveTimer >= invaderMoveInterval) {
+                invaderMoveTimer = 0;
+                marchInvaders();
+            }
+
+            // Animação de flutuação e pernas nos invasores
+            const time = performance.now() * 0.001;
+            invaders.forEach(inv => {
+                // Leve oscilação vertical baseada em seno
+                const speed = inv.userData.pulseSpeed;
+                inv.position.y = 0.4 + Math.sin(time * speed) * 0.1;
+
+                // Anima visualmente pernas/tentáculos simulando passos no grid
+                const stepState = Math.floor(time / invaderMoveInterval) % 2 === 0;
+                inv.userData.limbs.forEach((limb, idx) => {
+                    const offset = stepState ? 0.15 : -0.15;
+                    limb.rotation.x = offset * (idx % 2 === 0 ? 1 : -1);
+                });
+            });
+
+            // ------------------------------------------------------------------------
+            // 8.6. PROCESSAMENTO E SPAWN DA NAVE-MÃE (UFO)
+            // ------------------------------------------------------------------------
+            ufoSpawnTimer += deltaTime;
+            // Spawna um UFO a cada 18-30 segundos se nenhum estiver na tela
+            if (!ufo && ufoSpawnTimer > 20) {
+                ufoSpawnTimer = 0;
+                if (Math.random() > 0.4) {
+                    ufo = createUFOMesh();
+                    // Spawna na esquerda voando para direita, ou vice-versa
+                    const fromLeft = Math.random() > 0.5;
+                    ufo.position.set(fromLeft ? -BOUNDS_X - 3 : BOUNDS_X + 3, 5.0, -14);
+                    ufo.userData.dirX = fromLeft ? 1 : -1;
+                    scene.add(ufo);
+                    som.startUFOSound();
+                }
+            }
+
+            if (ufo) {
+                const ufoSpeed = 7.0;
+                ufo.position.x += ufo.userData.dirX * ufoSpeed * deltaTime;
+                
+                // Rotaciona para dar efeito 3D futurista
+                ufo.rotation.y += deltaTime * 2.0;
+
+                // Destrói se sair do limite da arena
+                if ((ufo.userData.dirX === 1 && ufo.position.x > BOUNDS_X + 4) ||
+                    (ufo.userData.dirX === -1 && ufo.position.x < -BOUNDS_X - 4)) {
+                    som.stopUFOSound();
+                    scene.remove(ufo);
+                    ufo = null;
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.7. GERENCIAMENTO DAS PARTÍCULAS EM VOO
+            // ------------------------------------------------------------------------
+            const gravity = -3.0; // Puxa partículas para baixo no grid
+            for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                const p = explosionParticles[i];
+                p.velocity.y += gravity * deltaTime; // Aplica gravidade
+                p.mesh.position.addScaledVector(p.velocity, deltaTime);
+                
+                p.life -= p.decay * deltaTime;
+                p.mesh.material.opacity = p.life;
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    explosionParticles.splice(i, 1);
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.8. VERIFICAÇÃO DE VITÓRIA (WAVE CLEAR)
+            // ------------------------------------------------------------------------
+            if (invaders.length === 0) {
+                handleWaveClear();
+            }
+        }
+
+        // =---------------------------------------------------------------------------
+        // 9. FUNÇÕES DE SUPORTE E MECÂNICAS DE MARCHA E VITÓRIA
+        // =---------------------------------------------------------------------------
+
+        // Dispara laser do jogador
+        function firePlayerLaser() {
+            som.playLaserPlayer();
+            
+            const laserGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8);
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const laser = new THREE.Mesh(laserGeo, laserMat);
+            laser.rotation.x = Math.PI / 2;
+            
+            // Spawna à frente do canhão do jogador
+            laser.position.set(playerShip.position.x, 0.1, playerShip.position.z - 0.7);
+            scene.add(laser);
+            playerLasers.push(laser);
+        }
+
+        // Dispara laser de um invasor aleatório (vindo de baixo)
+        function fireInvaderLaser(invader) {
+            som.playLaserInvader();
+
+            const laserGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8);
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff007f }); // Vermelho/Rosa Neon
+            const laser = new THREE.Mesh(laserGeo, laserMat);
+            laser.rotation.x = Math.PI / 2;
+            
+            // Spawna logo abaixo do invasor
+            laser.position.set(invader.position.x, 0.2, invader.position.z + 0.6);
+            scene.add(laser);
+            invaderLasers.push(laser);
+        }
+
+        // Deslocamento da grade de aliens (chamada em passos discretos sincronizados com áudio)
+        function marchInvaders() {
+            if (invaders.length === 0) return;
+
+            let hitWall = false;
+            let lowestZ = -999;
+
+            // 1. Verifica se algum invasor alcançou as bordas laterais
+            for (let i = 0; i < invaders.length; i++) {
+                const inv = invaders[i];
+                const nextX = inv.position.x + invaderDirection * 0.7; // Tamanho do passo lateral
+                
+                if (nextX > BOUNDS_X || nextX < -BOUNDS_X) {
+                    hitWall = true;
+                }
+                
+                if (inv.position.z > lowestZ) {
+                    lowestZ = inv.position.z;
+                }
+            }
+
+            // 2. Se bateu na parede, desce todos os invasores de linha e muda direção
+            if (hitWall) {
+                invaderDirection *= -1; // Inverte
+                invaderStepsDown++;
+                
+                for (let i = 0; i < invaders.length; i++) {
+                    // Desloca em Z para baixo
+                    invaders[i].position.z += 1.0; 
+                }
+
+                // Confere se algum invasor atingiu a linha limite vermelha de defesa
+                if (lowestZ + 1.0 >= INVADERS_MAX_Z) {
+                    handleGameOver();
+                    return;
+                }
+            } else {
+                // Se não bateu na parede lateral, apenas caminha lateralmente
+                for (let i = 0; i < invaders.length; i++) {
+                    invaders[i].position.x += invaderDirection * 0.7;
+                }
+            }
+
+            // 3. Chance randômica de invasores da linha inferior efetuarem disparos de laser
+            // A taxa de tiros inimigos escala com a Onda e com a redução de sobreviventes
+            const shootProbability = 0.05 + (wave * 0.02) + ((55 - invaders.length) * 0.003);
+            if (Math.random() < shootProbability && invaderLasers.length < 4) {
+                // Agrupa invasores pelo X para garantir que apenas os da "frente/linha de baixo" atirem
+                // Para simplificar, escolhemos um invasor aleatório qualquer da grade
+                const randomInvader = invaders[Math.floor(Math.random() * invaders.length)];
+                fireInvaderLaser(randomInvader);
+            }
+        }
+
+        // Processa dano recebido pelo jogador
+        function handlePlayerHit() {
+            lives--;
+            updateLivesDisplay();
+
+            // Limpa todos os lasers inimigos ativos para dar uma chance justa de respawn
+            invaderLasers.forEach(l => scene.remove(l));
+            invaderLasers = [];
+
+            // Desativa temporariamente a nave piscando ou invisível
+            playerShip.position.x = 0;
+            targetPlayerX = 0;
+
+            // Pequena vibração ou tremor de câmera simulando impacto
+            const originalCamY = camera.position.y;
+            let shakeTime = 0;
+            const shakeInterval = setInterval(() => {
+                camera.position.x = (Math.random() - 0.5) * 0.6;
+                camera.position.y = originalCamY + (Math.random() - 0.5) * 0.6;
+                shakeTime += 30;
+                if (shakeTime > 300) {
+                    clearInterval(shakeInterval);
+                    camera.position.x = 0;
+                    camera.position.y = originalCamY;
+                }
+            }, 30);
+
+            if (lives <= 0) {
+                handleGameOver();
+            }
+        }
+
+        // Atualiza elementos gráficos de vidas (Mini-Naves) no HUD
+        function updateLivesDisplay() {
+            const ships = livesDisplay.querySelectorAll('.life-ship');
+            ships.forEach((ship, idx) => {
+                if (idx < lives) {
+                    ship.classList.remove('lost');
+                } else {
+                    ship.classList.add('lost');
+                }
+            });
+        }
+
+        // Wave Clear - Avança de Onda
+        function handleWaveClear() {
+            gameState = GAME_STATES.MENU;
+            som.playVictoryMelodia();
+            
+            wave++;
+            hudWave.innerText = wave;
+
+            // Limpa todos os projéteis ativos
+            playerLasers.forEach(l => scene.remove(l));
+            invaderLasers.forEach(l => scene.remove(l));
+            playerLasers = [];
+            invaderLasers = [];
+
+            // Adiciona pontuação de bônus de limpeza
+            score += 1000 * (wave - 1);
+            hudScore.innerText = String(score).padStart(5, '0');
+
+            // Exibe notificação rápida de Onda Vencida e reinicia a grade após pequeno atraso
+            setTimeout(() => {
+                spawnInvadersGrid();
+                setupShields();
+                gameState = GAME_STATES.PLAYING;
+                som.startMusic();
+            }, 2000);
+        }
+
+        // Fim de Jogo
+        function handleGameOver() {
+            gameState = GAME_STATES.GAMEOVER;
+            som.playGameOverMelodia();
+
+            // Grava Recorde em LocalStorage
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('cyber_invaders_highscore', highscore);
+                hudHighscore.innerText = String(highscore).padStart(5, '0');
+            }
+
+            // Exibe resumo final de score
+            document.getElementById('summary-wave').innerText = wave;
+            document.getElementById('summary-score').innerText = String(score).padStart(5, '0');
+            document.getElementById('summary-highscore').innerText = String(highscore).padStart(5, '0');
+            document.getElementById('summary-total').innerText = String(score).padStart(5, '0');
+
+            screenGameover.classList.remove('hidden');
+            
+            // Libera cursor do mouse
+            if (document.pointerLockElement === document.body) {
+                document.exitPointerLock();
+            }
+        }
+
+        // ============================================================================
+        // 10. INPUTS E INTERAÇÃO DE CONTROLES (Teclado/Mouse/Touch)
+        // ============================================================================
+        
+        function setupControls() {
+            // Controles de Teclado
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = true;
+                if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = true;
+                if (e.code === 'Space') {
+                    keys.Space = true;
+                    e.preventDefault(); // Evita scroll do navegador
+                    
+                    if (gameState === GAME_STATES.PLAYING && playerLasers.length === 0) {
+                        firePlayerLaser();
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = false;
+                if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
+                if (e.code === 'Space') keys.Space = false;
+            });
+
+            // Controles de Mouse / Arrastar
+            const container = document.getElementById('canvas-container');
+            
+            container.addEventListener('mousedown', (e) => {
+                if (gameState !== GAME_STATES.PLAYING) return;
+                
+                // Botão esquerdo dispara laser
+                if (e.button === 0 && playerLasers.length === 0) {
+                    firePlayerLaser();
+                }
+            });
+
+            // Captura movimento do mouse para mover a nave lateralmente
+            window.addEventListener('mousemove', (e) => {
+                if (gameState !== GAME_STATES.PLAYING) return;
+                
+                // Transforma a posição do mouse na tela (-1 a +1) em coordenada X do jogo
+                const mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                targetPlayerX = mouseX * (BOUNDS_X + 1.0);
+            });
+
+            // Suporte para Dispositivos Touch/Mobile
+            isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isTouchDevice) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+                
+                // Mapeia botões virtuais da tela
+                const btnLeft = document.getElementById('btn-left');
+                const btnRight = document.getElementById('btn-right');
+                const btnShoot = document.getElementById('btn-shoot');
+
+                // Movimento por cliques nos botões virtuais
+                btnLeft.addEventListener('touchstart', (e) => { keys.a = true; e.preventDefault(); });
+                btnLeft.addEventListener('touchend', (e) => { keys.a = false; e.preventDefault(); });
+                
+                btnRight.addEventListener('touchstart', (e) => { keys.d = true; e.preventDefault(); });
+                btnRight.addEventListener('touchend', (e) => { keys.d = false; e.preventDefault(); });
+
+                btnShoot.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (gameState === GAME_STATES.PLAYING && playerLasers.length === 0) {
+                        firePlayerLaser();
+                    }
+                });
+
+                // Movimento por arraste no canvas direto (drag alternativo)
+                container.addEventListener('touchstart', (e) => {
+                    if (gameState !== GAME_STATES.PLAYING) return;
+                    touchDragging = true;
+                    const touch = e.touches[0];
+                    const mouseX = (touch.clientX / window.innerWidth) * 2 - 1;
+                    targetPlayerX = mouseX * (BOUNDS_X + 1.0);
+                }, { passive: true });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!touchDragging || gameState !== GAME_STATES.PLAYING) return;
+                    const touch = e.touches[0];
+                    const mouseX = (touch.clientX / window.innerWidth) * 2 - 1;
+                    targetPlayerX = mouseX * (BOUNDS_X + 1.0);
+                }, { passive: true });
+
+                container.addEventListener('touchend', () => {
+                    touchDragging = false;
+                });
+            }
+        }
+
+        // ============================================================================
+        // 11. LOOP DE RENDERIZAÇÃO E FLUXO DE EXECUÇÃO
+        // ============================================================================
+        
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            // Calcula Delta Time
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = Math.min(0.05, (timestamp - lastTime) * 0.001); // Limita saltos gigantescos
+            lastTime = timestamp;
+
+            // Atualiza lógica do jogo
+            updateGame(deltaTime);
+
+            // Animação leve de scroll infinito no Grid e Estrelas de fundo
+            if (spaceGrid && gameState === GAME_STATES.PLAYING) {
+                spaceGrid.position.z += deltaTime * 0.5; // Grid caminha de fundo lentamente
+                if (spaceGrid.position.z > 2.0) {
+                    spaceGrid.position.z = 0;
+                }
+            }
+
+            if (starfield) {
+                // Roda levemente o campo de estrelas
+                starfield.rotation.y += deltaTime * 0.015;
+            }
+
+            // Animação rotacional leve da Nave Mãe (UFO) se estiver ativa
+            if (ufo) {
+                ufo.rotation.y += deltaTime * 1.5;
+            }
+
+            // Renderiza cena Three.js
+            renderer.render(scene, camera);
+        }
+
+        // Inicia um novo jogo do zero
+        function startNewGame() {
+            score = 0;
+            wave = 1;
+            lives = 3;
+            
+            hudScore.innerText = '00000';
+            hudWave.innerText = '1';
+            updateLivesDisplay();
+
+            // Limpa entidades antigas da cena
+            invaders.forEach(inv => scene.remove(inv));
+            playerLasers.forEach(l => scene.remove(l));
+            invaderLasers.forEach(l => scene.remove(l));
+            explosionParticles.forEach(p => scene.remove(p.mesh));
+            
+            if (ufo) {
+                scene.remove(ufo);
+                ufo = null;
+            }
+
+            invaders = [];
+            playerLasers = [];
+            invaderLasers = [];
+            explosionParticles = [];
+            ufoSpawnTimer = 0;
+
+            // Spawna novos grids
+            spawnInvadersGrid();
+            setupShields();
+
+            // Centraliza o jogador
+            playerShip.position.set(0, 0, PLAYER_Z);
+            targetPlayerX = 0;
+
+            // Oculta overlays
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+
+            gameState = GAME_STATES.PLAYING;
+            
+            // Toca trilha sonora
+            som.init();
+            som.startMusic();
+        }
+
+        // Configuração de Botões e Inicialização Geral
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+            setupControls();
+
+            // Botão Start
+            btnStart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            // Botão Restart
+            btnRestart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            // Mute / Unmute
+            btnSound.addEventListener('click', () => {
+                const mutado = som.toggleMute();
+                if (mutado) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Silenciado';
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                }
+            });
+
+            // Roda loop
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
