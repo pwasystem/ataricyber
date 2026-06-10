@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freeway 3D - Cyber Chicken Crossing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #010103;
+            --glass-bg: rgba(6, 6, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* CRT scanlines */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Temporizador Central HUD */
+        #timer-panel {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: 320px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 18px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .timer-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            font-weight: 700;
+            color: #8a8fa3;
+            letter-spacing: 1.5px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .timer-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+            border-radius: 4px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 8px rgba(255, 0, 127, 0.3);
+        }
+
+        .timer-bar-fill.warning {
+            background: var(--neon-pink) !important;
+            box-shadow: 0 0 12px var(--neon-pink);
+            animation: pulse-danger 0.5s infinite alternate;
+        }
+
+        @keyframes pulse-danger {
+            from { filter: brightness(0.8); }
+            to { filter: brightness(1.2); }
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 30px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            width: 80px;
+            height: 80px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            pointer-events: auto;
+            touch-action: manipulation;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: background 0.1s, border-color 0.1s;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        /* TELAS DE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(14, 6, 20, 0.85) 0%, rgba(5, 2, 8, 0.98) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(18, 8, 26, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 0, 127, 0.04);
+            border-top: 3px solid var(--neon-pink);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-pink) 60%, var(--neon-yellow) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(255, 0, 127, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-cyan);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--text-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-yellow));
+            color: #0d0312;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 0, 127, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(255, 0, 127, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .score-summary {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO SISTEMA CYBER FREEWAY...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Travessias</div>
+                <div id="hud-score" class="hud-value pink">000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Recorde</div>
+                <div id="hud-highscore" class="hud-value">000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Trânsito</div>
+                <div id="hud-wave" class="hud-value cyan">Nível 1</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Tempo -->
+    <div id="timer-panel">
+        <div class="timer-header">
+            <span>BEAT THE CLOCK</span>
+            <span id="timer-text">90s</span>
+        </div>
+        <div class="timer-bar-container">
+            <div class="timer-bar-fill" id="timer-bar"></div>
+        </div>
+    </div>
+
+    <!-- Controles Mobile -->
+    <div id="mobile-controls">
+        <button id="btn-up" class="mobile-btn">▲</button>
+        <button id="btn-down" class="mobile-btn">▼</button>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER FREEWAY 3D</h1>
+            <div class="game-subtitle">Simulador de Evasão Rodoviária</div>
+
+            <div class="instructions">
+                <h3>Diretrizes Táticas:</h3>
+                <ul>
+                    <li>Cruze as **10 faixas da rodovia expressa** desviando de carros e caminhões cibernéticos em alta velocidade.</li>
+                    <li>Cada travessia bem-sucedida (atingir o topo da rodovia) concede **1 Ponto** e reposiciona a galinha na base para a próxima corrida.</li>
+                    <li>Se for atropelada, a galinha é **empurrada de volta** e fica atordoada temporariamente.</li>
+                    <li>O trânsito acelera e novos veículos surgem à medida que sua pontuação aumenta.</li>
+                    <li><strong>Controles da Galinha:</strong> Use as **setas direcionais (Para Cima / Para Baixo)** para mover a galinha.</li>
+                    <li><strong>Controles da Câmera:</strong> Use as teclas **A** / **D** para rotacionar o ângulo de visão orbital e **W** / **S** para ajustar o zoom.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR TRAVESSIA NEON</button>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">TEMPO ESGOTADO</h1>
+            <div class="game-subtitle">Sessão Rodoviária Encerrada</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Travessias Completadas:</span>
+                    <span id="summary-score" class="value">000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Recorde do Sistema:</span>
+                    <span id="summary-highscore" class="value">000</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">PONTUAÇÃO FINAL:</span>
+                    <span id="summary-total" class="value">000</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR DESAFIO</button>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. SINTETIZADOR DE ÁUDIO PROCEDURAL (Web Audio API)
+        // ============================================================================
+        class SomFreeway {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Sequenciador de Trilha (Synthwave rápido)
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som de salto/movimento da galinha (Cluck curtíssimo agudo)
+            playCluck() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                // Salto rápido na frequência para simular um "piado"
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.exponentialRampToValueAtTime(1000, t + 0.05);
+
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.06);
+            }
+
+            // Som de colisão com veículo (squawk estridente com decaimento)
+            playCollisionSquawk() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                
+                // Oscilador principal estridente dente-de-serra
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(900, t);
+                osc.frequency.exponentialRampToValueAtTime(120, t + 0.28); // Queda de pitch rápida de dor
+
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+                // Filtro passa-banda para soar metalizado e estridente
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800, t);
+                filter.Q.setValueAtTime(2.0, t);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.3);
+
+                // Ruído de impacto do carro
+                const bufferSize = this.ctx.sampleRate * 0.25;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const noiseGain = this.ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.35, t);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+                
+                const noiseFilter = this.ctx.createBiquadFilter();
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.setValueAtTime(250, t);
+
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(this.sfxGain);
+                
+                noise.start(t);
+                noise.stop(t + 0.25);
+            }
+
+            // Buzina de carro aleatória (som duplo de buzina clássica retro)
+            playCarHorn() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                
+                // Frequências clássicas de buzinas americanas/Atari
+                const f1 = 440;
+                const f2 = 470;
+
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc1.type = 'square';
+                osc1.frequency.setValueAtTime(f1, t);
+                
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(f2, t);
+
+                // Buzina com 0.3 segundos de duração
+                gain.gain.setValueAtTime(0.0, t);
+                gain.gain.linearRampToValueAtTime(0.08, t + 0.03); // Attack rápido
+                gain.gain.setValueAtTime(0.08, t + 0.25);
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.28); // Decay rápido
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1200, t); // Reduz estridência da dente de serra
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc1.start(t);
+                osc2.start(t);
+                osc1.stop(t + 0.3);
+                osc2.stop(t + 0.3);
+            }
+
+            // Fanfarra alegre de sucesso ao cruzar (arpejo cyberpunk maior brilhante)
+            playCrossSuccess() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [293.66, 329.63, 392.00, 440.00, 587.33, 659.25, 783.99, 880.00]; // Arpejo pentatônico maior ascendente rápido
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.05);
+                    
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.05 + 0.18);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(t + idx * 0.05);
+                    osc.stop(t + idx * 0.05 + 0.2);
+                });
+            }
+
+            // Trilha de Fundo Rápida (Synthwave Industrial)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const step = 0.14; // BPM ~107 acelerado (semicocheias rápidas)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (this.musicActive && !this.muted) {
+                        // Bassline Synthwave agressiva
+                        const notes = [
+                            73.42, 73.42, 73.42, 73.42,
+                            87.31, 87.31, 87.31, 87.31,
+                            98.00, 98.00, 98.00, 98.00,
+                            65.41, 65.41, 65.41, 73.42
+                        ];
+                        const freqNota = notes[this.musicBeat % notes.length];
+
+                        const osc = this.ctx.createOscillator();
+                        const filter = this.ctx.createBiquadFilter();
+                        const gain = this.ctx.createGain();
+
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freqNota, t);
+
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(220, t);
+
+                        gain.gain.setValueAtTime(0.12, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.4);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.start(t);
+                        osc.stop(t + step * 1.5);
+
+                        // Caixa Eletrônica (Kick/Snare)
+                        if (this.musicBeat % 4 === 0) { // Kick
+                            const kick = this.ctx.createOscillator();
+                            const kickGain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(110, t);
+                            kick.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+
+                            kickGain.gain.setValueAtTime(0.28, t);
+                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.1);
+
+                            kick.connect(kickGain);
+                            kickGain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.11);
+                        }
+                    }
+
+                    this.musicBeat++;
+                    nextTick += step;
+
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+
+                tickLoop();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+
+            playGameOver() {
+                this.stopMusic();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [392.00, 349.23, 311.13, 293.66, 220.00, 146.83]; // Acorde menor triste descendente
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(250, t + idx * 0.16);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.16);
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.16);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.16 + 0.45);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.16);
+                    osc.stop(t + idx * 0.16 + 0.48);
+                });
+            }
+        }
+
+        const som = new SomFreeway();
+
+        // ============================================================================
+        // 2. SISTEMA DE MOTOR E JOGO 3D (Three.js)
+        // ============================================================================
+        let scene, camera, renderer;
+        let starfield;
+
+        // Entidades
+        let playerChicken;
+        let vehicles = [];
+        let explosionParticles = [];
+
+        // Estados Globais do Jogo
+        const GAME_STATES = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
+        let gameState = GAME_STATES.MENU;
+
+        let score = 0;
+        let highscore = parseInt(localStorage.getItem('cyber_freeway_highscore') || '0');
+        let wave = 1;
+        let gameTimeLeft = 90.0; // Desafio de 90 segundos
+
+        // Configuração de Faixas e Arena
+        const BOUNDS_X = 16.0;   // Limite lateral da rodovia
+        const LANES_COUNT = 10;
+        const LANE_SPACING = 1.6; // Espaço em Z entre faixas
+        const ROAD_START_Z = 8.0; // Z onde a galinha começa (base)
+        const ROAD_END_Z = -8.0;  // Z onde a galinha completa travessia (topo)
+
+        // Características do Jogador
+        let currentLaneIdx = -1; // -1 = Base, 0 a 9 = Faixas, 10 = Topo
+        let chickenStunTimer = 0;
+        let isStunned = false;
+
+        // Configurações de Câmera Orbital (WASD)
+        let anguloCamera = 0;
+        let zoomCamera = 1.0;
+        let shakeAmount = 0;
+
+        // Controles
+        const keys = { ArrowUp: false, ArrowDown: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
+        let isTouchDevice = false;
+
+        // Elementos DOM
+        const hudScore = document.getElementById('hud-score');
+        const hudHighscore = document.getElementById('hud-highscore');
+        const hudWave = document.getElementById('hud-wave');
+        const timerText = document.getElementById('timer-text');
+        const timerBar = document.getElementById('timer-bar');
+        const btnSound = document.getElementById('btn-sound');
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        hudHighscore.innerText = String(highscore).padStart(3, '0');
+
+        // ============================================================================
+        // 3. CONSTRUÇÃO PROCEDURAL DA GALINHA E VEÍCULOS (Voxel Style)
+        // ============================================================================
+        
+        // Cria Galinha voxelada 3D
+        function createChickenMesh() {
+            const chickenGroup = new THREE.Group();
+
+            // Material Corpo Branco
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+
+            // Corpo (Cubo)
+            const bodyGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.25;
+            chickenGroup.add(body);
+
+            // Cabeça (Cubo empilhado)
+            const headGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.position.set(0, 0.65, 0.08);
+            chickenGroup.add(head);
+
+            // Bico Amarelo
+            const beakGeo = new THREE.BoxGeometry(0.12, 0.1, 0.15);
+            const beakMat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            const beak = new THREE.Mesh(beakGeo, beakMat);
+            beak.position.set(0, 0.62, 0.3);
+            chickenGroup.add(beak);
+
+            // Crista Vermelha (Cresta superior)
+            const crestGeo = new THREE.BoxGeometry(0.1, 0.15, 0.25);
+            const crestMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            const crest = new THREE.Mesh(crestGeo, crestMat);
+            crest.position.set(0, 0.88, 0.08);
+            chickenGroup.add(crest);
+
+            // Patas Amarelas (Cilindros ou cubos finos)
+            const legGeo = new THREE.BoxGeometry(0.08, 0.22, 0.08);
+            const leftLeg = new THREE.Mesh(legGeo, beakMat);
+            leftLeg.position.set(-0.15, 0.05, 0);
+            
+            const rightLeg = leftLeg.clone();
+            rightLeg.position.x = 0.15;
+            
+            chickenGroup.add(leftLeg, rightLeg);
+
+            // Olhos
+            const eyeGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.19, 0.68, 0.15);
+            
+            const rightEye = leftEye.clone();
+            rightEye.position.x = 0.19;
+            
+            chickenGroup.add(leftEye, rightEye);
+
+            // Habilita sombras
+            chickenGroup.castShadow = true;
+            chickenGroup.receiveShadow = true;
+
+            // Armazena referências para animação de pulo/salto
+            chickenGroup.userData = {
+                originalY: 0,
+                isJumping: false,
+                jumpTime: 0,
+                startY: 0
+            };
+
+            return chickenGroup;
+        }
+
+        // Cria Carros e Caminhões Voxel
+        // Tipo 0 = Carro Compacto (Esportivo)
+        // Tipo 1 = Caminhão de Carga
+        function createVehicleMesh(type, colorHex) {
+            const vehicleGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                roughness: 0.2,
+                metalness: 0.8,
+                emissive: colorHex,
+                emissiveIntensity: 0.18
+            });
+
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+
+            if (type === 0) { // Carro Esportivo Neon
+                // Chassi inferior
+                const baseGeo = new THREE.BoxGeometry(1.6, 0.25, 0.85);
+                const base = new THREE.Mesh(baseGeo, bodyMat);
+                base.position.y = 0.2;
+                vehicleGroup.add(base);
+
+                // Cockpit superior
+                const topGeo = new THREE.BoxGeometry(0.9, 0.3, 0.75);
+                const top = new THREE.Mesh(topGeo, bodyMat);
+                top.position.set(-0.15, 0.45, 0);
+                vehicleGroup.add(top);
+
+                // Janelas/Vidros
+                const windowGeo = new THREE.BoxGeometry(0.5, 0.22, 0.77);
+                const windowMesh = new THREE.Mesh(windowGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                windowMesh.position.set(-0.1, 0.48, 0);
+                vehicleGroup.add(windowMesh);
+
+                // Rodas (4 cilindros horizontais)
+                const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.15, 8);
+                wheelGeo.rotateX(Math.PI / 2);
+                
+                const w1 = new THREE.Mesh(wheelGeo, wheelMat); w1.position.set(-0.5, 0.15, 0.44);
+                const w2 = w1.clone(); w2.position.set(0.5, 0.15, 0.44);
+                const w3 = w1.clone(); w3.position.set(-0.5, 0.15, -0.44);
+                const w4 = w1.clone(); w4.position.set(0.5, 0.15, -0.44);
+
+                vehicleGroup.add(w1, w2, w3, w4);
+            } else { // Caminhão Pesado
+                // Chassi de base
+                const baseGeo = new THREE.BoxGeometry(2.4, 0.3, 0.9);
+                const base = new THREE.Mesh(baseGeo, bodyMat);
+                base.position.y = 0.25;
+                vehicleGroup.add(base);
+
+                // Cabine frontal
+                const cabGeo = new THREE.BoxGeometry(0.7, 0.65, 0.8);
+                const cab = new THREE.Mesh(cabGeo, bodyMat);
+                cab.position.set(0.75, 0.65, 0);
+                vehicleGroup.add(cab);
+
+                // Contêiner de Carga traseiro
+                const cargoMat = new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.6 });
+                const cargoGeo = new THREE.BoxGeometry(1.6, 0.75, 0.85);
+                const cargo = new THREE.Mesh(cargoGeo, cargoMat);
+                cargo.position.set(-0.35, 0.7, 0);
+                vehicleGroup.add(cargo);
+
+                // 6 Rodas para o caminhão pesado
+                const wheelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.15, 8);
+                wheelGeo.rotateX(Math.PI / 2);
+
+                const w1 = new THREE.Mesh(wheelGeo, wheelMat); w1.position.set(-0.8, 0.18, 0.46);
+                const w2 = w1.clone(); w2.position.set(0, 0.18, 0.46);
+                const w3 = w1.clone(); w3.position.set(0.8, 0.18, 0.46);
+                const w4 = w1.clone(); w4.position.set(-0.8, 0.18, -0.46);
+                const w5 = w1.clone(); w5.position.set(0, 0.18, -0.46);
+                const w6 = w1.clone(); w6.position.set(0.8, 0.18, -0.46);
+
+                vehicleGroup.add(w1, w2, w3, w4, w5, w6);
+            }
+
+            vehicleGroup.castShadow = true;
+            return vehicleGroup;
+        }
+
+        // ============================================================================
+        // 4. PARTÍCULAS DE COLISÃO
+        // ============================================================================
+        function spawnExplosionParticles(position, color, count = 12) {
+            const particleGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const particleMat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 1.0
+            });
+
+            for (let i = 0; i < count; i++) {
+                const mesh = new THREE.Mesh(particleGeo, particleMat);
+                mesh.position.copy(position);
+
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() * 3) + 1, // Explosão de penas arremessadas para cima
+                    (Math.random() - 0.5) * 5
+                );
+
+                scene.add(mesh);
+                explosionParticles.push({
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: (Math.random() * 1.5) + 1.2
+                });
+            }
+        }
+
+        // ============================================================================
+        // 5. INICIALIZAÇÃO DA CENA E AMBIENTE 3D
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x010103, 0.022);
+
+            // Câmera orbital tridimensional
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Iluminação
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+            scene.add(ambientLight);
+
+            // Luz do Sol / Postes
+            const dirLight = new THREE.DirectionalLight(0xff00ff, 0.7); // Luz dicroica
+            dirLight.position.set(0, 15, 8);
+            scene.add(dirLight);
+
+            const roadLight = new THREE.PointLight(0x00f0ff, 1.2, 50);
+            roadLight.position.set(0, 5, 0);
+            scene.add(roadLight);
+
+            // Construção da Rodovia (10 faixas divididas por linhas de marcação neon)
+            const roadGeo = new THREE.PlaneGeometry(36, 17.6, 18, 11);
+            const roadMat = new THREE.MeshStandardMaterial({
+                color: 0x050512,
+                roughness: 0.7
+            });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.position.set(0, -0.01, 0); // Fica levemente debaixo da superfície
+            scene.add(road);
+
+            // Postes de Luz Neon e divisórias nas bordas
+            const sideBorderGeo = new THREE.BoxGeometry(0.2, 0.2, 17.6);
+            const leftBorder = new THREE.Mesh(sideBorderGeo, new THREE.MeshBasicMaterial({ color: 0xff007f }));
+            leftBorder.position.set(-BOUNDS_X - 0.2, 0.05, 0);
+            
+            const rightBorder = leftBorder.clone();
+            rightBorder.position.x = BOUNDS_X + 0.2;
+            
+            scene.add(leftBorder, rightBorder);
+
+            // Desenha as linhas neon de separação das 10 faixas
+            // Z varia de -8.0 (topo) a 8.0 (base).
+            for (let i = 1; i < LANES_COUNT; i++) {
+                const laneZ = ROAD_START_Z - (i * LANE_SPACING);
+                
+                // Desenha linha pontilhada brilhante
+                const lineGeo = new THREE.BoxGeometry(32, 0.02, 0.05);
+                const lineMat = new THREE.MeshBasicMaterial({
+                    color: 0x330055, // Azul/Roxo apagado de base
+                    transparent: true,
+                    opacity: 0.4
+                });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.position.set(0, 0, laneZ);
+                scene.add(line);
+            }
+
+            // Postes de luz física com lâmpadas cônicas
+            const postGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.5, 8);
+            const postMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const lampMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const lampGeo = new THREE.BoxGeometry(0.3, 0.1, 0.3);
+
+            for (let i = -1; i <= 1; i += 2) {
+                // Postes da esquerda
+                const postL = new THREE.Mesh(postGeo, postMat);
+                postL.position.set(-BOUNDS_X - 0.6, 1.25, i * 6.0);
+                const lampL = new THREE.Mesh(lampGeo, lampMat);
+                lampL.position.set(0.1, 1.25, 0);
+                postL.add(lampL);
+
+                // Postes da direita
+                const postR = new THREE.Mesh(postGeo, postMat);
+                postR.position.set(BOUNDS_X + 0.6, 1.25, i * 6.0);
+                const lampR = new THREE.Mesh(lampGeo, lampMat);
+                lampR.position.set(-0.1, 1.25, 0);
+                postR.add(lampR);
+
+                scene.add(postL, postR);
+            }
+
+            // Estrelas Cibernéticas de Fundo
+            const starCount = 120;
+            const starGeo = new THREE.BufferGeometry();
+            const starPositions = new Float32Array(starCount * 3);
+            
+            for (let i = 0; i < starCount; i++) {
+                starPositions[i * 3] = (Math.random() - 0.5) * 80;
+                starPositions[i * 3 + 1] = (Math.random() * 20) + 2;
+                starPositions[i * 3 + 2] = (Math.random() - 0.5) * 80 - 10;
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            
+            const starMat = new THREE.PointsMaterial({
+                size: 0.2,
+                color: 0xff007f,
+                transparent: true,
+                opacity: 0.4
+            });
+            starfield = new THREE.Points(starGeo, starMat);
+            scene.add(starfield);
+
+            // Criação da Galinha do Jogador
+            playerChicken = createChickenMesh();
+            scene.add(playerChicken);
+
+            // Oculta loading screen
+            loadingScreen.style.display = 'none';
+
+            window.addEventListener('resize', onWindowResize);
+            
+            atualizarCamera(0);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 6. PROCESSAMENTO E GERAÇÃO DO TRÁFEGO DE VEÍCULOS
+        // ============================================================================
+        
+        // Inicializa o tráfego nas 10 faixas de rodovia
+        function setupHighwayTraffic() {
+            // Remove carros velhos
+            vehicles.forEach(v => scene.remove(v));
+            vehicles = [];
+
+            // Faixas vão de 0 (faixa mais próxima da base) a 9 (faixa mais próxima do topo)
+            // Velocidade e direção alternam por faixa
+            for (let lane = 0; lane < LANES_COUNT; lane++) {
+                const laneZ = ROAD_START_Z - LANE_SPACING - (lane * LANE_SPACING);
+                const dirX = lane % 2 === 0 ? 1 : -1; // 1 = Direita, -1 = Esquerda
+                
+                // Determina velocidade da faixa com base na onda
+                const baseSpeed = (2.8 + Math.random() * 3.5) + (wave * 0.5);
+                const laneSpeed = baseSpeed * dirX;
+
+                // Spawna 1 ou 2 veículos por faixa distribuídos horizontalmente
+                const vehicleCount = 1 + (Math.random() > 0.5 ? 1 : 0);
+                for (let i = 0; i < vehicleCount; i++) {
+                    const type = Math.random() > 0.65 ? 1 : 0; // Compacto ou Caminhão
+                    
+                    // Seleciona cor randômica
+                    const colors = [0x00f0ff, 0xff007f, 0x39ff14, 0xffff00, 0xff5e00];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const vMesh = createVehicleMesh(type, color);
+
+                    // Distribui os carros com distância horizontal para não sobreporem
+                    const startX = -12 + (i * 18) + (Math.random() - 0.5) * 5;
+                    vMesh.position.set(startX, 0, laneZ);
+                    
+                    // Rotaciona o carro dependendo da direção
+                    if (dirX === -1) {
+                        vMesh.rotation.y = Math.PI;
+                    }
+
+                    // Configurações do carro
+                    vMesh.userData = {
+                        laneIdx: lane,
+                        speed: laneSpeed,
+                        width: type === 0 ? 1.6 : 2.4,
+                        originalColor: color,
+                        hornTimer: 2.0 + Math.random() * 6.0 // Timer randômico para buzinas
+                    };
+
+                    scene.add(vMesh);
+                    vehicles.push(vMesh);
+                }
+            }
+        }
+
+        // ============================================================================
+        // 7. MECÂNICA DE COLISÕES
+        // ============================================================================
+        function checkCollision(objA, objB, sizeA = 0.5, sizeB = 0.5) {
+            // AABB horizontal (eixo X) e vertical (eixo Z)
+            const posA = new THREE.Vector3();
+            const posB = new THREE.Vector3();
+
+            objA.getWorldPosition(posA);
+            objB.getWorldPosition(posB);
+
+            return (Math.abs(posA.x - posB.x) < (sizeA + sizeB) &&
+                    Math.abs(posA.z - posB.z) < (sizeA + sizeB));
+        }
+
+        // ============================================================================
+        // 8. LOOP DE ATUALIZAÇÃO DA LÓGICA DO JOGO
+        // ============================================================================
+        
+        function updateGame(deltaTime) {
+            if (gameState !== GAME_STATES.PLAYING) return;
+
+            // ------------------------------------------------------------------------
+            // 8.1. TEMPORIZADOR DE SESSÃO
+            // ------------------------------------------------------------------------
+            gameTimeLeft -= deltaTime;
+            if (gameTimeLeft <= 0) {
+                gameTimeLeft = 0;
+                handleGameOver();
+            }
+
+            timerText.innerText = Math.floor(gameTimeLeft) + 's';
+            // Atualiza barra de progresso
+            const percent = (gameTimeLeft / 90.0) * 100;
+            timerBar.style.width = percent + '%';
+
+            // Alerta crítico de tempo abaixo de 20s
+            if (gameTimeLeft < 20.0) {
+                timerBar.classList.add('warning');
+            } else {
+                timerBar.classList.remove('warning');
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.2. ATORDOAMENTO E COLISÃO
+            // ------------------------------------------------------------------------
+            if (isStunned) {
+                chickenStunTimer -= deltaTime;
+                
+                // Pisca a galinha em vermelho durante o atordoamento
+                const flash = Math.floor(performance.now() * 0.01) % 2 === 0;
+                playerChicken.children.forEach(c => {
+                    if (c.material) c.material.emissive.setHex(flash ? 0xff0000 : 0x000000);
+                });
+
+                if (chickenStunTimer <= 0) {
+                    isStunned = false;
+                    // Restaura cor original branca
+                    playerChicken.children.forEach(c => {
+                        if (c.material) c.material.emissive.setHex(0x000000);
+                    });
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.3. ANIMAÇÃO DE PULO (HOPPING) DA GALINHA
+            // ------------------------------------------------------------------------
+            if (playerChicken.userData.isJumping) {
+                playerChicken.userData.jumpTime += deltaTime * 8.0; // Velocidade do pulo
+                
+                const t = playerChicken.userData.jumpTime;
+                if (t >= 1.0) {
+                    // Terminou pulo
+                    playerChicken.userData.isJumping = false;
+                    playerChicken.position.y = 0;
+                } else {
+                    // Parábola de altura do pulo (y = sen(t * pi) * altura)
+                    const jumpHeight = 0.45;
+                    playerChicken.position.y = Math.sin(t * Math.PI) * jumpHeight;
+                }
+            }
+
+            // Suaviza a transição de posição Z da galinha de acordo com a faixa
+            const targetZ = getZFromLane(currentLaneIdx);
+            playerChicken.position.z = THREE.MathUtils.lerp(playerChicken.position.z, targetZ, 12 * deltaTime);
+
+            // ------------------------------------------------------------------------
+            // 8.4. MOVIMENTO DO TRÁFEGO DE VEÍCULOS
+            // ------------------------------------------------------------------------
+            for (let i = 0; i < vehicles.length; i++) {
+                const v = vehicles[i];
+                // Move horizontalmente
+                v.position.x += v.userData.speed * deltaTime;
+
+                // Respawna no lado oposto ao sair da tela
+                if (v.userData.speed > 0 && v.position.x > BOUNDS_X + 2.0) {
+                    v.position.x = -BOUNDS_X - 2.0;
+                } else if (v.userData.speed < 0 && v.position.x < -BOUNDS_X - 2.0) {
+                    v.position.x = BOUNDS_X + 2.0;
+                }
+
+                // Disparo de buzinas randômicas
+                v.userData.hornTimer -= deltaTime;
+                if (v.userData.hornTimer <= 0) {
+                    v.userData.hornTimer = 4.0 + Math.random() * 8.0; // Reseta
+                    
+                    // Buzina apenas se estiver perto da galinha horizontalmente
+                    if (Math.abs(v.position.x - playerChicken.position.x) < 8.0) {
+                        som.playCarHorn();
+                        
+                        // Pisca os faróis do carro rapidamente ao buzinar
+                        const originalColor = v.userData.originalColor;
+                        v.children[0].material.emissive.setHex(0xffffff);
+                        setTimeout(() => {
+                            if (v.children[0] && v.children[0].material) {
+                                v.children[0].material.emissive.setHex(originalColor);
+                            }
+                        }, 250);
+                    }
+                }
+
+                // Colisão do Carro com a Galinha (se não estiver atordoada)
+                if (!isStunned && checkCollision(playerChicken, v, 0.25, v.userData.width * 0.45)) {
+                    som.playCollisionSquawk();
+                    spawnExplosionParticles(playerChicken.position, 0xff0055, 12);
+                    
+                    // Recua a galinha por 2 faixas e atordoa
+                    currentLaneIdx = Math.max(-1, currentLaneIdx - 2);
+                    isStunned = true;
+                    chickenStunTimer = 0.8;
+                    
+                    // Ativa tremor de câmera
+                    shakeAmount = 0.45;
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.5. VERIFICAÇÃO DE SUCESSO (CROSSING / VITÓRIA DE FAIXA)
+            // ------------------------------------------------------------------------
+            if (currentLaneIdx === LANES_COUNT) { // Chegou no topo
+                som.playCrossSuccess();
+                spawnExplosionParticles(playerChicken.position, 0xffff00, 20);
+
+                score++;
+                hudScore.innerText = String(score).padStart(3, '0');
+
+                // Aumenta nível de tráfego a cada 3 pontos
+                const nextWave = Math.floor(score / 3) + 1;
+                if (nextWave !== wave) {
+                    wave = nextWave;
+                    hudWave.innerText = 'Nível ' + wave;
+                    setupHighwayTraffic();
+                }
+
+                // Retorna à base para a próxima corrida
+                currentLaneIdx = -1;
+                playerChicken.position.z = getZFromLane(-1);
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.6. PARTICULAS DE EXPLOSÃO
+            // ------------------------------------------------------------------------
+            const gravity = -3.5;
+            for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                const p = explosionParticles[i];
+                p.velocity.y += gravity * deltaTime;
+                p.mesh.position.addScaledVector(p.velocity, deltaTime);
+
+                p.life -= p.decay * deltaTime;
+                p.mesh.material.opacity = p.life;
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    explosionParticles.splice(i, 1);
+                }
+            }
+        }
+
+        // Converte o índice de faixas (-1 a 10) em coordenadas reais de Z no Three.js
+        function getZFromLane(laneIdx) {
+            if (laneIdx === -1) return ROAD_START_Z + 0.6; // Base inicial
+            if (laneIdx === LANES_COUNT) return ROAD_END_Z - 0.6; // Topo final
+            
+            // Faixas intermediárias
+            return ROAD_START_Z - LANE_SPACING - (laneIdx * LANE_SPACING);
+        }
+
+        // ============================================================================
+        // 9. INPUTS E INTERAÇÃO DE CONTROLES (Teclado/Mouse/Touch)
+        // ============================================================================
+        
+        function handleHop(direction) {
+            if (gameState !== GAME_STATES.PLAYING || isStunned) return;
+
+            if (direction === 'up' && currentLaneIdx < LANES_COUNT) {
+                som.playCluck();
+                currentLaneIdx++;
+                triggerHopAnimation();
+            } else if (direction === 'down' && currentLaneIdx > -1) {
+                som.playCluck();
+                currentLaneIdx--;
+                triggerHopAnimation();
+            }
+        }
+
+        function triggerHopAnimation() {
+            playerChicken.userData.isJumping = true;
+            playerChicken.userData.jumpTime = 0;
+        }
+
+        function setupControls() {
+            // Teclado
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowUp') {
+                    handleHop('up');
+                    e.preventDefault();
+                }
+                if (e.code === 'ArrowDown') {
+                    handleHop('down');
+                    e.preventDefault();
+                }
+                if (e.code === 'KeyW') keys.KeyW = true;
+                if (e.code === 'KeyS') keys.KeyS = true;
+                if (e.code === 'KeyA') keys.KeyA = true;
+                if (e.code === 'KeyD') keys.KeyD = true;
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'KeyW') keys.KeyW = false;
+                if (e.code === 'KeyS') keys.KeyS = false;
+                if (e.code === 'KeyA') keys.KeyA = false;
+                if (e.code === 'KeyD') keys.KeyD = false;
+            });
+
+            // Toque para celular/mobile
+            isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isTouchDevice) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+                
+                const btnUp = document.getElementById('btn-up');
+                const btnDown = document.getElementById('btn-down');
+
+                btnUp.addEventListener('touchstart', (e) => {
+                    handleHop('up');
+                    e.preventDefault();
+                });
+                btnDown.addEventListener('touchstart', (e) => {
+                    handleHop('down');
+                    e.preventDefault();
+                });
+            } else {
+                // Clique do mouse na tela também pula para cima
+                const container = document.getElementById('canvas-container');
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        handleHop('up');
+                    }
+                });
+            }
+        }
+
+        // ============================================================================
+        // 10. ATUALIZAÇÃO DA CÂMERA ORBITAL (WASD)
+        // ============================================================================
+        function atualizarCamera(dt) {
+            const velRotacao = 1.6;
+            const velZoom = 1.0;
+
+            if (keys.KeyA) {
+                anguloCamera += velRotacao * dt;
+            }
+            if (keys.KeyD) {
+                anguloCamera -= velRotacao * dt;
+            }
+            if (keys.KeyW) {
+                zoomCamera -= velZoom * dt; // aproxima
+            }
+            if (keys.KeyS) {
+                zoomCamera += velZoom * dt; // afasta
+            }
+
+            // Clampa rotação lateral para não inverter a esquerda
+            const limiteAngulo = Math.PI / 4.5;
+            anguloCamera = Math.max(-limiteAngulo, Math.min(limiteAngulo, anguloCamera));
+
+            // Clampa zoom
+            zoomCamera = Math.max(0.6, Math.min(1.5, zoomCamera));
+
+            const focoX = 0;
+            const focoY = 0;
+            const focoZ = 0;
+
+            const distBase = 20;
+            const altBase = 11;
+
+            const distAtual = distBase * zoomCamera;
+            const altAtual = altBase * zoomCamera;
+
+            let camX = focoX + distAtual * Math.sin(anguloCamera);
+            let camZ = focoZ + distAtual * Math.cos(anguloCamera);
+            let camY = focoY + altAtual;
+
+            // Tremor de impacto
+            let shakeX = 0, shakeY = 0, shakeZ = 0;
+            if (shakeAmount > 0) {
+                shakeX = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeY = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeZ = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeAmount -= dt * 2.8;
+            }
+
+            camera.position.set(camX + shakeX, camY + shakeY, camZ + shakeZ);
+            camera.lookAt(focoX, focoY, focoZ);
+        }
+
+        // ============================================================================
+        // 11. LOOP DE RENDERIZAÇÃO
+        // ============================================================================
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            // Calcula delta time
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = Math.min(0.05, (timestamp - lastTime) * 0.001);
+            lastTime = timestamp;
+
+            // Atualiza mecânicas
+            updateGame(deltaTime);
+
+            // Atualiza posição da câmera
+            atualizarCamera(deltaTime);
+
+            if (starfield) {
+                starfield.rotation.y += deltaTime * 0.015;
+            }
+
+            // Renderiza cena Three.js
+            renderer.render(scene, camera);
+        }
+
+        // Fim do tempo de jogo
+        function handleGameOver() {
+            gameState = GAME_STATES.GAMEOVER;
+            som.playGameOver();
+
+            // Recorde
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('cyber_freeway_highscore', highscore);
+                hudHighscore.innerText = String(highscore).padStart(3, '0');
+            }
+
+            document.getElementById('summary-score').innerText = String(score).padStart(3, '0');
+            document.getElementById('summary-highscore').innerText = String(highscore).padStart(3, '0');
+            document.getElementById('summary-total').innerText = String(score).padStart(3, '0');
+
+            screenGameover.classList.remove('hidden');
+        }
+
+        // Inicia novo jogo
+        function startNewGame() {
+            score = 0;
+            wave = 1;
+            gameTimeLeft = 90.0;
+            currentLaneIdx = -1;
+            isStunned = false;
+            chickenStunTimer = 0;
+
+            hudScore.innerText = '000';
+            hudWave.innerText = 'Nível 1';
+
+            // Limpa partículas velhas
+            explosionParticles.forEach(p => scene.remove(p.mesh));
+            explosionParticles = [];
+
+            // Spawna tráfego
+            setupHighwayTraffic();
+
+            // Reposiciona galinha
+            playerChicken.position.set(0, 0, getZFromLane(-1));
+            playerChicken.position.y = 0;
+
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+
+            gameState = GAME_STATES.PLAYING;
+
+            som.init();
+            som.startMusic();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+            setupControls();
+
+            btnStart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnRestart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnSound.addEventListener('click', () => {
+                const mutado = som.toggleMute();
+                if (mutado) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Silenciado';
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                }
+            });
+
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
