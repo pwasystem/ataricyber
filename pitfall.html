@@ -928,6 +928,7 @@
                 swingTime: 0,
                 grounded: true,
                 facing: 1, // 1: direita, -1: esquerda
+                respawnX: -16,
                 invincible: 0, // tempo restante
                 stumbleTime: 0, // tempo travado de dor
                 width: 0.8,
@@ -938,7 +939,7 @@
             // Câmera Orbital
             camera: {
                 radius: 28,
-                theta: Math.PI / 2, // 90 graus (vista de lado)
+                theta: 0, // Inicia com vista lateral clássica
                 phi: 0.22, // levemente acima do plano
                 targetYOffset: 1.0
             },
@@ -1935,6 +1936,12 @@
             state.player.swinging = false;
             state.player.invincible = 0;
             state.player.stumbleTime = 0;
+            state.player.respawnX = -16;
+
+            // Reseta câmera para lateral clássica e zoom padrão
+            state.camera.theta = 0;
+            state.camera.radius = 28;
+            state.camera.phi = 0.22;
 
             state.transition.active = false;
 
@@ -2096,13 +2103,13 @@
                 activeVine.rotation.z = Math.sin(time) * 0.65; // balanço de amplitude
                 
                 // Checar se o jogador no ar colide com a ponta da liana para se agarrar
-                if (!p.swinging && !p.grounded && !p.climbing && p.vy < 2.0) {
+                if (!p.swinging && !p.grounded && !p.climbing) {
                     const vineLen = 9.8;
                     const tipX = activeVine.position.x - Math.sin(activeVine.rotation.z) * vineLen;
                     const tipY = activeVine.position.y - Math.cos(activeVine.rotation.z) * vineLen;
                     
                     const dist = Math.hypot(p.x - tipX, p.y - tipY);
-                    if (dist < 1.6) {
+                    if (dist < 2.0) {
                         p.swinging = true;
                         p.swingRefVine = activeVine;
                         state.player.swingTime = 0;
@@ -2297,6 +2304,7 @@
 
                 // Ajusta Harry
                 state.player.x = -t.direction * (CONFIG.width / 2 - 1.2);
+                state.player.respawnX = (t.direction === 1) ? -16 : 16;
                 if (state.player.climbing) {
                     state.player.climbing = false;
                 }
@@ -2403,7 +2411,7 @@
             }
 
             // Respawn seguro no início da sala atual
-            state.player.x = -16;
+            state.player.x = state.player.respawnX;
             state.player.y = (state.level === 'surface') ? 0 : CONFIG.undergroundY;
             state.player.vx = 0;
             state.player.vy = 0;
@@ -2593,6 +2601,12 @@
             }
             if (cKeys['s'] || cKeys['S']) {
                 state.camera.phi = Math.max(0.02, state.camera.phi - 1.2 * dt);
+            }
+            if (cKeys['z'] || cKeys['Z']) {
+                state.camera.radius = Math.max(8, state.camera.radius - 20 * dt);
+            }
+            if (cKeys['x'] || cKeys['X']) {
+                state.camera.radius = Math.min(55, state.camera.radius + 20 * dt);
             }
 
             // A câmera orbita em torno de Harry
