@@ -527,7 +527,8 @@
                     <li>Invasores alienígenas marcham em direção ao grid inferior de defesa. Destrua-os antes que atinjam sua base.</li>
                     <li>Use os <strong>4 escudos cibernéticos</strong> para se proteger dos tiros inimigos. Cuidado: os escudos sofrem desgaste contínuo e se desintegram.</li>
                     <li>Uma **Nave-Mãe (UFO)** vermelha cruza o topo esporadicamente, dando bônus de pontuação massivos ao ser destruída.</li>
-                    <li><strong>Controles (Teclado):</strong> Use as setas ou **A** / **D** para mover a nave. Pressione **Espaço** para disparar.</li>
+                    <li><strong>Controles da Nave:</strong> Use as **setas direcionais (Esquerda/Direita)** para mover a nave e **Espaço** para disparar.</li>
+                    <li><strong>Controles da Câmera:</strong> Use **A** / **D** para girar o ângulo de visão e **W** / **S** para ajustar o zoom (aproximar/afastar).</li>
                     <li><strong>Controles (Mouse/Touch):</strong> Clique e segure para arrastar a nave lateralmente. Clique no lado direito ou toque no botão virtual para atirar.</li>
                 </ul>
             </div>
@@ -984,13 +985,18 @@
         let ufoSpawnTimer = 0;
 
         // Entradas do Usuário
-        const keys = { a: false, d: false, ArrowLeft: false, ArrowRight: false, Space: false };
+        const keys = { ArrowLeft: false, ArrowRight: false, Space: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
         let isTouchDevice = false;
         let touchMoveX = 0;
         let touchDragging = false;
         let shootCooldown = 0;
         let isPointerLocked = false;
         let targetPlayerX = 0; // Usado para suavização de movimento com drag
+
+        // Estado da Câmera Orbital
+        let anguloCamera = 0;  // Ângulo orbital da câmera (A/D)
+        let zoomCamera = 1.0;  // Fator de zoom da câmera (W/S)
+        let shakeAmount = 0;   // Tremor de impacto
 
         // Inicialização de Elementos DOM
         const hudScore = document.getElementById('hud-score');
@@ -1534,18 +1540,23 @@
             // 8.1. MOVIMENTO DO JOGADOR
             // ------------------------------------------------------------------------
             let moveDir = 0;
+            if (keys.ArrowLeft) moveDir = -1;
+            if (keys.ArrowRight) moveDir = 1;
             
             if (isTouchDevice) {
-                // Em celulares/drag, interpola suavemente até o ponto tocado
-                const diff = targetPlayerX - playerShip.position.x;
-                if (Math.abs(diff) > 0.05) {
-                    playerShip.position.x += diff * 15 * deltaTime;
+                if (touchDragging) {
+                    // Arraste com o dedo
+                    const diff = targetPlayerX - playerShip.position.x;
+                    if (Math.abs(diff) > 0.05) {
+                        playerShip.position.x += diff * 15 * deltaTime;
+                    }
+                } else if (moveDir !== 0) {
+                    // Botões virtuais na tela
+                    const playerSpeed = 12.0;
+                    playerShip.position.x += moveDir * playerSpeed * deltaTime;
                 }
             } else {
                 // Teclado
-                if (keys.a || keys.ArrowLeft) moveDir = -1;
-                if (keys.d || keys.ArrowRight) moveDir = 1;
-
                 const playerSpeed = 12.0; // Velocidade de locomoção
                 playerShip.position.x += moveDir * playerSpeed * deltaTime;
             }
@@ -1906,19 +1917,8 @@
             playerShip.position.x = 0;
             targetPlayerX = 0;
 
-            // Pequena vibração ou tremor de câmera simulando impacto
-            const originalCamY = camera.position.y;
-            let shakeTime = 0;
-            const shakeInterval = setInterval(() => {
-                camera.position.x = (Math.random() - 0.5) * 0.6;
-                camera.position.y = originalCamY + (Math.random() - 0.5) * 0.6;
-                shakeTime += 30;
-                if (shakeTime > 300) {
-                    clearInterval(shakeInterval);
-                    camera.position.x = 0;
-                    camera.position.y = originalCamY;
-                }
-            }, 30);
+            // Ativa o tremor de câmera no loop atualizarCamera
+            shakeAmount = 0.5;
 
             if (lives <= 0) {
                 handleGameOver();
@@ -1997,8 +1997,12 @@
         function setupControls() {
             // Controles de Teclado
             window.addEventListener('keydown', (e) => {
-                if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = true;
-                if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = true;
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
+                if (e.code === 'ArrowRight') keys.ArrowRight = true;
+                if (e.code === 'KeyA') keys.KeyA = true;
+                if (e.code === 'KeyD') keys.KeyD = true;
+                if (e.code === 'KeyW') keys.KeyW = true;
+                if (e.code === 'KeyS') keys.KeyS = true;
                 if (e.code === 'Space') {
                     keys.Space = true;
                     e.preventDefault(); // Evita scroll do navegador
@@ -2010,8 +2014,12 @@
             });
 
             window.addEventListener('keyup', (e) => {
-                if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = false;
-                if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
+                if (e.code === 'ArrowRight') keys.ArrowRight = false;
+                if (e.code === 'KeyA') keys.KeyA = false;
+                if (e.code === 'KeyD') keys.KeyD = false;
+                if (e.code === 'KeyW') keys.KeyW = false;
+                if (e.code === 'KeyS') keys.KeyS = false;
                 if (e.code === 'Space') keys.Space = false;
             });
 
@@ -2047,11 +2055,11 @@
                 const btnShoot = document.getElementById('btn-shoot');
 
                 // Movimento por cliques nos botões virtuais
-                btnLeft.addEventListener('touchstart', (e) => { keys.a = true; e.preventDefault(); });
-                btnLeft.addEventListener('touchend', (e) => { keys.a = false; e.preventDefault(); });
+                btnLeft.addEventListener('touchstart', (e) => { keys.ArrowLeft = true; e.preventDefault(); });
+                btnLeft.addEventListener('touchend', (e) => { keys.ArrowLeft = false; e.preventDefault(); });
                 
-                btnRight.addEventListener('touchstart', (e) => { keys.d = true; e.preventDefault(); });
-                btnRight.addEventListener('touchend', (e) => { keys.d = false; e.preventDefault(); });
+                btnRight.addEventListener('touchstart', (e) => { keys.ArrowRight = true; e.preventDefault(); });
+                btnRight.addEventListener('touchend', (e) => { keys.ArrowRight = false; e.preventDefault(); });
 
                 btnShoot.addEventListener('touchstart', (e) => {
                     e.preventDefault();
@@ -2082,6 +2090,62 @@
             }
         }
 
+        // Atualiza a rotação (A/D) e o zoom (W/S) da câmera orbital e processa o shake
+        function atualizarCamera(dt) {
+            const velRotacao = 1.6; // velocidade de rotação em radianos por segundo
+            const velZoom = 1.0; // velocidade do fator de zoom por segundo
+
+            if (keys.KeyA) {
+                anguloCamera += velRotacao * dt;
+            }
+            if (keys.KeyD) {
+                anguloCamera -= velRotacao * dt;
+            }
+            if (keys.KeyW) {
+                zoomCamera -= velZoom * dt; // zoom in (aproxima)
+            }
+            if (keys.KeyS) {
+                zoomCamera += velZoom * dt; // zoom out (afasta)
+            }
+
+            // Limita a rotação lateral para manter o jogo jogável
+            const limiteAngulo = Math.PI / 4;
+            anguloCamera = Math.max(-limiteAngulo, Math.min(limiteAngulo, anguloCamera));
+
+            // Limita o zoom da câmera
+            zoomCamera = Math.max(0.6, Math.min(1.6, zoomCamera));
+
+            // Ponto focal central de lookAt da câmera
+            const focoX = 0;
+            const focoY = 3;
+            const focoZ = -4;
+
+            // Parâmetros base da câmera (quando zoom é 1.0)
+            const distBase = 26;
+            const altBase = 10;
+
+            const distAtual = distBase * zoomCamera;
+            const altAtual = altBase * zoomCamera;
+
+            // Calcula a nova posição da câmera no espaço usando coordenadas cilíndricas orbitais
+            let camX = focoX + distAtual * Math.sin(anguloCamera);
+            let camZ = focoZ + distAtual * Math.cos(anguloCamera);
+            let camY = focoY + altAtual;
+
+            // Aplica o shake de impacto, se ativo
+            let shakeX = 0, shakeY = 0, shakeZ = 0;
+            if (shakeAmount > 0) {
+                shakeX = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeY = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeZ = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeAmount -= dt * 2.8; // Reduz gradualmente
+            }
+
+            // Seta posição e orientação da câmera
+            camera.position.set(camX + shakeX, camY + shakeY, camZ + shakeZ);
+            camera.lookAt(focoX, focoY, focoZ);
+        }
+
         // ============================================================================
         // 11. LOOP DE RENDERIZAÇÃO E FLUXO DE EXECUÇÃO
         // ============================================================================
@@ -2096,6 +2160,9 @@
 
             // Atualiza lógica do jogo
             updateGame(deltaTime);
+
+            // Atualiza a posição e rotação orbital/zoom da câmera
+            atualizarCamera(deltaTime);
 
             // Animação leve de scroll infinito no Grid e Estrelas de fundo
             if (spaceGrid && gameState === GAME_STATES.PLAYING) {
