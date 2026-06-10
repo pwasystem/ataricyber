@@ -836,7 +836,7 @@
         // ============================================================================
         // 2. SISTEMA DE MOTOR E JOGO 3D (Three.js)
         // ============================================================================
-        let scene, camera, renderer;
+        let scene, camera, renderer, lastTime = 0;
         let starfield;
 
         // Entidades
@@ -1320,14 +1320,14 @@
                 // Pisca a galinha em vermelho durante o atordoamento
                 const flash = Math.floor(performance.now() * 0.01) % 2 === 0;
                 playerChicken.children.forEach(c => {
-                    if (c.material) c.material.emissive.setHex(flash ? 0xff0000 : 0x000000);
+                    if (c.material && c.material.emissive) c.material.emissive.setHex(flash ? 0xff0000 : 0x000000);
                 });
 
                 if (chickenStunTimer <= 0) {
                     isStunned = false;
                     // Restaura cor original branca
                     playerChicken.children.forEach(c => {
-                        if (c.material) c.material.emissive.setHex(0x000000);
+                        if (c.material && c.material.emissive) c.material.emissive.setHex(0x000000);
                     });
                 }
             }
