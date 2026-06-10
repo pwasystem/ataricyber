@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seaquest 3D - Cyber Deep Ocean</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #010105;
+            --glass-bg: rgba(6, 12, 26, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Efeito visual CRT */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.22) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        /* Mergulhadores Coletados */
+        .divers-hud-container {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .diver-icon {
+            width: 12px;
+            height: 18px;
+            background-color: var(--neon-cyan);
+            border-radius: 4px;
+            box-shadow: var(--text-glow);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .diver-icon::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 3px;
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon-cyan);
+            border-radius: 50%;
+        }
+
+        .diver-icon.empty {
+            opacity: 0.15;
+            background-color: #ffffff;
+            box-shadow: none;
+        }
+
+        .diver-icon.empty::after {
+            background-color: #ffffff;
+        }
+
+        /* Vidas do Jogador */
+        .lives-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .life-sub {
+            width: 20px;
+            height: 10px;
+            background-color: var(--neon-green);
+            border-radius: 5px;
+            box-shadow: var(--green-glow);
+            filter: drop-shadow(0 0 4px var(--neon-green));
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            position: relative;
+        }
+
+        .life-sub::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: 4px;
+            width: 4px;
+            height: 6px;
+            background-color: var(--neon-green);
+        }
+
+        .life-sub.lost {
+            opacity: 0.2;
+            transform: scale(0.8);
+        }
+
+        /* Botões de Ação */
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Painel de Oxigênio na Base */
+        #oxygen-panel {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: 320px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 18px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .oxygen-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            font-weight: 700;
+            color: #8a8fa3;
+            letter-spacing: 1.5px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .oxygen-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .oxygen-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-pink) 0%, var(--neon-cyan) 60%, var(--neon-green) 100%);
+            border-radius: 5px;
+            transition: width 0.1s linear, background-color 0.3s ease;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .oxygen-bar-fill.warning {
+            background: var(--neon-pink) !important;
+            box-shadow: 0 0 15px var(--neon-pink);
+            animation: pulse-danger 0.5s infinite alternate;
+        }
+
+        @keyframes pulse-danger {
+            from { filter: brightness(0.8); }
+            to { filter: brightness(1.2); }
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: none;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            pointer-events: auto;
+            touch-action: manipulation;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .mobile-btn.shoot-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 94, 0, 0.25);
+            border-color: var(--neon-orange);
+            box-shadow: 0 8px 24px rgba(255, 94, 0, 0.2);
+        }
+
+        .mobile-btn.shoot-btn:active {
+            background: rgba(255, 94, 0, 0.5);
+            box-shadow: 0 0 18px rgba(255, 94, 0, 0.6);
+        }
+
+        .dir-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+            pointer-events: none;
+        }
+
+        .dir-pad .mobile-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+        }
+
+        /* TELAS DE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(4, 12, 32, 0.85) 0%, rgba(1, 4, 12, 0.98) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(8, 14, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.04);
+            border-top: 3px solid var(--neon-cyan);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 60%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-pink);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--pink-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+            color: #03081a;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Resumo da Pontuação */
+        .score-summary {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background-color: #010208;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO SISTEMA CYBER SEAQUEST...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Pontos</div>
+                <div id="hud-score" class="hud-value cyan">00000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Recorde</div>
+                <div id="hud-highscore" class="hud-value">00000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Nível</div>
+                <div id="hud-wave" class="hud-value green">1</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Mergulhadores</div>
+                <div class="divers-hud-container" id="divers-display">
+                    <div class="diver-icon empty"></div>
+                    <div class="diver-icon empty"></div>
+                    <div class="diver-icon empty"></div>
+                    <div class="diver-icon empty"></div>
+                    <div class="diver-icon empty"></div>
+                    <div class="diver-icon empty"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div class="hud-group">
+                <div class="hud-label">Vidas</div>
+                <div class="lives-container" id="lives-display">
+                    <div class="life-sub"></div>
+                    <div class="life-sub"></div>
+                    <div class="life-sub"></div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Oxigênio -->
+    <div id="oxygen-panel">
+        <div class="oxygen-header">
+            <span>SURFACE / OXIGÊNIO</span>
+            <span id="oxygen-text">100%</span>
+        </div>
+        <div class="oxygen-bar-container">
+            <div class="oxygen-bar-fill" id="oxygen-bar"></div>
+        </div>
+    </div>
+
+    <!-- Controles Mobile -->
+    <div id="mobile-controls">
+        <div class="dir-pad">
+            <div></div>
+            <button id="btn-up" class="mobile-btn">▲</button>
+            <div></div>
+            <button id="btn-left" class="mobile-btn">◀</button>
+            <div></div>
+            <button id="btn-right" class="mobile-btn">▶</button>
+            <div></div>
+            <button id="btn-down" class="mobile-btn">▼</button>
+            <div></div>
+        </div>
+        <button id="btn-shoot" class="mobile-btn shoot-btn">🔥</button>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER SEAQUEST 3D</h1>
+            <div class="game-subtitle">Operação Oceânica Profunda</div>
+
+            <div class="instructions">
+                <h3>Diretrizes Táticas:</h3>
+                <ul>
+                    <li>Resgate os **Mergulhadores** perdidos no oceano profundo coletando-os com seu submarino (máximo de 6 por vez).</li>
+                    <li>Sua reserva de **Oxigênio** está se esgotando! Suba à **superfície** (linha do topo) para reabastecer e entregar os mergulhadores salvos.</li>
+                    <li>Cuidado! Se você subir à superfície enquanto a **Nave de Patrulha** vermelha estiver passando, você explodirá.</li>
+                    <li>Evite ou destrua tubarões mecânicos e submarinos patrulha inimigos disparando torpedos.</li>
+                    <li><strong>Controles da Nave:</strong> Use as **setas direcionais** para navegar e **Espaço** para disparar.</li>
+                    <li><strong>Controles da Câmera:</strong> Use **A** / **D** para girar o ângulo de visão orbital e **W** / **S** para ajustar o zoom (distância).</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">CONECTAR E SUBMERGIR</button>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">SUBMARINO DESTRUÍDO</h1>
+            <div class="game-subtitle">Rede de Suporte Vital Falhou</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Nível de Profundidade:</span>
+                    <span id="summary-wave" class="value">1</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Créditos de Resgate:</span>
+                    <span id="summary-score" class="value">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Recorde do Setor:</span>
+                    <span id="summary-highscore" class="value">00000</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">PONTUAÇÃO FINAL:</span>
+                    <span id="summary-total" class="value">00000</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR OPERAÇÃO</button>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. GERENCIADOR DE ÁUDIO SINTETIZADO (Web Audio API)
+        // ============================================================================
+        class SomSeaquest {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Sequenciador de Trilha (Synthwave de Profundidade)
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+
+                // Loop de Sonar Subaquático
+                this.sonarActive = false;
+                this.sonarInterval = null;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som do sonar subaquático periódico (Ping clássico)
+            playSonarPing() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1400, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.35); // Queda de tom clássica do sonar
+
+                gain.gain.setValueAtTime(0.04, t);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+
+                // Reverberação artificial curta usando filtro passa-alta
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, t);
+                filter.Q.setValueAtTime(1.5, t);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 1.25);
+            }
+
+            startSonarLoop() {
+                if (this.sonarActive) return;
+                this.sonarActive = true;
+                
+                const scheduleSonar = () => {
+                    if (!this.sonarActive) return;
+                    this.playSonarPing();
+                    this.sonarInterval = setTimeout(scheduleSonar, 4500); // Toca a cada 4.5 segundos
+                };
+                scheduleSonar();
+            }
+
+            stopSonarLoop() {
+                this.sonarActive = false;
+                if (this.sonarInterval) {
+                    clearTimeout(this.sonarInterval);
+                    this.sonarInterval = null;
+                }
+            }
+
+            // Som de disparo de torpedo submarino (tipo bolha)
+            playTorpedoFire() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.18); // Frequência sobe com efeito de "bubbles"
+
+                gain.gain.setValueAtTime(0.18, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.19);
+            }
+
+            // Resgatar mergulhador (som agradável de bônus)
+            playDiverRescue() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [523.25, 659.25, 783.99, 1046.50]; // Arpejo de Dó Maior rápido
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.04);
+                    
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.04 + 0.15);
+
+                    osc.connect(gain);
+                    gain.connect(this.sfxGain);
+                    
+                    osc.start(t + idx * 0.04);
+                    osc.stop(t + idx * 0.04 + 0.16);
+                });
+            }
+
+            // Descarregar mergulhadores na superfície (sucesso total)
+            playDeliverDivers() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [587.33, 739.99, 880.00, 1174.66, 1479.98]; // Arpejo Ré Maior triunfante
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.06);
+                    
+                    gain.gain.setValueAtTime(0.18, t + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(this.sfxGain);
+                    
+                    osc.start(t + idx * 0.06);
+                    osc.stop(t + idx * 0.06 + 0.26);
+                });
+            }
+
+            // Som de detonação / colisão subaquática (ruído com muito ganho e frequências filtradas)
+            playExplosion() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.8; // 0.8s de explosão abafada
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(180, t); // Frequência muito baixa por conta da água
+                filter.frequency.exponentialRampToValueAtTime(10, t + 0.78);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.7, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.78);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                // Sub oscilador senoidal para dar impacto físico na água
+                const sub = this.ctx.createOscillator();
+                const subGain = this.ctx.createGain();
+                sub.type = 'sine';
+                sub.frequency.setValueAtTime(45, t);
+                subGain.gain.setValueAtTime(0.8, t);
+                subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+
+                sub.connect(subGain);
+                subGain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 0.8);
+                sub.start(t);
+                sub.stop(t + 0.62);
+            }
+
+            // Alerta de Oxigênio Crítico (bipes alternados)
+            playOxygenWarning() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(987.77, t); // Nota Si aguda (irritante)
+
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.1);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.11);
+            }
+
+            // Trilha de Fundo Synthwave Subaquática (Deep Synth Beats)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const step = 0.28; // Tempo da colcheia lenta (BPM ~107)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (this.musicActive && !this.muted) {
+                        // Bassline profunda (notas da escala de Dó menor natural)
+                        if (this.musicBeat % 2 === 0) {
+                            const notes = [65.41, 65.41, 77.78, 77.78, 87.31, 87.31, 58.27, 58.27];
+                            const nota = notes[Math.floor(this.musicBeat / 2) % notes.length];
+
+                            const osc = this.ctx.createOscillator();
+                            const filter = this.ctx.createBiquadFilter();
+                            const gain = this.ctx.createGain();
+
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(nota, t);
+
+                            filter.type = 'lowpass';
+                            filter.frequency.setValueAtTime(160, t);
+
+                            gain.gain.setValueAtTime(0.14, t);
+                            gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.6);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(this.masterGain);
+
+                            osc.start(t);
+                            osc.stop(t + step * 1.8);
+                        }
+
+                        // Caixa subaquática abafada (Kick leve)
+                        if (this.musicBeat % 4 === 0) {
+                            const kick = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(90, t);
+                            kick.frequency.exponentialRampToValueAtTime(30, t + 0.15);
+
+                            gain.gain.setValueAtTime(0.24, t);
+                            gain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+
+                            kick.connect(gain);
+                            gain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.16);
+                        }
+                    }
+
+                    this.musicBeat++;
+                    nextTick += step;
+
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+
+                tickLoop();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+
+            playGameOver() {
+                this.stopMusic();
+                this.stopSonarLoop();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 164.81, 146.83, 110.00, 73.42]; // Escala triste descendente
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(220, t + idx * 0.18);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.18);
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.18 + 0.5);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.18);
+                    osc.stop(t + idx * 0.18 + 0.52);
+                });
+            }
+        }
+
+        const som = new SomSeaquest();
+
+        // ============================================================================
+        // 2. SISTEMA DE MOTOR E JOGO 3D (Three.js)
+        // ============================================================================
+        let scene, camera, renderer;
+        let starfield, bubbleParticles;
+
+        // Entidades
+        let playerSub;
+        let enemies = [];
+        let divers = [];
+        let playerTorpedos = [];
+        let explosionParticles = [];
+        let surfaceBoat = null;
+
+        // Estados Globais
+        const GAME_STATES = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
+        let gameState = GAME_STATES.MENU;
+
+        let score = 0;
+        let highscore = parseInt(localStorage.getItem('cyber_seaquest_highscore') || '0');
+        let wave = 1;
+        let lives = 3;
+        let diversCollected = 0;
+        let oxygen = 100.0;
+        
+        // Coordenadas e Limites de Arena
+        const BOUNDS_X = 14;      // Limites horizontais de navegação
+        const DEPTH_MIN_Y = -6.5;  // Profundidade máxima de mergulho
+        const SURFACE_Y = 6.2;     // Linha d'água de superfície (reabastecimento)
+
+        // Marcha de Spawns Inimigos
+        let enemySpawnTimer = 0;
+        let enemySpawnInterval = 1.8; // Segundos entre novos spawns
+        let diverSpawnTimer = 0;
+        let diverSpawnInterval = 4.0;
+        let surfaceBoatTimer = 0;
+        let surfaceBoatInterval = 12.0;
+
+        // Configuração de Câmera Orbital
+        let anguloCamera = 0;
+        let zoomCamera = 1.0;
+        let shakeAmount = 0;
+
+        // Controles de Entrada
+        const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, Space: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
+        let isTouchDevice = false;
+        let touchDragging = false;
+        let targetPlayerX = 0;
+        let targetPlayerY = 0;
+        let shootCooldown = 0;
+        let subFacingDirection = 1; // 1 = Direita, -1 = Esquerda
+
+        // Alertas
+        let oxygenWarningTimer = 0;
+
+        // Elementos DOM
+        const hudScore = document.getElementById('hud-score');
+        const hudHighscore = document.getElementById('hud-highscore');
+        const hudWave = document.getElementById('hud-wave');
+        const diversDisplay = document.getElementById('divers-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const oxygenText = document.getElementById('oxygen-text');
+        const oxygenBar = document.getElementById('oxygen-bar');
+        const btnSound = document.getElementById('btn-sound');
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        hudHighscore.innerText = String(highscore).padStart(5, '0');
+
+        // ============================================================================
+        // 3. CONSTRUÇÃO PROCEDURAL DE ELEMENTOS 3D NEON
+        // ============================================================================
+
+        // Submarino do Jogador em 3D
+        function createPlayerSubMesh() {
+            const subGroup = new THREE.Group();
+
+            // Material Ciano Neon
+            const subMat = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                emissive: 0x003344,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+
+            // Corpo Central (Cilindro Horizontal)
+            const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2.0, 12);
+            const body = new THREE.Mesh(bodyGeo, subMat);
+            body.rotation.z = Math.PI / 2; // Deita o cilindro
+            subGroup.add(body);
+
+            // Torre/Cúpula de Periscópio
+            const towerGeo = new THREE.BoxGeometry(0.6, 0.6, 0.4);
+            const tower = new THREE.Mesh(towerGeo, subMat);
+            tower.position.set(0, 0.6, 0);
+            subGroup.add(tower);
+
+            // Periscópio
+            const periscopeGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8);
+            const periscope = new THREE.Mesh(periscopeGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            periscope.position.set(0.1, 1.0, 0);
+            subGroup.add(periscope);
+
+            // Asas Traseiras (Estabilizadores)
+            const wingGeo = new THREE.BoxGeometry(0.3, 0.1, 0.8);
+            const leftWing = new THREE.Mesh(wingGeo, subMat);
+            leftWing.position.set(-0.9, 0, 0);
+            subGroup.add(leftWing);
+
+            // Farol Frontal Luminoso
+            const headlightGeo = new THREE.SphereGeometry(0.2, 8, 8);
+            const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const headlight = new THREE.Mesh(headlightGeo, headlightMat);
+            headlight.position.set(1.0, 0, 0); // Fica na ponta da direita
+            subGroup.add(headlight);
+
+            // Hélice Traseira
+            const propellerGeo = new THREE.BoxGeometry(0.1, 0.6, 0.1);
+            const propellerMat = new THREE.MeshStandardMaterial({ color: 0xff007f });
+            const propeller = new THREE.Mesh(propellerGeo, propellerMat);
+            propeller.position.set(-1.1, 0, 0);
+            subGroup.add(propeller);
+
+            subGroup.userData = { propeller: propeller };
+            subGroup.castShadow = true;
+            subGroup.receiveShadow = true;
+
+            return subGroup;
+        }
+
+        // Cria Mesh de Inimigos
+        // Tipo 0 = Tubarão Robótico (Verde)
+        // Tipo 1 = Submarino Patrulha (Rosa)
+        function createEnemyMesh(type) {
+            const enemyGroup = new THREE.Group();
+            let color, emissive, speed;
+
+            if (type === 0) {
+                color = 0x39ff14; // Verde
+                emissive = 0x053303;
+                speed = 4.0 + (wave * 0.4);
+            } else {
+                color = 0xff007f; // Rosa
+                emissive = 0x33001a;
+                speed = 5.5 + (wave * 0.5);
+            }
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: emissive,
+                roughness: 0.3,
+                metalness: 0.5
+            });
+
+            if (type === 0) { // Tubarão Robótico
+                // Corpo fusiforme
+                const bodyGeo = new THREE.CylinderGeometry(0.1, 0.35, 1.6, 8);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.rotation.z = Math.PI / 2;
+                enemyGroup.add(body);
+
+                // Cauda articulada
+                const tailGeo = new THREE.ConeGeometry(0.25, 0.8, 8);
+                const tail = new THREE.Mesh(tailGeo, mat);
+                tail.rotation.z = -Math.PI / 2;
+                tail.position.set(-1.0, 0, 0);
+                enemyGroup.add(tail);
+
+                // Barbatana Dorsal Superior
+                const finGeo = new THREE.BoxGeometry(0.3, 0.4, 0.1);
+                const fin = new THREE.Mesh(finGeo, mat);
+                fin.position.set(0, 0.4, 0);
+                enemyGroup.add(fin);
+            } else { // Submarino Inimigo
+                const bodyGeo = new THREE.CylinderGeometry(0.45, 0.45, 1.8, 10);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.rotation.z = Math.PI / 2;
+                enemyGroup.add(body);
+
+                const towerGeo = new THREE.BoxGeometry(0.5, 0.5, 0.3);
+                const tower = new THREE.Mesh(towerGeo, mat);
+                tower.position.set(0, 0.5, 0);
+                enemyGroup.add(tower);
+            }
+
+            enemyGroup.castShadow = true;
+            return enemyGroup;
+        }
+
+        // Cria Barco de Patrulha de Superfície (Nave vermelha hostil do topo)
+        function createSurfaceBoatMesh() {
+            const boatGroup = new THREE.Group();
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0x440000,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+
+            // Casco do navio triangular
+            const hullGeo = new THREE.BoxGeometry(2.2, 0.4, 0.8);
+            const hull = new THREE.Mesh(hullGeo, mat);
+            boatGroup.add(hull);
+
+            // Cabine de controle
+            const cabinGeo = new THREE.BoxGeometry(0.8, 0.4, 0.6);
+            const cabin = new THREE.Mesh(cabinGeo, mat);
+            cabin.position.set(-0.2, 0.4, 0);
+            boatGroup.add(cabin);
+
+            // Antena / Chaminé neon emissiva
+            const pipeGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
+            const pipeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+            pipe.position.set(0.4, 0.4, 0);
+            boatGroup.add(pipe);
+
+            boatGroup.position.y = SURFACE_Y + 0.3; // Fica flutuando exatamente na superfície
+            return boatGroup;
+        }
+
+        // Cria Mergulhador Resgatável
+        function createDiverMesh() {
+            const diverGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                emissive: 0x002233,
+                roughness: 0.4
+            });
+
+            // Cilindro do corpo (Roupa de mergulho)
+            const bodyGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.8, 8);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.rotation.z = Math.PI / 2; // Nada deitado
+            diverGroup.add(body);
+
+            // Cabeça (Capacete esférico)
+            const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
+            const head = new THREE.Mesh(headGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            head.position.set(0.5, 0, 0);
+            diverGroup.add(head);
+
+            // Tanque de Oxigênio (Nas costas)
+            const tankGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
+            const tankMat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            const tank = new THREE.Mesh(tankGeo, tankMat);
+            tank.rotation.z = Math.PI / 2;
+            tank.position.set(0, 0, -0.22);
+            diverGroup.add(tank);
+
+            // Pés / Nadadeiras articuladas
+            const finGeo = new THREE.BoxGeometry(0.12, 0.05, 0.3);
+            const leftFin = new THREE.Mesh(finGeo, new THREE.MeshStandardMaterial({ color: 0x39ff14 }));
+            leftFin.position.set(-0.55, -0.08, 0.1);
+            const rightFin = leftFin.clone();
+            rightFin.position.z = -0.1;
+            diverGroup.add(leftFin, rightFin);
+
+            diverGroup.userData = { leftFin: leftFin, rightFin: rightFin };
+
+            return diverGroup;
+        }
+
+        // ============================================================================
+        // 4. SISTEMA DE EXPLOSÃO E PARTÍCULAS SOB A ÁGUA
+        // ============================================================================
+        function spawnExplosionParticles(position, color, count = 15) {
+            // Bolhas de explosão e detritos sob a água
+            const particleGeo = new THREE.SphereGeometry(0.1, 6, 6);
+            const particleMat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            for (let i = 0; i < count; i++) {
+                const mesh = new THREE.Mesh(particleGeo, particleMat);
+                mesh.position.copy(position);
+
+                // Movimento omnidirecional na água desacelerado pelo meio líquido
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5
+                );
+
+                scene.add(mesh);
+                explosionParticles.push({
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: (Math.random() * 1.6) + 1.2
+                });
+            }
+        }
+
+        // ============================================================================
+        // 5. INICIALIZAÇÃO DA CENA 3D SUBATÓMICA
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            // Fundo azul marinho escuro (profundezas oceânicas)
+            scene.background = new THREE.Color(0x020516);
+            // Neblina densa submarina para limitar visibilidade e dar sensação de água
+            scene.fog = new THREE.FogExp2(0x020516, 0.038);
+
+            // Câmera tridimensional com ângulo de visão inicial
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+            
+            // Renderizador WebGL
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Iluminação
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // Luz geral abafada
+            scene.add(ambientLight);
+
+            // Luz difusa azulada penetrando do topo da água
+            const sunLight = new THREE.DirectionalLight(0x00f0ff, 0.95);
+            sunLight.position.set(0, 15, 5);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
+
+            // Iluminação focal que segue o submarino (Headlight)
+            const spotLight = new THREE.SpotLight(0xffffaa, 2.0, 20, Math.PI / 6, 0.5);
+            spotLight.position.set(0, 0, 0);
+            scene.add(spotLight);
+            scene.userData = { subHeadlight: spotLight };
+
+            // Piso Oceânico (Montanhas Submarinas / Fundo de areia neon)
+            const oceanFloorGeo = new THREE.PlaneGeometry(50, 40, 24, 20);
+            // Desalinha os vértices para formar relevo
+            const posAttr = oceanFloorGeo.attributes.position;
+            for (let i = 0; i < posAttr.count; i++) {
+                let y = posAttr.getY(i);
+                // Monta lombadas
+                let z = Math.sin(posAttr.getX(i) * 0.2) * Math.cos(y * 0.2) * 1.5;
+                posAttr.setZ(i, z);
+            }
+            oceanFloorGeo.computeVertexNormals();
+
+            const oceanFloorMat = new THREE.MeshStandardMaterial({
+                color: 0x071133,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const oceanFloor = new THREE.Mesh(oceanFloorGeo, oceanFloorMat);
+            oceanFloor.rotation.x = -Math.PI / 2;
+            oceanFloor.position.set(0, -DEPTH_MIN_Y - 1.0, 0);
+            scene.add(oceanFloor);
+
+            // Limite superior de água (Superfície Translúcida)
+            const surfaceGeo = new THREE.PlaneGeometry(50, 40, 10, 10);
+            const surfaceMat = new THREE.MeshBasicMaterial({
+                color: 0x00f0ff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const waterSurface = new THREE.Mesh(surfaceGeo, surfaceMat);
+            waterSurface.rotation.x = -Math.PI / 2;
+            waterSurface.position.set(0, SURFACE_Y, 0);
+            scene.add(waterSurface);
+
+            // Gerador de Bolhas Contínuas subindo (Partículas)
+            const bubbleCount = 100;
+            const bubbleGeo = new THREE.BufferGeometry();
+            const bubblePositions = new Float32Array(bubbleCount * 3);
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                bubblePositions[i * 3] = (Math.random() - 0.5) * 32;
+                bubblePositions[i * 3 + 1] = (Math.random() * 14) + DEPTH_MIN_Y;
+                bubblePositions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+            }
+
+            bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePositions, 3));
+            
+            const bubbleMat = new THREE.PointsMaterial({
+                size: 0.15,
+                color: 0x00f0ff,
+                transparent: true,
+                opacity: 0.4
+            });
+
+            bubbleParticles = new THREE.Points(bubbleGeo, bubbleMat);
+            scene.add(bubbleParticles);
+
+            // Criação do submarino do jogador
+            playerSub = createPlayerSubMesh();
+            scene.add(playerSub);
+
+            // Remove loading screen
+            loadingScreen.style.display = 'none';
+
+            window.addEventListener('resize', onWindowResize);
+            
+            // Posiciona a câmera inicialmente
+            atualizarCamera(0);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 6. PROCESSAMENTO DE ENTIDADES DO JOGO
+        // ============================================================================
+
+        // Spawn de tubarões robóticos ou submarinos nas laterais
+        function spawnEnemy() {
+            const type = Math.random() > 0.45 ? 1 : 0; // Submarino ou tubarão
+            const enemy = createEnemyMesh(type);
+
+            const fromLeft = Math.random() > 0.5;
+            const startX = fromLeft ? -BOUNDS_X - 3 : BOUNDS_X + 3;
+            const dirX = fromLeft ? 1 : -1;
+            
+            // Inverte orientação horizontal do inimigo de acordo com a direção que está nadando
+            if (dirX === -1) {
+                enemy.rotation.y = Math.PI;
+            }
+
+            // Profundidade randômica escalonada (entre profundidade mínima e pouco abaixo da superfície)
+            const startY = DEPTH_MIN_Y + 1.5 + Math.random() * (SURFACE_Y - DEPTH_MIN_Y - 2.5);
+
+            enemy.position.set(startX, startY, 0);
+            
+            // Configurações no userdata
+            enemy.userData = {
+                type: type,
+                dirX: dirX,
+                speed: (type === 0 ? 3.2 : 4.5) + (wave * 0.4),
+                amplitude: 0.2 + Math.random() * 0.2, // Amplitude de ondulação ondulatória na água
+                freq: 2 + Math.random() * 3,
+                startY: startY
+            };
+
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        // Spawn de mergulhador coletável
+        function spawnDiver() {
+            if (divers.length >= 3) return; // Limita mergulhadores simultâneos ativos
+
+            const diver = createDiverMesh();
+            const fromLeft = Math.random() > 0.5;
+            const startX = fromLeft ? -BOUNDS_X - 2 : BOUNDS_X + 2;
+            const dirX = fromLeft ? 1 : -1;
+
+            if (dirX === -1) {
+                diver.rotation.y = Math.PI;
+            }
+
+            const startY = DEPTH_MIN_Y + 1.0 + Math.random() * (SURFACE_Y - DEPTH_MIN_Y - 2.5);
+            diver.position.set(startX, startY, 0);
+
+            diver.userData = {
+                dirX: dirX,
+                speed: 1.2 + (wave * 0.15),
+                amplitude: 0.1,
+                freq: 4
+            };
+
+            scene.add(diver);
+            divers.push(diver);
+        }
+
+        // Spawn do navio/patrulha na superfície
+        function spawnSurfaceBoat() {
+            if (surfaceBoat) return;
+
+            surfaceBoat = createSurfaceBoatMesh();
+            const fromLeft = Math.random() > 0.5;
+            const startX = fromLeft ? -BOUNDS_X - 4 : BOUNDS_X + 4;
+            const dirX = fromLeft ? 1 : -1;
+
+            if (dirX === -1) {
+                surfaceBoat.rotation.y = Math.PI;
+            }
+
+            surfaceBoat.position.x = startX;
+            surfaceBoat.userData = {
+                dirX: dirX,
+                speed: 5.5 + (wave * 0.6)
+            };
+
+            scene.add(surfaceBoat);
+        }
+
+        // Dispara torpedo do jogador
+        function fireTorpedo() {
+            som.playTorpedoFire();
+
+            const torpedoGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 6);
+            const torpedoMat = new THREE.MeshBasicMaterial({ color: 0xff5e00 });
+            const torpedo = new THREE.Mesh(torpedoGeo, torpedoMat);
+            torpedo.rotation.z = Math.PI / 2; // Deitado
+            
+            // Spawna na frente da cabeça do submarino dependendo do lado que está encarando
+            const posX = playerSub.position.x + (subFacingDirection * 1.0);
+            torpedo.position.set(posX, playerSub.position.y, 0);
+            
+            torpedo.userData = { dirX: subFacingDirection };
+            
+            scene.add(torpedo);
+            playerTorpedos.push(torpedo);
+        }
+
+        // ============================================================================
+        // 7. MECÂNICA DE COLISÃO
+        // ============================================================================
+        function checkCollision(objA, objB, sizeA = 0.5, sizeB = 0.5) {
+            // Detecção AABB em 2D (Eixos X e Y, pois profundidade Z está alinhada a 0)
+            const posA = new THREE.Vector3();
+            const posB = new THREE.Vector3();
+
+            objA.getWorldPosition(posA);
+            objB.getWorldPosition(posB);
+
+            return (Math.abs(posA.x - posB.x) < (sizeA + sizeB) &&
+                    Math.abs(posA.y - posB.y) < (sizeA + sizeB));
+        }
+
+        // ============================================================================
+        // 8. LOOP DE ATUALIZAÇÃO DA LÓGICA DO JOGO
+        // ============================================================================
+        let lastTime = 0;
+
+        function updateGame(deltaTime) {
+            if (gameState !== GAME_STATES.PLAYING) return;
+
+            // ------------------------------------------------------------------------
+            // 8.1. OXIGÊNIO E CONSUMO
+            // ------------------------------------------------------------------------
+            // Oxigênio consome proporcionalmente à onda (aumenta o consumo em níveis altos)
+            const oxygenConsumption = 3.6 + (wave * 0.5); // % por segundo
+            
+            if (playerSub.position.y >= SURFACE_Y - 0.2) {
+                // Surfa na superfície: reabastece oxigênio
+                oxygen += deltaTime * 80.0; // Recarrega rápido
+                if (oxygen > 100.0) oxygen = 100.0;
+
+                // Descarrega os mergulhadores e ganha bônus substancial
+                if (diversCollected > 0) {
+                    som.playDeliverDivers();
+                    
+                    let bonusMultiplier = 1;
+                    if (diversCollected === 6) {
+                        bonusMultiplier = 2.5; // Super bônus por lotação cheia
+                    }
+
+                    const pointsEarned = Math.floor(diversCollected * 150 * bonusMultiplier * wave);
+                    score += pointsEarned;
+                    hudScore.innerText = String(score).padStart(5, '0');
+
+                    // Efeito de partículas na entrega
+                    spawnExplosionParticles(playerSub.position, 0x39ff14, 15);
+
+                    diversCollected = 0;
+                    updateDiversDisplay();
+                }
+            } else {
+                // Sob a água: consome oxigênio
+                oxygen -= oxygenConsumption * deltaTime;
+                
+                if (oxygen <= 0) {
+                    oxygen = 0;
+                    som.playExplosion();
+                    spawnExplosionParticles(playerSub.position, 0xff007f, 25);
+                    handlePlayerHit();
+                }
+            }
+
+            // Atualiza barra de HUD
+            oxygenText.innerText = Math.floor(oxygen) + '%';
+            oxygenBar.style.width = oxygen + '%';
+            
+            // Cor de alerta na barra de oxigênio abaixo de 28%
+            if (oxygen < 28) {
+                oxygenBar.classList.add('warning');
+                // Emite sinalizador sonoro periódico
+                oxygenWarningTimer += deltaTime;
+                if (oxygenWarningTimer > 0.8) {
+                    oxygenWarningTimer = 0;
+                    som.playOxygenWarning();
+                }
+            } else {
+                oxygenBar.classList.remove('warning');
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.2. MOVIMENTAÇÃO DO JOGADOR
+            // ------------------------------------------------------------------------
+            let moveX = 0;
+            let moveY = 0;
+
+            if (isTouchDevice) {
+                if (touchDragging) {
+                    const diffX = targetPlayerX - playerSub.position.x;
+                    const diffY = targetPlayerY - playerSub.position.y;
+                    if (Math.abs(diffX) > 0.05) moveX = Math.sign(diffX);
+                    if (Math.abs(diffY) > 0.05) moveY = Math.sign(diffY);
+                    
+                    // Suaviza movimentação direta no toque
+                    playerSub.position.x += diffX * 10 * deltaTime;
+                    playerSub.position.y += diffY * 10 * deltaTime;
+                }
+            } else {
+                // Teclado
+                if (keys.ArrowLeft) moveX = -1;
+                if (keys.ArrowRight) moveX = 1;
+                if (keys.ArrowUp) moveY = 1;
+                if (keys.ArrowDown) moveY = -1;
+
+                const speed = 7.5; // Velocidade de locomoção do submarino
+                playerSub.position.x += moveX * speed * deltaTime;
+                playerSub.position.y += moveY * speed * deltaTime;
+            }
+
+            // Clampa o submarino aos limites da arena
+            playerSub.position.x = Math.max(-BOUNDS_X, Math.min(BOUNDS_X, playerSub.position.x));
+            playerSub.position.y = Math.max(DEPTH_MIN_Y, Math.min(SURFACE_Y, playerSub.position.y));
+
+            // Rotaciona a malha do submarino dependendo da direção encarada
+            if (moveX !== 0) {
+                subFacingDirection = moveX;
+                const targetRotY = moveX === -1 ? Math.PI : 0;
+                // Interpolação suave de rotação (Yaw)
+                playerSub.rotation.y = THREE.MathUtils.lerp(playerSub.rotation.y, targetRotY, 12 * deltaTime);
+            }
+
+            // Leve inclinação em arfagem (Pitch) ao subir/descer
+            if (moveY !== 0) {
+                const pitch = moveY * 0.15 * (subFacingDirection);
+                playerSub.rotation.z = THREE.MathUtils.lerp(playerSub.rotation.z, pitch, 10 * deltaTime);
+            } else {
+                playerSub.rotation.z = THREE.MathUtils.lerp(playerSub.rotation.z, 0, 10 * deltaTime);
+            }
+
+            // Animação rotacional contínua da Hélice Traseira
+            if (playerSub.userData.propeller) {
+                playerSub.userData.propeller.rotation.x += deltaTime * 20.0;
+            }
+
+            // Faz os refletores de luz do submarino acompanharem sua posição
+            const headlight = scene.userData.subHeadlight;
+            if (headlight) {
+                headlight.position.copy(playerSub.position);
+                // Direciona farol para frente
+                headlight.target.position.set(
+                    playerSub.position.x + (subFacingDirection * 10),
+                    playerSub.position.y,
+                    0
+                );
+                headlight.target.updateMatrixWorld();
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.3. DISPAROS E RECARGA DE TORPEDOS DO JOGADOR
+            // ------------------------------------------------------------------------
+            if (shootCooldown > 0) {
+                shootCooldown -= deltaTime;
+            }
+
+            const torpedoVel = 18.0;
+            for (let i = playerTorpedos.length - 1; i >= 0; i--) {
+                const torp = playerTorpedos[i];
+                torp.position.x += torp.userData.dirX * torpedoVel * deltaTime;
+
+                // Destrói se sair da tela
+                if (Math.abs(torp.position.x) > BOUNDS_X + 2.5) {
+                    scene.remove(torp);
+                    playerTorpedos.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão de Torpedos com Inimigos
+                let hitEnemy = false;
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const en = enemies[j];
+                    if (checkCollision(torp, en, 0.25, 0.7)) {
+                        som.playExplosion();
+                        spawnExplosionParticles(en.position, en.children[0].material.color, 12);
+
+                        // Pontos
+                        score += en.userData.type === 0 ? 30 : 50;
+                        hudScore.innerText = String(score).padStart(5, '0');
+
+                        scene.remove(en);
+                        enemies.splice(j, 1);
+                        scene.remove(torp);
+                        playerTorpedos.splice(i, 1);
+                        hitEnemy = true;
+                        break;
+                    }
+                }
+
+                if (hitEnemy) continue;
+
+                // Colisão de Torpedos com o Barco de Patrulha superficial
+                if (surfaceBoat && checkCollision(torp, surfaceBoat, 0.25, 1.0)) {
+                    som.playExplosion();
+                    spawnExplosionParticles(surfaceBoat.position, 0xff0000, 25);
+
+                    score += 100;
+                    hudScore.innerText = String(score).padStart(5, '0');
+
+                    scene.remove(surfaceBoat);
+                    surfaceBoat = null;
+                    scene.remove(torp);
+                    playerTorpedos.splice(i, 1);
+                    surfaceBoatTimer = -6.0; // Adiciona cooldown longo para renascimento
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.4. ATUALIZAÇÃO E MOVIMENTO DOS INIMIGOS
+            // ------------------------------------------------------------------------
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const en = enemies[i];
+                // Caminha horizontalmente
+                en.position.x += en.userData.dirX * en.userData.speed * deltaTime;
+                
+                // Ondulação vertical leve (senoidal) para simular flutuação aquática
+                const pulse = performance.now() * 0.001 * en.userData.freq;
+                en.position.y = en.userData.startY + Math.sin(pulse) * en.userData.amplitude;
+
+                // Destrói se sair da arena
+                if ((en.userData.dirX === 1 && en.position.x > BOUNDS_X + 3.0) ||
+                    (en.userData.dirX === -1 && en.position.x < -BOUNDS_X - 3.0)) {
+                    scene.remove(en);
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão direta Inimigo com Jogador
+                if (checkCollision(en, playerSub, 0.45, 0.75)) {
+                    som.playExplosion();
+                    spawnExplosionParticles(playerSub.position, 0xff007f, 25);
+                    
+                    scene.remove(en);
+                    enemies.splice(i, 1);
+
+                    handlePlayerHit();
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.5. ATUALIZAÇÃO E MOVIMENTO DOS MERGULHADORES
+            // ------------------------------------------------------------------------
+            for (let i = divers.length - 1; i >= 0; i--) {
+                const div = divers[i];
+                div.position.x += div.userData.dirX * div.userData.speed * deltaTime;
+
+                const pulse = performance.now() * 0.001 * div.userData.freq;
+                div.position.y = div.position.y + Math.sin(pulse) * 0.01;
+
+                // Anima as pernas nadando alternadas
+                if (div.userData.leftFin) {
+                    const osc = Math.sin(pulse * 3) * 0.4;
+                    div.userData.leftFin.rotation.z = osc;
+                    div.userData.rightFin.rotation.z = -osc;
+                }
+
+                // Destrói se sair da tela sem ser resgatado
+                if ((div.userData.dirX === 1 && div.position.x > BOUNDS_X + 2.0) ||
+                    (div.userData.dirX === -1 && div.position.x < -BOUNDS_X - 2.0)) {
+                    scene.remove(div);
+                    divers.splice(i, 1);
+                    continue;
+                }
+
+                // Colisão de Mergulhador com o Jogador (Coleta)
+                if (checkCollision(div, playerSub, 0.45, 0.7)) {
+                    if (diversCollected < 6) {
+                        som.playDiverRescue();
+                        diversCollected++;
+                        updateDiversDisplay();
+
+                        // Partículas de coleta suave
+                        spawnExplosionParticles(div.position, 0x00f0ff, 6);
+
+                        scene.remove(div);
+                        divers.splice(i, 1);
+                    }
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.6. NAVIO DE PATRULHA SUPERFICIAL
+            // ------------------------------------------------------------------------
+            if (surfaceBoat) {
+                surfaceBoat.position.x += surfaceBoat.userData.dirX * surfaceBoat.userData.speed * deltaTime;
+                
+                // Confere colisão fatal com o jogador na superfície
+                if (checkCollision(surfaceBoat, playerSub, 0.5, 1.0)) {
+                    som.playExplosion();
+                    spawnExplosionParticles(playerSub.position, 0xff0000, 25);
+                    
+                    scene.remove(surfaceBoat);
+                    surfaceBoat = null;
+                    surfaceBoatTimer = -4.0;
+
+                    handlePlayerHit();
+                }
+
+                // Destrói ao sair da tela
+                if (surfaceBoat && ((surfaceBoat.userData.dirX === 1 && surfaceBoat.position.x > BOUNDS_X + 4) ||
+                    (surfaceBoat.userData.dirX === -1 && surfaceBoat.position.x < -BOUNDS_X - 4))) {
+                    scene.remove(surfaceBoat);
+                    surfaceBoat = null;
+                }
+            } else {
+                surfaceBoatTimer += deltaTime;
+                if (surfaceBoatTimer >= surfaceBoatInterval) {
+                    surfaceBoatTimer = 0;
+                    spawnSurfaceBoat();
+                }
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.7. TIMERS DE SPAWNS DE ENTIDADES (Patrulhas e Divers)
+            // ------------------------------------------------------------------------
+            enemySpawnTimer += deltaTime;
+            if (enemySpawnTimer >= enemySpawnInterval) {
+                enemySpawnTimer = 0;
+                spawnEnemy();
+            }
+
+            diverSpawnTimer += deltaTime;
+            if (diverSpawnTimer >= diverSpawnInterval) {
+                diverSpawnTimer = 0;
+                spawnDiver();
+            }
+
+            // ------------------------------------------------------------------------
+            // 8.8. GERENCIAMENTO DAS PARTÍCULAS EM VOO
+            // ------------------------------------------------------------------------
+            for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                const p = explosionParticles[i];
+                p.velocity.y *= 0.96; // Atrito da água reduz velocidade vertical
+                p.velocity.x *= 0.96;
+                p.mesh.position.addScaledVector(p.velocity, deltaTime);
+
+                p.life -= p.decay * deltaTime;
+                p.mesh.material.opacity = p.life;
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    explosionParticles.splice(i, 1);
+                }
+            }
+        }
+
+        // ============================================================================
+        // 9. FUNÇÕES DE SUPORTE
+        // ============================================================================
+
+        // Atualiza a representação visual de Mergulhadores coletados no HUD
+        function updateDiversDisplay() {
+            const icons = diversDisplay.querySelectorAll('.diver-icon');
+            icons.forEach((icon, idx) => {
+                if (idx < diversCollected) {
+                    icon.classList.remove('empty');
+                } else {
+                    icon.classList.add('empty');
+                }
+            });
+        }
+
+        // Dano no Jogador (Perda de Vida)
+        function handlePlayerHit() {
+            lives--;
+            updateLivesDisplay();
+
+            // Reposiciona no centro e limpa lasers inimigos
+            playerSub.position.set(0, 0, 0);
+            targetPlayerX = 0;
+            targetPlayerY = 0;
+            oxygen = 100.0; // Dá oxigênio cheio ao renascer
+
+            // Limpa todos os inimigos da tela para dar respawn seguro
+            enemies.forEach(en => scene.remove(en));
+            enemies = [];
+
+            if (surfaceBoat) {
+                scene.remove(surfaceBoat);
+                surfaceBoat = null;
+                surfaceBoatTimer = -3.0;
+            }
+
+            // Ativa tremor de câmera
+            shakeAmount = 0.6;
+
+            if (lives <= 0) {
+                handleGameOver();
+            }
+        }
+
+        function updateLivesDisplay() {
+            const subs = livesDisplay.querySelectorAll('.life-sub');
+            subs.forEach((sub, idx) => {
+                if (idx < lives) {
+                    sub.classList.remove('lost');
+                } else {
+                    sub.classList.add('lost');
+                }
+            });
+        }
+
+        function handleGameOver() {
+            gameState = GAME_STATES.GAMEOVER;
+            som.playGameOver();
+
+            // Atualiza recorde
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('cyber_seaquest_highscore', highscore);
+                hudHighscore.innerText = String(highscore).padStart(5, '0');
+            }
+
+            document.getElementById('summary-wave').innerText = wave;
+            document.getElementById('summary-score').innerText = String(score).padStart(5, '0');
+            document.getElementById('summary-highscore').innerText = String(highscore).padStart(5, '0');
+            document.getElementById('summary-total').innerText = String(score).padStart(5, '0');
+
+            screenGameover.classList.remove('hidden');
+        }
+
+        // ============================================================================
+        // 10. INPUTS E INTERAÇÃO DE CONTROLES (Teclado/Mouse/Touch)
+        // ============================================================================
+        function setupControls() {
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
+                if (e.code === 'ArrowRight') keys.ArrowRight = true;
+                if (e.code === 'ArrowUp') keys.ArrowUp = true;
+                if (e.code === 'ArrowDown') keys.ArrowDown = true;
+                if (e.code === 'KeyA') keys.KeyA = true;
+                if (e.code === 'KeyD') keys.KeyD = true;
+                if (e.code === 'KeyW') keys.KeyW = true;
+                if (e.code === 'KeyS') keys.KeyS = true;
+                if (e.code === 'Space') {
+                    keys.Space = true;
+                    e.preventDefault();
+                    if (gameState === GAME_STATES.PLAYING && shootCooldown <= 0) {
+                        fireTorpedo();
+                        shootCooldown = 0.35; // Cooldown de tiro
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
+                if (e.code === 'ArrowRight') keys.ArrowRight = false;
+                if (e.code === 'ArrowUp') keys.ArrowUp = false;
+                if (e.code === 'ArrowDown') keys.ArrowDown = false;
+                if (e.code === 'KeyA') keys.KeyA = false;
+                if (e.code === 'KeyD') keys.KeyD = false;
+                if (e.code === 'KeyW') keys.KeyW = false;
+                if (e.code === 'KeyS') keys.KeyS = false;
+                if (e.code === 'Space') keys.Space = false;
+            });
+
+            // Controles de clique do mouse / drag lateral
+            const container = document.getElementById('canvas-container');
+            container.addEventListener('mousedown', (e) => {
+                if (gameState !== GAME_STATES.PLAYING) return;
+                if (e.button === 0 && shootCooldown <= 0) {
+                    fireTorpedo();
+                    shootCooldown = 0.35;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (gameState !== GAME_STATES.PLAYING) return;
+                
+                // Converte coordenadas do mouse para posição na cena 3D (X e Y)
+                const mouseNormX = (e.clientX / window.innerWidth) * 2 - 1;
+                const mouseNormY = -(e.clientY / window.innerHeight) * 2 + 1;
+                
+                targetPlayerX = mouseNormX * (BOUNDS_X + 1.0);
+                targetPlayerY = mouseNormY * (SURFACE_Y - 0.5);
+            });
+
+            // Mobile Touch Support
+            isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isTouchDevice) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+
+                const btnUp = document.getElementById('btn-up');
+                const btnDown = document.getElementById('btn-down');
+                const btnLeft = document.getElementById('btn-left');
+                const btnRight = document.getElementById('btn-right');
+                const btnShoot = document.getElementById('btn-shoot');
+
+                btnUp.addEventListener('touchstart', (e) => { keys.ArrowUp = true; e.preventDefault(); });
+                btnUp.addEventListener('touchend', (e) => { keys.ArrowUp = false; e.preventDefault(); });
+
+                btnDown.addEventListener('touchstart', (e) => { keys.ArrowDown = true; e.preventDefault(); });
+                btnDown.addEventListener('touchend', (e) => { keys.ArrowDown = false; e.preventDefault(); });
+
+                btnLeft.addEventListener('touchstart', (e) => { keys.ArrowLeft = true; e.preventDefault(); });
+                btnLeft.addEventListener('touchend', (e) => { keys.ArrowLeft = false; e.preventDefault(); });
+
+                btnRight.addEventListener('touchstart', (e) => { keys.ArrowRight = true; e.preventDefault(); });
+                btnRight.addEventListener('touchend', (e) => { keys.ArrowRight = false; e.preventDefault(); });
+
+                btnShoot.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (gameState === GAME_STATES.PLAYING && shootCooldown <= 0) {
+                        fireTorpedo();
+                        shootCooldown = 0.35;
+                    }
+                });
+
+                // Arraste de tela
+                container.addEventListener('touchstart', (e) => {
+                    if (gameState !== GAME_STATES.PLAYING) return;
+                    touchDragging = true;
+                    const touch = e.touches[0];
+                    const normX = (touch.clientX / window.innerWidth) * 2 - 1;
+                    const normY = -(touch.clientY / window.innerHeight) * 2 + 1;
+                    targetPlayerX = normX * (BOUNDS_X + 1.0);
+                    targetPlayerY = normY * (SURFACE_Y - 0.5);
+                }, { passive: true });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!touchDragging || gameState !== GAME_STATES.PLAYING) return;
+                    const touch = e.touches[0];
+                    const normX = (touch.clientX / window.innerWidth) * 2 - 1;
+                    const normY = -(touch.clientY / window.innerHeight) * 2 + 1;
+                    targetPlayerX = normX * (BOUNDS_X + 1.0);
+                    targetPlayerY = normY * (SURFACE_Y - 0.5);
+                }, { passive: true });
+
+                container.addEventListener('touchend', () => {
+                    touchDragging = false;
+                });
+            }
+        }
+
+        // ============================================================================
+        // 11. ATUALIZAÇÃO DA CÂMERA ORBITAL (WASD)
+        // ============================================================================
+        function atualizarCamera(dt) {
+            const velRotacao = 1.6; // velocidade de rotação
+            const velZoom = 1.0; // velocidade do fator de zoom
+
+            // inputs das teclas WASD
+            if (keys.KeyA) {
+                anguloCamera += velRotacao * dt;
+            }
+            if (keys.KeyD) {
+                anguloCamera -= velRotacao * dt;
+            }
+            if (keys.KeyW) {
+                zoomCamera -= velZoom * dt; // aproxima
+            }
+            if (keys.KeyS) {
+                zoomCamera += velZoom * dt; // afasta
+            }
+
+            // Clampa a rotação para não virar de ponta cabeça
+            const limiteAngulo = Math.PI / 4.5; // Limita em aproximadamente 40 graus horizontais
+            anguloCamera = Math.max(-limiteAngulo, Math.min(limiteAngulo, anguloCamera));
+
+            // Clampa o zoom da câmera
+            zoomCamera = Math.max(0.65, Math.min(1.5, zoomCamera));
+
+            // Foco central do jogo
+            const focoX = 0;
+            const focoY = 0;
+            const focoZ = 0;
+
+            // Coordenadas esféricas cilíndricas base
+            const distBase = 25;
+            const altBase = 3;
+
+            const distAtual = distBase * zoomCamera;
+            const altAtual = altBase * zoomCamera;
+
+            let camX = focoX + distAtual * Math.sin(anguloCamera);
+            let camZ = focoZ + distAtual * Math.cos(anguloCamera);
+            let camY = focoY + altAtual;
+
+            // Efeito de tremor de impacto
+            let shakeX = 0, shakeY = 0, shakeZ = 0;
+            if (shakeAmount > 0) {
+                shakeX = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeY = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeZ = (Math.random() * 2 - 1) * shakeAmount * 1.5;
+                shakeAmount -= dt * 2.8; // diminui gradualmente
+            }
+
+            camera.position.set(camX + shakeX, camY + shakeY, camZ + shakeZ);
+            camera.lookAt(focoX, focoY, focoZ);
+        }
+
+        // ============================================================================
+        // 12. LOOP GERAL DE RENDERIZAÇÃO
+        // ============================================================================
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            // Calcula delta time
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = Math.min(0.05, (timestamp - lastTime) * 0.001);
+            lastTime = timestamp;
+
+            // Atualiza mecânicas de jogo
+            updateGame(deltaTime);
+
+            // Atualiza a posição orbital da câmera
+            atualizarCamera(deltaTime);
+
+            // Scroll vertical contínuo das partículas de bolhas na água
+            if (bubbleParticles && gameState === GAME_STATES.PLAYING) {
+                const posAttr = bubbleParticles.geometry.attributes.position;
+                for (let i = 0; i < posAttr.count; i++) {
+                    let y = posAttr.getY(i);
+                    y += deltaTime * 2.0; // Bolhas sobem
+                    if (y > SURFACE_Y) {
+                        y = DEPTH_MIN_Y; // Volta para o fundo
+                    }
+                    posAttr.setY(i, y);
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            // Animação rotacional leve de inimigos
+            enemies.forEach(en => {
+                en.rotation.x += deltaTime * 0.15;
+            });
+
+            // Renderiza cena Three.js
+            renderer.render(scene, camera);
+        }
+
+        // Inicializa novo jogo
+        function startNewGame() {
+            score = 0;
+            wave = 1;
+            lives = 3;
+            diversCollected = 0;
+            oxygen = 100.0;
+
+            hudScore.innerText = '00000';
+            hudWave.innerText = '1';
+            updateLivesDisplay();
+            updateDiversDisplay();
+
+            // Limpa entidades velhas
+            enemies.forEach(en => scene.remove(en));
+            divers.forEach(div => scene.remove(div));
+            playerTorpedos.forEach(torp => scene.remove(torp));
+            explosionParticles.forEach(p => scene.remove(p.mesh));
+
+            if (surfaceBoat) {
+                scene.remove(surfaceBoat);
+                surfaceBoat = null;
+            }
+
+            enemies = [];
+            divers = [];
+            playerTorpedos = [];
+            explosionParticles = [];
+            
+            enemySpawnTimer = 0;
+            diverSpawnTimer = 0;
+            surfaceBoatTimer = 0;
+            shakeAmount = 0;
+            anguloCamera = 0;
+            zoomCamera = 1.0;
+
+            // Reposiciona jogador
+            playerSub.position.set(0, 0, 0);
+            targetPlayerX = 0;
+            targetPlayerY = 0;
+            subFacingDirection = 1;
+            playerSub.rotation.set(0, 0, 0);
+
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+
+            gameState = GAME_STATES.PLAYING;
+
+            // Inicia sons
+            som.init();
+            som.startMusic();
+            som.startSonarLoop();
+        }
+
+        // Escutadores globais e carregamento
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+            setupControls();
+
+            btnStart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnRestart.addEventListener('click', () => {
+                startNewGame();
+            });
+
+            btnSound.addEventListener('click', () => {
+                const mutado = som.toggleMute();
+                if (mutado) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Silenciado';
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                }
+            });
+
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
