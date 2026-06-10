@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missel Comando 3D - Cyber Defense</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-orange: #ff5e00;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffff00;
+            --dark-bg: #020205;
+            --glass-bg: rgba(6, 6, 12, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            cursor: none; /* Esconde o cursor padrão para usarmos a mira customizada */
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        .sound-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .sound-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .sound-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        /* HUD de Silos de Munição na Base da Tela */
+        #silo-hud-container {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 20px;
+            pointer-events: none;
+        }
+
+        .silo-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 8px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 110px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+            transition: all 0.2s ease;
+        }
+
+        .silo-card.active-silo {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+
+        .silo-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #8a8fa3;
+            margin-bottom: 4px;
+        }
+
+        .silo-bullets {
+            display: flex;
+            gap: 3px;
+        }
+
+        .bullet-indicator {
+            width: 6px;
+            height: 12px;
+            background-color: var(--neon-cyan);
+            border-radius: 2px;
+            box-shadow: 0 0 5px var(--neon-cyan);
+            transition: all 0.2s ease;
+        }
+
+        .bullet-indicator.empty {
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        /* TELAS DE INTERFACE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(6, 6, 14, 0.82) 0%, rgba(2, 2, 5, 0.97) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(8, 8, 18, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 35px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 240, 255, 0.04);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 60%, var(--neon-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-orange);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+            color: #000000;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .score-summary {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Mobile Controls Info Overlay (Quando aplicável) */
+        #mobile-warning {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--neon-cyan);
+            background: rgba(0,0,0,0.5);
+            padding: 4px 10px;
+            border-radius: 6px;
+            z-index: 10;
+            pointer-events: none;
+            display: none;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background-color: #010102;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">SISTEMA CIBERNÉTICO DE DEFESA CARREGANDO...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Onda</div>
+                <div id="hud-wave" class="hud-value cyan">1</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Pontuação</div>
+                <div id="hud-score" class="hud-value">00000</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Multiplicador</div>
+                <div id="hud-mult" class="hud-value pink">x1</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div class="hud-group">
+                <div class="hud-label">Cidades</div>
+                <div id="hud-cities" class="hud-value green">6/6</div>
+            </div>
+            <button id="btn-sound" class="sound-btn active" title="Mudar som">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="silo-hud-container">
+        <div id="silo-left" class="silo-card">
+            <span class="silo-name">ALPHA (Esq)</span>
+            <div class="silo-bullets"></div>
+        </div>
+        <div id="silo-center" class="silo-card">
+            <span class="silo-name">BETA (Centro)</span>
+            <div class="silo-bullets"></div>
+        </div>
+        <div id="silo-right" class="silo-card">
+            <span class="silo-name">GAMMA (Dir)</span>
+            <div class="silo-bullets"></div>
+        </div>
+    </div>
+
+    <div id="mobile-warning">Toque no céu para disparar mísseis de defesa</div>
+
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">MISSEL COMANDO 3D</h1>
+            <div class="game-subtitle">CYBER DEFENSE INITIATIVE</div>
+
+            <div class="instructions">
+                <h3>Diretrizes Operacionais:</h3>
+                <ul>
+                    <li>Mísseis balísticos inimigos estão chovendo do topo do céu em direção às suas <strong>6 Cidades</strong> e <strong>3 Bases</strong>.</li>
+                    <li>Sua mira tridimensional segue o cursor. <strong>Clique (ou toque)</strong> para disparar um míssil de defesa que explodirá no local mirado.</li>
+                    <li><strong>Mecânica Crucial:</strong> As esferas de explosão dos seus mísseis servem como escudo térmico. Qualquer projétil inimigo que tocar na explosão será destruído.</li>
+                    <li>Suas 3 bases (Alpha, Beta e Gamma) possuem munição limitada por onda. O míssil é disparado automaticamente pela <strong>base disponível mais próxima</strong> da mira.</li>
+                    <li>Cada 10.000 pontos reconstrói uma cidade destruída ao final de uma onda de sucesso. Proteja a humanidade!</li>
+                    <li><strong>Controle de Câmera:</strong> Pressione <strong>A</strong> / <strong>D</strong> para girar a visualização e <strong>W</strong> / <strong>S</strong> para ajustar o zoom.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR OPERAÇÃO DE DEFESA</button>
+        </div>
+    </div>
+
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">DEFESA SUPERADA</h1>
+            <div class="game-subtitle">Todas as cidades foram devastadas</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Ondas Sobrevividas:</span>
+                    <span id="summary-wave" class="value">1</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Pontos de Combate:</span>
+                    <span id="summary-score" class="value">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Recorde Global:</span>
+                    <span id="summary-highscore" class="value">00000</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">Pontuação Final:</span>
+                    <span id="summary-total" class="value">00000</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR COMANDO</button>
+        </div>
+    </div>
+
+    <!-- Carrega a biblioteca Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Sempre utilize português do Brasil para passar informações e desenvolver os comentários.
+
+        // ============================================================================
+        // 1. GERENCIADOR DE SOM SINTETIZADO (Web Audio API)
+        // ============================================================================
+        class SomMisselCommand {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Sequenciador de fundo (Trilha Synthwave Cyberpunk)
+                this.themeActive = false;
+                this.seqInterval = null;
+                this.beat = 0;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som de disparo de míssil antibalístico (frequência ascendente rápida)
+            playDisparo() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, t);
+                osc.frequency.exponentialRampToValueAtTime(1400, t + 0.35);
+
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.36);
+            }
+
+            // Som de alerta para quando uma bateria de mísseis fica sem munição
+            playAlertaSiloVazio() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, t); // Lá agudo alarmante
+
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.linearRampToValueAtTime(0.01, t + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+
+                osc.start(t);
+                osc.stop(t + 0.09);
+            }
+
+            // Explosão de míssil (ruído branco filtrado com passa-baixa e decaimento longo)
+            playExplosaoAliada() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.8; // 0.8 segundos de estrondo
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(350, t);
+                filter.frequency.exponentialRampToValueAtTime(25, t + 0.78);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.7, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.78);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 0.8);
+            }
+
+            // Som dramático quando uma cidade é atingida por míssil inimigo
+            playDestruicaoCidade() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                // Combina ruído branco com oscilador super grave senoidal
+                const bufferSize = this.ctx.sampleRate * 1.2;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(150, t);
+                filter.frequency.linearRampToValueAtTime(20, t + 1.1);
+
+                const noiseGain = this.ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.9, t);
+                noiseGain.gain.exponentialRampToValueAtTime(0.005, t + 1.1);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(this.sfxGain);
+
+                // Sub oscilador para dar peso físico de impacto
+                const subOsc = this.ctx.createOscillator();
+                const subGain = this.ctx.createGain();
+                subOsc.type = 'sine';
+                subOsc.frequency.setValueAtTime(55, t); // Lá grave
+                subOsc.frequency.linearRampToValueAtTime(30, t + 0.8);
+
+                subGain.gain.setValueAtTime(0.8, t);
+                subGain.gain.exponentialRampToValueAtTime(0.005, t + 0.8);
+
+                subOsc.connect(subGain);
+                subGain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 1.2);
+                subOsc.start(t);
+                subOsc.stop(t + 0.82);
+            }
+
+            // Fanfarra de conclusão de onda (arpejo cyberpunk maior alegre)
+            playVitoriaOnda() {
+                this.stopMusic();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [293.66, 349.23, 440.00, 587.33, 698.46, 880.00, 1174.66]; // Ré menor melódico ascendente brilhante (D, F, A, D...)
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+                    gain.gain.setValueAtTime(0.18, t + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + idx * 0.08 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.08);
+                    osc.stop(t + idx * 0.08 + 0.42);
+                });
+            }
+
+            // Fanfarra de fim de jogo (derrota triste descendente)
+            playGameOverMelodia() {
+                this.stopMusic();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 174.61, 146.83, 110.00, 73.42]; // Triste descendente
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(220, t + idx * 0.18);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.18);
+                    gain.gain.setValueAtTime(0.2, t + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + idx * 0.18 + 0.6);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.18);
+                    osc.stop(t + idx * 0.18 + 0.62);
+                });
+            }
+
+            // Sequenciador Synthwave para trilha de fundo
+            startMusic() {
+                this.init();
+                if (this.themeActive) return;
+                this.themeActive = true;
+
+                const step = 0.13; // Tempo da colcheia (~115 BPM)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (!this.muted && this.themeActive) {
+                        // Linha de baixo (Bassline Synth) nos passos pares
+                        if (this.beat % 2 === 0) {
+                            // Notas da escala de Ré menor natural
+                            const bassNotes = [73.42, 73.42, 87.31, 87.31, 98.00, 98.00, 65.41, 73.42];
+                            const nota = bassNotes[Math.floor(this.beat / 2) % bassNotes.length];
+                            
+                            const osc = this.ctx.createOscillator();
+                            const filter = this.ctx.createBiquadFilter();
+                            const gain = this.ctx.createGain();
+                            
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(nota, t);
+
+                            filter.type = 'lowpass';
+                            filter.frequency.setValueAtTime(250, t);
+
+                            gain.gain.setValueAtTime(0.16, t);
+                            gain.gain.exponentialRampToValueAtTime(0.01, t + step * 1.5);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(this.masterGain);
+                            
+                            osc.start(t);
+                            osc.stop(t + step * 1.8);
+                        }
+
+                        // Bumbo Eletrônico (Kick) nos passos 0 e 4
+                        if (this.beat % 4 === 0) {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(110, t);
+                            osc.frequency.exponentialRampToValueAtTime(35, t + 0.08);
+
+                            gain.gain.setValueAtTime(0.3, t);
+                            gain.gain.linearRampToValueAtTime(0.01, t + 0.08);
+
+                            osc.connect(gain);
+                            gain.connect(this.masterGain);
+                            osc.start(t);
+                            osc.stop(t + 0.09);
+                        }
+
+                        // Chapéu (Hi-hat) nos contratempos
+                        if (this.beat % 4 === 2) {
+                            const osc = this.ctx.createOscillator();
+                            const filter = this.ctx.createBiquadFilter();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(8000, t);
+                            
+                            filter.type = 'highpass';
+                            filter.frequency.value = 5000;
+
+                            gain.gain.setValueAtTime(0.015, t);
+                            gain.gain.linearRampToValueAtTime(0.001, t + 0.03);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(this.masterGain);
+                            osc.start(t);
+                            osc.stop(t + 0.04);
+                        }
+                    }
+
+                    this.beat++;
+                    nextTick += step;
+                };
+
+                const scheduler = () => {
+                    if (!this.themeActive) return;
+                    
+                    if (nextTick < this.ctx.currentTime) {
+                        nextTick = this.ctx.currentTime;
+                    }
+
+                    while (nextTick < this.ctx.currentTime + 0.1) {
+                        tickLoop();
+                    }
+                    
+                    this.seqInterval = setTimeout(scheduler, 25);
+                };
+                scheduler();
+            }
+
+            stopMusic() {
+                this.themeActive = false;
+                if (this.seqInterval) {
+                    clearTimeout(this.seqInterval);
+                    this.seqInterval = null;
+                }
+            }
+        }
+
+        const som = new SomMisselCommand();
+
+        // Vincula botão de som do HUD
+        const btnSound = document.getElementById('btn-sound');
+        btnSound.addEventListener('click', (e) => {
+            e.stopPropagation();
+            som.init();
+            const muted = som.toggleMute();
+            if (muted) {
+                btnSound.classList.remove('active');
+                btnSound.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                        <path d="M9 9v6a3 3 0 0 0 3 3h1.586l4.707 4.707A1 1 0 0 0 20 22V4a1 1 0 0 0-1.707-.707L13.586 8H12a3 3 0 0 0-3 3z"></path>
+                    </svg>
+                `;
+            } else {
+                btnSound.classList.add('active');
+                btnSound.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                `;
+            }
+        });
+
+
+        // ============================================================================
+        // 2. CONFIGURAÇÕES GLOBAIS DO JOGO
+        // ============================================================================
+        const CONFIG = {
+            CÉU_ALTURA: 28,               // Altura Y máxima onde mísseis balísticos nascem
+            CHÃO_Y: 0,                    // Altura Y do solo
+            MUNIÇÃO_MAX_SILO: 10,         // Limite de mísseis por base ao iniciar onda
+            EXPLOSÃO_RAIO_MAX: 4.8,       // Raio máximo que a esfera de explosão atinge
+            EXPLOSÃO_VEL_EXPANSAO: 6.5,   // Velocidade de crescimento da explosão
+            EXPLOSÃO_DURACAO_CHEIA: 0.6,  // Tempo (segundos) que a explosão permanece cheia
+            EXPLOSÃO_VEL_CONTRACAO: 8.0,  // Velocidade de encolhimento da explosão
+            VEL_MISSEL_ALIADO: 55,        // Velocidade linear do míssil antibalístico
+            MIRA_TAMANHO: 0.6,            // Escala visual da mira holográfica
+        };
+
+
+        // ============================================================================
+        // 3. ENGINE GRÁFICA TRIDIMENSIONAL (Three.js Setup)
+        // ============================================================================
+        class Motor3D {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.isMobileLayout = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.scene = new THREE.Scene();
+                // Tornando o cenário mais claro com um fundo azul escuro cyberpunk vibrante
+                this.scene.background = new THREE.Color(0x090c24);
+                // Adiciona névoa com a nova cor de fundo e densidade ligeiramente menor
+                this.scene.fog = new THREE.FogExp2(0x090c24, 0.012);
+
+                this.camera = new THREE.PerspectiveCamera(
+                    45,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                
+                // Câmera tridimensional inclinada olhando para baixo
+                // X=0, Y=16 (elevado), Z=36 (atrás)
+                this.camera.position.set(0, 16, 36);
+                this.camera.lookAt(0, 4, -4);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                
+                // Configurações de cores realistas e tonemapping
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.1;
+
+                this.container.appendChild(this.renderer.domElement);
+
+                // Luzes
+                this.configurarIluminacao();
+
+                this.isMobileLayout = window.innerWidth < 768;
+
+                window.addEventListener('resize', () => this.onResize());
+                document.getElementById('loading-screen').style.display = 'none';
+            }
+
+            configurarIluminacao() {
+                // Luz ambiente azul mais clara e intensa
+                const ambient = new THREE.AmbientLight(0x222e4d, 1.9);
+                this.scene.add(ambient);
+
+                // Luz direcional principal mais intensa para iluminar bem os modelos 3D
+                const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+                sun.position.set(-15, 45, 20);
+                sun.castShadow = true;
+                sun.shadow.mapSize.width = 1024;
+                sun.shadow.mapSize.height = 1024;
+                this.scene.add(sun);
+
+                // Luz neon fill lateral ciano mais brilhante
+                const neonFill = new THREE.DirectionalLight(0x00f0ff, 0.8);
+                neonFill.position.set(25, 10, -10);
+                this.scene.add(neonFill);
+            }
+
+            onResize() {
+                this.isMobileLayout = window.innerWidth < 768;
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+
+        // ============================================================================
+        // 4. MODELOS PROCEDURAIS CYBERPUNK 3D
+        // ============================================================================
+        
+        // 4.1 Malha do Chão: Grade Metálica com Listras Neon
+        function criarGradeChao3D() {
+            const grupo = new THREE.Group();
+            
+            // Placa sólida escura do chão
+            const chaoGeom = new THREE.BoxGeometry(75, 1, 40);
+            const chaoMat = new THREE.MeshStandardMaterial({
+                color: 0x05050e,
+                roughness: 0.8,
+                metalness: 0.9
+            });
+            const chao = new THREE.Mesh(chaoGeom, chaoMat);
+            chao.position.set(0, -0.5, -5);
+            chao.receiveShadow = true;
+            grupo.add(chao);
+
+            // Grade de Neon Ciano sobreposta
+            const gradeHelper = new THREE.GridHelper(75, 30, 0x00f0ff, 0x071e3d);
+            gradeHelper.position.set(0, 0.02, -5);
+            grupo.add(gradeHelper);
+
+            return grupo;
+        }
+
+        // 4.2 Cidades Cibernéticas (Complexo de Prédios Procedurais)
+        class CidadeCibernetica3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.predios = [];
+                this.destruida = false;
+                this.construirCidade();
+            }
+
+            construirCidade() {
+                const metalMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x1e293b,
+                    metalness: 0.9,
+                    roughness: 0.2,
+                    clearcoat: 1.0
+                });
+
+                const neonWindowsMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 }); // Janelas neon verde
+                const neonTopGlow = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+                // Cada cidade é composta por 4 blocos de prédios com alturas variadas
+                const layout = [
+                    { w: 0.8, h: 2.2, d: 0.8, ox: -0.6, oz: -0.4 },
+                    { w: 1.1, h: 3.4, d: 1.1, ox: 0, oz: 0 },
+                    { w: 0.7, h: 2.6, d: 0.7, ox: 0.7, oz: -0.3 },
+                    { w: 0.9, h: 1.8, d: 0.9, ox: -0.2, oz: 0.5 }
+                ];
+
+                layout.forEach((data) => {
+                    const predioGroup = new THREE.Group();
+
+                    const geom = new THREE.BoxGeometry(data.w, data.h, data.d);
+                    const mesh = new THREE.Mesh(geom, metalMat);
+                    mesh.position.y = data.h / 2;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    predioGroup.add(mesh);
+
+                    // Adiciona listras horizontais brilhantes simulando andares de janelas
+                    const numJanelas = Math.floor(data.h / 0.6);
+                    for (let i = 1; i < numJanelas; i++) {
+                        const janGeom = new THREE.BoxGeometry(data.w + 0.03, 0.08, data.d + 0.03);
+                        const jan = new THREE.Mesh(janGeom, neonWindowsMat);
+                        jan.position.y = i * 0.6;
+                        predioGroup.add(jan);
+                    }
+
+                    // Antena no topo do prédio central mais alto
+                    if (data.h > 3.0) {
+                        const antena = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.8), metalMat);
+                        antena.position.y = data.h + 0.4;
+                        predioGroup.add(antena);
+
+                        const farol = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff0055 }));
+                        farol.position.y = data.h + 0.8;
+                        predioGroup.add(farol);
+                    }
+
+                    predioGroup.position.set(data.ox, 0, data.oz);
+                    this.mesh.add(predioGroup);
+                    this.predios.push(predioGroup);
+                });
+
+                // Escala inicial
+                this.mesh.scale.set(1.4, 1.4, 1.4);
+            }
+
+            destruir() {
+                if (this.destruida) return;
+                this.destruida = true;
+
+                // Rotaciona e afunda os prédios simulando colapso/escombros apagados
+                const cinzaApagadoMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95 });
+
+                this.predios.forEach((p, idx) => {
+                    // Substitui materiais por cinza escuro de cinzas
+                    p.traverse(child => {
+                        if (child.isMesh) {
+                            child.material = cinzaApagadoMat;
+                        }
+                    });
+
+                    // Desaba de forma procedural
+                    const direcaoQuedaX = (idx % 2 === 0 ? 1 : -1) * (0.3 + Math.random() * 0.4);
+                    const direcaoQuedaZ = (idx > 2 ? 1 : -1) * (0.2 + Math.random() * 0.3);
+                    
+                    // Animação de desabamento via propriedades físicas
+                    p.rotation.z = direcaoQuedaX;
+                    p.rotation.x = direcaoQuedaZ;
+                    p.position.y = -0.5; // Afunda
+                });
+            }
+
+            reconstruir() {
+                this.destruida = false;
+                // Remove visualmente e reconstrói
+                while(this.mesh.children.length > 0){ 
+                    this.mesh.remove(this.mesh.children[0]); 
+                }
+                this.predios = [];
+                this.construirCidade();
+                this.mesh.position.y = 0;
+            }
+        }
+
+        // 4.3 Bases de Bateria de Mísseis (Cúpula e Silos de Lançamento)
+        class BaseMisseis3D {
+            constructor(nome) {
+                this.name = nome;
+                this.mesh = new THREE.Group();
+                this.canhao = null;
+                this.muniçãoTotal = CONFIG.MUNIÇÃO_MAX_SILO;
+                this.destruida = false;
+                
+                this.construirBase();
+            }
+
+            construirBase() {
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x475569, // Metal polido chumbo
+                    metalness: 0.95,
+                    roughness: 0.08,
+                    clearcoat: 1.0
+                });
+
+                const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+                // 1. Cúpula Base (Domo central protetor)
+                const domo = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+                    cromoMat
+                );
+                domo.castShadow = true;
+                domo.receiveShadow = true;
+                this.mesh.add(domo);
+
+                // 2. Canhão de Disparo (Tubo que aponta para a mira)
+                const canhaoGroup = new THREE.Group();
+                const tubo = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.18, 0.24, 1.8, 10),
+                    cromoMat
+                );
+                tubo.position.y = 0.9;
+                tubo.castShadow = true;
+                canhaoGroup.add(tubo);
+
+                // Ponta de laser neon ciano
+                const pontaNeon = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.15, 10), neonCyanMat);
+                pontaNeon.position.y = 1.8;
+                canhaoGroup.add(pontaNeon);
+
+                this.canhao = canhaoGroup;
+                this.mesh.add(this.canhao);
+
+                this.mesh.scale.set(1.2, 1.2, 1.2);
+            }
+
+            apontarPara(target3D) {
+                if (this.destruida || !this.canhao) return;
+                
+                // Calcula vetor de direção a partir do centro da base (Y=0) até a mira
+                const origin = new THREE.Vector3().setFromMatrixPosition(this.mesh.matrixWorld);
+                const dir = new THREE.Vector3().copy(target3D).sub(origin);
+                
+                // Ângulo de inclinação no plano vertical (Z/Y)
+                const angleZ = Math.atan2(-dir.x, dir.y);
+                const angleX = Math.atan2(dir.z, Math.sqrt(dir.x*dir.x + dir.y*dir.y));
+
+                this.canhao.rotation.set(angleX, 0, angleZ);
+            }
+
+            destruir() {
+                if (this.destruida) return;
+                this.destruida = true;
+                
+                const cinzaQueimadoMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
+                this.mesh.traverse(child => {
+                    if (child.isMesh) {
+                        child.material = cinzaQueimadoMat;
+                    }
+                });
+
+                if (this.canhao) {
+                    this.canhao.rotation.set(Math.PI / 3, 0, Math.PI / 4); // Cai de lado quebrado
+                }
+            }
+
+            reconstruir() {
+                this.destruida = false;
+                this.muniçãoTotal = CONFIG.MUNIÇÃO_MAX_SILO;
+                while(this.mesh.children.length > 0){ 
+                    this.mesh.remove(this.mesh.children[0]); 
+                }
+                this.construirBase();
+            }
+        }
+
+        // 4.4 Mira Holográfica 3D (Anel neon ciano com linhas em cruz)
+        function criarMiraHolografica3D() {
+            const grupo = new THREE.Group();
+            const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+            // Anel Circular
+            const anelGeom = new THREE.TorusGeometry(CONFIG.MIRA_TAMANHO, 0.05, 8, 32);
+            const anel = new THREE.Mesh(anelGeom, neonCyanMat);
+            grupo.add(anel);
+
+            // Linha Vertical da mira
+            const vertical = new THREE.Mesh(new THREE.BoxGeometry(0.04, CONFIG.MIRA_TAMANHO * 2.8, 0.04), neonCyanMat);
+            // Linha Horizontal da mira
+            const horizontal = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.MIRA_TAMANHO * 2.8, 0.04, 0.04), neonCyanMat);
+            
+            grupo.add(vertical, horizontal);
+            return grupo;
+        }
+
+
+        // ============================================================================
+        // 5. SISTEMA DE PARTÍCULAS (Centelhas de explosões e poeira)
+        // ============================================================================
+        class SistemaParticulas {
+            constructor(scene) {
+                this.scene = scene;
+                this.particulas = [];
+            }
+
+            spawnarExplosaoCentelhas(x, y, z, cor = 0xff00ff, qtd = 20, velMult = 1.0) {
+                const geom = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+                const mat = new THREE.MeshBasicMaterial({ color: cor });
+
+                for (let i = 0; i < qtd; i++) {
+                    const p = new THREE.Mesh(geom, mat);
+                    p.position.set(
+                        x + (Math.random() * 0.4 - 0.2), 
+                        y + (Math.random() * 0.4 - 0.2), 
+                        z + (Math.random() * 0.4 - 0.2)
+                    );
+                    
+                    const ang = Math.random() * Math.PI * 2;
+                    const pitch = (Math.random() * 2 - 1) * Math.PI / 2;
+                    const sp = (2.5 + Math.random() * 6.5) * velMult;
+                    
+                    const vx = Math.cos(ang) * Math.cos(pitch) * sp;
+                    const vy = Math.sin(pitch) * sp;
+                    const vz = Math.sin(ang) * Math.cos(pitch) * sp;
+                    
+                    this.scene.add(p);
+                    this.particulas.push({
+                        mesh: p,
+                        vx: vx,
+                        vy: vy,
+                        vz: vz,
+                        vida: 0.4 + Math.random() * 0.4,
+                        vidaMax: 0.8
+                    });
+                }
+            }
+
+            update(dt) {
+                for (let i = this.particulas.length - 1; i >= 0; i--) {
+                    const p = this.particulas[i];
+                    p.vida -= dt;
+
+                    if (p.vida <= 0) {
+                        this.scene.remove(p.mesh);
+                        this.particulas.splice(i, 1);
+                    } else {
+                        p.mesh.position.x += p.vx * dt;
+                        p.mesh.position.y += p.vy * dt;
+                        p.mesh.position.z += p.vz * dt;
+
+                        // Reduz escala com base no tempo de vida restante
+                        const s = p.vida / p.vidaMax;
+                        p.mesh.scale.set(s, s, s);
+                    }
+                }
+            }
+
+            limparTodas() {
+                this.particulas.forEach(p => this.scene.remove(p.mesh));
+                this.particulas = [];
+            }
+        }
+
+
+        // ============================================================================
+        // 6. LÓGICA E REGRAS DE JOGO (MotorJogo)
+        // ============================================================================
+        class MotorJogo {
+            constructor() {
+                this.motor3D = new Motor3D();
+                this.som = som;
+                this.particulas = new SistemaParticulas(this.motor3D.scene);
+
+                // Entidades do jogo
+                this.cidades = [];
+                this.bases = [];
+                
+                this.miraMundo = new THREE.Vector3(0, 5, 0); // Posição 3D calculada da mira
+                this.miraMesh = null;
+
+                // Listas de projéteis ativos
+                this.misseisInimigos = [];
+                this.misseisAliados = [];
+                this.explosões = []; // Explosões ativas no céu
+
+                // Estados de fluxo de jogo
+                this.estadoJogo = 'MENU'; // MENU, PLAYING, GAME_OVER
+                this.score = 0;
+                this.onda = 1;
+                this.highscore = parseInt(localStorage.getItem('misselcommand_highscore')) || 0;
+                this.comboMult = 1;
+                this.tempoFimCombo = 0;
+
+                // Gerenciamento da onda atual
+                this.ondaTotalInimigos = 0;      // Total de mísseis a serem criados nesta onda
+                this.ondaCriadosInimigos = 0;    // Quantos mísseis já nasceram
+                this.ondaIntervaloSpawn = 1.8;   // Intervalo (segundos) entre mísseis inimigos
+                this.timerSpawn = 0;
+                
+                // Detector de tela sensível ao toque
+                this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+                this.construirCenarioEstatico();
+                this.setupUIEventos();
+                this.configurarInput();
+
+                // Balanço de câmera shake (em impactos)
+                this.shakeAmount = 0;
+
+                // Controles de câmera dinâmica (orbital)
+                this.anguloCamera = 0; // rotação horizontal inicial
+                this.zoomCamera = 1.0; // zoom inicial (1.0 = padrão)
+                this.teclasPress = {
+                    KeyW: false,
+                    KeyS: false,
+                    KeyA: false,
+                    KeyD: false
+                };
+
+                // Loop Principal
+                this.lastTime = performance.now();
+                this.animate();
+            }
+
+            // Instancia o chão, as 6 cidades e as 3 bases no espaço tridimensional
+            construirCenarioEstatico() {
+                // Chão
+                const gradeChao = criarGradeChao3D();
+                this.motor3D.scene.add(gradeChao);
+
+                // 6 Cidades posicionadas estrategicamente ao longo do eixo X (Y=0, Z=0)
+                const posCidadesX = [-20, -12, -4, 4, 12, 20];
+                posCidadesX.forEach((posX, idx) => {
+                    const cidade = new CidadeCibernetica3D();
+                    cidade.mesh.position.set(posX, 0, 0);
+                    this.motor3D.scene.add(cidade.mesh);
+                    this.cidades.push(cidade);
+                });
+
+                // 3 Bases de Defesa: Alpha (Esquerda), Beta (Centro) e Gamma (Direita)
+                const basesConfig = [
+                    { nome: 'ALPHA', x: -27 },
+                    { nome: 'BETA', x: 0 },
+                    { nome: 'GAMMA', x: 27 }
+                ];
+                basesConfig.forEach((cfg) => {
+                    const base = new BaseMisseis3D(cfg.nome);
+                    base.mesh.position.set(cfg.x, 0, 0.4);
+                    this.motor3D.scene.add(base.mesh);
+                    this.bases.push(base);
+                });
+
+                // Mira Holográfica
+                this.miraMesh = criarMiraHolografica3D();
+                this.motor3D.scene.add(this.miraMesh);
+                this.miraMesh.position.copy(this.miraMundo);
+            }
+
+            setupUIEventos() {
+                document.getElementById('btn-start').addEventListener('click', () => {
+                    this.som.init();
+                    this.som.startMusic();
+                    this.iniciarJogo(true);
+                });
+
+                document.getElementById('btn-restart').addEventListener('click', () => {
+                    this.som.init();
+                    this.som.startMusic();
+                    this.iniciarJogo(true);
+                });
+
+                if (this.isTouchDevice) {
+                    document.getElementById('mobile-warning').style.display = 'block';
+                }
+            }
+
+            configurarInput() {
+                // Rastreamento do mouse para atualizar a mira holográfica 3D
+                window.addEventListener('mousemove', (e) => {
+                    if (this.estadoJogo !== 'PLAYING') return;
+                    this.atualizarCoordenadasMira(e.clientX, e.clientY);
+                });
+
+                // Clique para disparar míssil de defesa
+                window.addEventListener('mousedown', (e) => {
+                    if (this.estadoJogo !== 'PLAYING') return;
+                    e.preventDefault();
+                    
+                    // Atualiza mira primeiro para garantir precisão
+                    this.atualizarCoordenadasMira(e.clientX, e.clientY);
+                    this.dispararDefesa();
+                });
+
+                // Toques em dispositivos móveis
+                window.addEventListener('touchstart', (e) => {
+                    if (this.estadoJogo !== 'PLAYING') return;
+                    // Previne comportamentos padrão como zoom
+                    if (e.touches.length === 1) {
+                        const touch = e.touches[0];
+                        this.atualizarCoordenadasMira(touch.clientX, touch.clientY);
+                        this.dispararDefesa();
+                    }
+                }, { passive: false });
+
+                window.addEventListener('touchmove', (e) => {
+                    if (this.estadoJogo !== 'PLAYING') return;
+                    if (e.touches.length === 1) {
+                        const touch = e.touches[0];
+                        this.atualizarCoordenadasMira(touch.clientX, touch.clientY);
+                    }
+                }, { passive: false });
+
+                // Teclado para controlar a rotação e o zoom da câmera
+                window.addEventListener('keydown', (e) => {
+                    if (e.code in this.teclasPress) {
+                        this.teclasPress[e.code] = true;
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    if (e.code in this.teclasPress) {
+                        this.teclasPress[e.code] = false;
+                    }
+                });
+            }
+
+            // Converte coordenadas 2D da tela (pixel) em coordenadas 3D no plano do jogo (Z = 0)
+            atualizarCoordenadasMira(screenX, screenY) {
+                // Normaliza as coordenadas para o padrão do Raycaster (-1 a 1)
+                const mouseNormX = (screenX / window.innerWidth) * 2 - 1;
+                const mouseNormY = -(screenY / window.innerHeight) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(new THREE.Vector2(mouseNormX, mouseNormY), this.motor3D.camera);
+
+                // Fazemos interseção com um plano virtual Z = 0 onde o jogo acontece
+                const planoVirtual = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+                const pontoIntersecao = new THREE.Vector3();
+                
+                raycaster.ray.intersectPlane(planoVirtual, pontoIntersecao);
+
+                // Limita a mira horizontalmente e verticalmente para não sair do céu de jogo visível
+                pontoIntersecao.x = Math.max(-32, Math.min(32, pontoIntersecao.x));
+                pontoIntersecao.y = Math.max(1.5, Math.min(26, pontoIntersecao.y)); // Mantém acima do solo
+                pontoIntersecao.z = 0; // Jogo se passa no plano Z=0
+
+                this.miraMundo.copy(pontoIntersecao);
+                if (this.miraMesh) {
+                    this.miraMesh.position.copy(this.miraMundo);
+                }
+
+                // Aponta os canhões de todas as bases ativas para a mira do jogador
+                this.bases.forEach(base => base.apontarPara(this.miraMundo));
+            }
+
+            iniciarJogo(resetTotal = true) {
+                if (resetTotal) {
+                    this.score = 0;
+                    this.onda = 1;
+                    this.cidades.forEach(c => c.reconstruir());
+                    this.bases.forEach(b => b.reconstruir());
+                }
+
+                // Limpa projéteis antigos
+                this.limparObjetosCena();
+
+                // Configura parâmetros da primeira onda
+                this.configurarOnda();
+
+                document.getElementById('screen-menu').classList.add('hidden');
+                document.getElementById('screen-gameover').classList.add('hidden');
+
+                this.estadoJogo = 'PLAYING';
+                this.atualizarHUD();
+            }
+
+            configurarOnda() {
+                // Escalabilidade de dificuldade com base na onda
+                this.ondaTotalInimigos = 12 + this.onda * 3; // Mais mísseis a cada onda
+                this.ondaCriadosInimigos = 0;
+                
+                // Intervalo diminui gradualmente (onda rápida)
+                this.ondaIntervaloSpawn = Math.max(0.65, 2.0 - this.onda * 0.15);
+                this.timerSpawn = 0.5; // Dispara o primeiro rapidamente
+
+                // Recarrega silos de bases que não estão destruídas
+                this.bases.forEach(base => {
+                    if (!base.destruida) {
+                        base.muniçãoTotal = CONFIG.MUNIÇÃO_MAX_SILO;
+                    }
+                });
+
+                this.atualizarHUD();
+            }
+
+            limparObjetosCena() {
+                // Inimigos
+                this.misseisInimigos.forEach(m => this.motor3D.scene.remove(m.mesh));
+                this.misseisInimigos = [];
+
+                // Aliados
+                this.misseisAliados.forEach(m => this.motor3D.scene.remove(m.mesh));
+                this.misseisAliados = [];
+
+                // Explosões
+                this.explosões.forEach(e => this.motor3D.scene.remove(e.mesh));
+                this.explosões = [];
+
+                this.particulas.limparTodas();
+            }
+
+            // Dispara míssil antibalístico da base mais próxima com munição
+            dispararDefesa() {
+                if (this.estadoJogo !== 'PLAYING') return;
+
+                let melhorBase = null;
+                let menorDistancia = Infinity;
+
+                // Busca a base ativa mais próxima horizontalmente da mira
+                this.bases.forEach(base => {
+                    if (!base.destruida && base.muniçãoTotal > 0) {
+                        const dist = Math.abs(base.mesh.position.x - this.miraMundo.x);
+                        if (dist < menorDistancia) {
+                            menorDistancia = dist;
+                            melhorBase = base;
+                        }
+                    }
+                });
+
+                if (melhorBase) {
+                    melhorBase.muniçãoTotal--;
+                    this.atualizarHUD();
+                    this.som.playDisparo();
+
+                    const origemX = melhorBase.mesh.position.x;
+                    const origemY = 1.2; // Altura do topo do canhão
+
+                    // Cria representação gráfica 3D do míssil aliado (pequena ogiva neon ciano)
+                    const geom = new THREE.SphereGeometry(0.24, 8, 8);
+                    const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                    const míssilMesh = new THREE.Mesh(geom, mat);
+                    míssilMesh.position.set(origemX, origemY, 0);
+                    this.motor3D.scene.add(míssilMesh);
+
+                    // Cria a linha de rastro do míssil aliado
+                    const rastroMat = new THREE.LineBasicMaterial({ color: 0x005577 });
+                    const rastroGeom = new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(origemX, origemY, 0),
+                        new THREE.Vector3(origemX, origemY, 0)
+                    ]);
+                    const rastroLine = new THREE.Line(rastroGeom, rastroMat);
+                    this.motor3D.scene.add(rastroLine);
+
+                    // Calcula vetor de velocidade
+                    const destino = new THREE.Vector3().copy(this.miraMundo);
+                    const totalDist = destino.distanceTo(míssilMesh.position);
+                    const tempoDeVoo = totalDist / CONFIG.VEL_MISSEL_ALIADO;
+
+                    this.misseisAliados.push({
+                        mesh: míssilMesh,
+                        line: rastroLine,
+                        inicio: new THREE.Vector3(origemX, origemY, 0),
+                        fim: destino,
+                        tempoAcumulado: 0,
+                        tempoVooTotal: tempoDeVoo
+                    });
+                } else {
+                    // Sem munição em bases ativas! Toca som de silo vazio
+                    this.som.playAlertaSiloVazio();
+                }
+            }
+
+            // Spawna um míssil inimigo de trajetória balística linear
+            spawnarMisselInimigo() {
+                const spawnX = Math.random() * 64 - 32; // Limite horizontal
+                const spawnY = CONFIG.CÉU_ALTURA + Math.random() * 3;
+
+                // Escolhe um alvo prioritário entre cidades ou bases sobreviventes
+                const alvosPossiveis = [];
+                this.cidades.forEach((cid, idx) => {
+                    if (!cid.destruida) alvosPossiveis.push({ tipo: 'cidade', obj: cid, x: cid.mesh.position.x });
+                });
+                this.bases.forEach((base, idx) => {
+                    if (!base.destruida) alvosPossiveis.push({ tipo: 'base', obj: base, x: base.mesh.position.x });
+                });
+
+                // Se não há alvos sobreviventes, o jogo já devia ter acabado, mas por garantia escolhe ponto no chão
+                let targetX = Math.random() * 40 - 20;
+                let alvoSelecionado = null;
+
+                if (alvosPossiveis.length > 0) {
+                    alvoSelecionado = alvosPossiveis[Math.floor(Math.random() * alvosPossiveis.length)];
+                    targetX = alvoSelecionado.x;
+                }
+
+                // Cria modelo 3D do míssil inimigo (ogiva rosa neon)
+                const geom = new THREE.ConeGeometry(0.18, 0.6, 5);
+                const mat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+                const mesh = new THREE.Mesh(geom, mat);
+                mesh.position.set(spawnX, spawnY, 0);
+                
+                // Aponta para baixo na direção da descida
+                const anguloZ = Math.atan2(-(targetX - spawnX), -spawnY);
+                mesh.rotation.z = anguloZ;
+                
+                this.motor3D.scene.add(mesh);
+
+                // Cria a linha de rastro do míssil inimigo (vermelho/magenta escuro)
+                const rastroMat = new THREE.LineBasicMaterial({ color: 0x880044 });
+                const rastroGeom = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(spawnX, spawnY, 0),
+                    new THREE.Vector3(spawnX, spawnY, 0)
+                ]);
+                const rastroLine = new THREE.Line(rastroGeom, rastroMat);
+                this.motor3D.scene.add(rastroLine);
+
+                // Velocidade aumenta ligeiramente com a onda
+                const vel = (2.2 + this.onda * 0.3) * (0.85 + Math.random() * 0.3);
+
+                this.misseisInimigos.push({
+                    mesh: mesh,
+                    line: rastroLine,
+                    inicio: new THREE.Vector3(spawnX, spawnY, 0),
+                    alvo: new THREE.Vector3(targetX, CONFIG.CHÃO_Y, 0),
+                    alvoEstrutura: alvoSelecionado, // Cidade ou Base
+                    velocidade: vel,
+                    progressao: 0,
+                    seDividiu: false // Flag para mísseis inteligentes
+                });
+            }
+
+            // Cria uma esfera de explosão na mira
+            criarExplosaoEsferica(x, y, z) {
+                // Altera o raio inicial de 0.1 para 1.0 para que a escala física (raioAtual) coincida com o raio visual 3D
+                const geom = new THREE.SphereGeometry(1.0, 16, 16);
+                
+                // Material neon holográfico transparente aditivo
+                const mat = new THREE.MeshBasicMaterial({
+                    color: 0xffea00, // Amarelo brilhante
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const mesh = new THREE.Mesh(geom, mat);
+                mesh.position.set(x, y, z);
+                this.motor3D.scene.add(mesh);
+
+                this.explosões.push({
+                    mesh: mesh,
+                    x: x,
+                    y: y,
+                    z: z,
+                    raioAtual: 0.1,
+                    fase: 'EXPANDINDO', // EXPANDINDO, ESPERA, ENCOLHENDO
+                    timerEspera: 0
+                });
+
+                this.som.playExplosaoAliada();
+                this.shakeAmount = Math.max(this.shakeAmount, 0.15);
+            }
+
+            // ============================================================================
+            // 7. LOOP PRINCIPAL DE LOOP (Frame Update)
+            // ============================================================================
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const now = performance.now();
+                let dt = (now - this.lastTime) / 1000;
+                this.lastTime = now;
+
+                if (dt > 0.1) dt = 0.1; // Trava contra oscilações bruscas
+
+                if (this.estadoJogo === 'PLAYING') {
+                    this.atualizarSpawns(dt);
+                    this.atualizarMisseisAliados(dt);
+                    this.atualizarMisseisInimigos(dt);
+                    this.atualizarExplosoes(dt);
+                    this.processarColisoes();
+                    this.particulas.update(dt);
+                    this.verificarFimDeOnda();
+                } else {
+                    // Menu ou Game Over: atualiza partículas decorativas apenas
+                    this.particulas.update(dt);
+                }
+
+                // Renderização da cena
+                this.atualizarCamera(dt);
+                this.motor3D.renderer.render(this.motor3D.scene, this.motor3D.camera);
+            }
+
+            // Atualiza a rotação (A/D) e o zoom (W/S) da câmera orbital e processa o shake
+            atualizarCamera(dt) {
+                const velRotacao = 1.6; // velocidade de rotação em radianos por segundo
+                const velZoom = 1.0; // velocidade do fator de zoom por segundo
+
+                if (this.teclasPress.KeyA) {
+                    this.anguloCamera += velRotacao * dt;
+                }
+                if (this.teclasPress.KeyD) {
+                    this.anguloCamera -= velRotacao * dt;
+                }
+                if (this.teclasPress.KeyW) {
+                    this.zoomCamera -= velZoom * dt; // zoom in (aproxima)
+                }
+                if (this.teclasPress.KeyS) {
+                    this.zoomCamera += velZoom * dt; // zoom out (afasta)
+                }
+
+                // Limita a rotação para evitar que o jogador olhe por trás do plano de jogo (Z=0)
+                // Um limite de -60 a +60 graus (Math.PI / 3) mantém as cidades legíveis e visíveis
+                const limiteAngulo = Math.PI / 3;
+                this.anguloCamera = Math.max(-limiteAngulo, Math.min(limiteAngulo, this.anguloCamera));
+
+                // Limita o zoom da câmera
+                this.zoomCamera = Math.max(0.5, Math.min(1.5, this.zoomCamera));
+
+                // Ponto focal central de lookAt da câmera
+                const focoX = 0;
+                const focoY = 4;
+                const focoZ = -4;
+
+                // Parâmetros base da câmera (quando zoom é 1.0)
+                const distBase = 40;
+                const altBase = 12;
+
+                const distAtual = distBase * this.zoomCamera;
+                const altAtual = altBase * this.zoomCamera;
+
+                // Calcula a nova posição da câmera no espaço usando coordenadas cilíndricas orbitais
+                let camX = focoX + distAtual * Math.sin(this.anguloCamera);
+                let camZ = focoZ + distAtual * Math.cos(this.anguloCamera);
+                let camY = focoY + altAtual;
+
+                // Aplica o shake de impacto, se ativo
+                if (this.shakeAmount > 0) {
+                    const shakeX = (Math.random() * 2 - 1) * this.shakeAmount * 1.5;
+                    const shakeY = (Math.random() * 2 - 1) * this.shakeAmount * 1.5;
+                    const shakeZ = (Math.random() * 2 - 1) * this.shakeAmount * 1.5;
+                    camX += shakeX;
+                    camY += shakeY;
+                    camZ += shakeZ;
+                    
+                    this.shakeAmount -= dt * 2.8; // Reduz gradualmente
+                }
+
+                // Seta posição e orientação da câmera
+                this.motor3D.camera.position.set(camX, camY, camZ);
+                this.motor3D.camera.lookAt(focoX, focoY, focoZ);
+
+                // Aplica o efeito billboard na mira holográfica para que ela sempre encare a câmera diretamente
+                if (this.miraMesh) {
+                    this.miraMesh.quaternion.copy(this.motor3D.camera.quaternion);
+                }
+            }
+
+            atualizarSpawns(dt) {
+                // Apenas spawna se ainda houver inimigos restantes na onda
+                if (this.ondaCriadosInimigos < this.ondaTotalInimigos) {
+                    this.timerSpawn -= dt;
+                    if (this.timerSpawn <= 0) {
+                        this.spawnarMisselInimigo();
+                        this.ondaCriadosInimigos++;
+                        
+                        // Sorteia próximo intervalo
+                        this.timerSpawn = this.ondaIntervaloSpawn * (0.7 + Math.random() * 0.6);
+                    }
+                }
+            }
+
+            atualizarMisseisAliados(dt) {
+                for (let i = this.misseisAliados.length - 1; i >= 0; i--) {
+                    const m = this.misseisAliados[i];
+                    m.tempoAcumulado += dt;
+
+                    const porcentagem = Math.min(1.0, m.tempoAcumulado / m.tempoVooTotal);
+                    
+                    // Interpolação linear da posição (LERP)
+                    const novaPos = new THREE.Vector3().lerpVectors(m.inicio, m.fim, porcentagem);
+                    m.mesh.position.copy(novaPos);
+
+                    // Atualiza a geometria do rastro para seguir a ogiva
+                    const pontos = [m.inicio, novaPos];
+                    m.line.geometry.setFromPoints(pontos);
+
+                    // Verifica se atingiu a coordenada da mira (destino final)
+                    if (porcentagem >= 1.0) {
+                        // Explode míssil de defesa
+                        this.criarExplosaoEsferica(m.fim.x, m.fim.y, m.fim.z);
+                        
+                        // Remove elementos da cena
+                        this.motor3D.scene.remove(m.mesh);
+                        this.motor3D.scene.remove(m.line);
+                        this.misseisAliados.splice(i, 1);
+                    }
+                }
+            }
+
+            atualizarMisseisInimigos(dt) {
+                for (let i = this.misseisInimigos.length - 1; i >= 0; i--) {
+                    const m = this.misseisInimigos[i];
+                    m.progressao += m.velocidade * dt;
+
+                    // Calcula vetor de deslocamento linear
+                    const direcao = new THREE.Vector3().copy(m.alvo).sub(m.inicio);
+                    const totalDist = m.inicio.distanceTo(m.alvo);
+                    const porcentagem = Math.min(1.0, m.progressao / totalDist);
+
+                    const novaPos = new THREE.Vector3().lerpVectors(m.inicio, m.alvo, porcentagem);
+                    m.mesh.position.copy(novaPos);
+
+                    // Atualiza rastro
+                    m.line.geometry.setFromPoints([m.inicio, novaPos]);
+
+                    // MECÂNICA DE DIVISÃO INTELIGENTE:
+                    // Em ondas superiores a 2, mísseis têm 25% de chance de se dividir em 2 a meia altura
+                    if (this.onda > 2 && !m.seDividiu && porcentagem > 0.4 && porcentagem < 0.5 && Math.random() < 0.25) {
+                        m.seDividiu = true;
+                        
+                        // Spawn do míssil filho que desvia para outro alvo
+                        const filhoX = novaPos.x + (Math.random() > 0.5 ? 6 : -6);
+                        
+                        // Cria clone do inimigo
+                        const geom = new THREE.ConeGeometry(0.18, 0.6, 5);
+                        const mat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+                        const filhoMesh = new THREE.Mesh(geom, mat);
+                        filhoMesh.position.copy(novaPos);
+                        
+                        const alvoFilhoX = Math.max(-28, Math.min(28, filhoX));
+                        filhoMesh.rotation.z = Math.atan2(-(alvoFilhoX - novaPos.x), -novaPos.y);
+                        this.motor3D.scene.add(filhoMesh);
+
+                        const rLineMat = new THREE.LineBasicMaterial({ color: 0x880044 });
+                        const rLineGeom = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(novaPos.x, novaPos.y, 0),
+                            new THREE.Vector3(novaPos.x, novaPos.y, 0)
+                        ]);
+                        const rLine = new THREE.Line(rLineGeom, rLineMat);
+                        this.motor3D.scene.add(rLine);
+
+                        this.misseisInimigos.push({
+                            mesh: filhoMesh,
+                            line: rLine,
+                            inicio: new THREE.Vector3().copy(novaPos),
+                            alvo: new THREE.Vector3(alvoFilhoX, CONFIG.CHÃO_Y, 0),
+                            alvoEstrutura: null, // Ponto randômico do solo
+                            velocidade: m.velocidade * 1.15, // Filho ligeiramente mais veloz
+                            progressao: 0,
+                            seDividiu: true
+                        });
+
+                        // Centelhas no ponto de bifurcação
+                        this.particulas.spawnarExplosaoCentelhas(novaPos.x, novaPos.y, 0, 0xff00ff, 8, 0.5);
+                    }
+
+                    // Se atingiu o alvo no solo sem ser interceptado
+                    if (porcentagem >= 1.0) {
+                        // Impacto! Destrói a estrutura
+                        this.processarImpactoInimigo(m);
+
+                        // Remove da cena
+                        this.motor3D.scene.remove(m.mesh);
+                        this.motor3D.scene.remove(m.line);
+                        this.misseisInimigos.splice(i, 1);
+                    }
+                }
+            }
+
+            processarImpactoInimigo(missel) {
+                const pos = missel.mesh.position;
+                
+                // Centelhas da explosão no chão
+                this.particulas.spawnarExplosaoCentelhas(pos.x, pos.y, 0, 0xff5e00, 30, 1.4);
+                this.som.playDestruicaoCidade();
+                this.shakeAmount = 1.2; // Forte tremor na câmera
+
+                const estrutura = missel.alvoEstrutura;
+                if (estrutura) {
+                    estrutura.obj.destruir();
+                    this.atualizarHUD();
+                }
+
+                // Cria uma pequena esfera de explosão vermelha nociva no solo
+                const geom = new THREE.SphereGeometry(1.5, 12, 12);
+                const mat = new THREE.MeshBasicMaterial({ color: 0xff0055, transparent: true, opacity: 0.6 });
+                const mesh = new THREE.Mesh(geom, mat);
+                mesh.position.set(pos.x, 0.2, 0);
+                this.motor3D.scene.add(mesh);
+                
+                setTimeout(() => this.motor3D.scene.remove(mesh), 600);
+
+                // Verifica se todas as cidades foram devastadas (Condição de derrota)
+                this.verificarDerrota();
+            }
+
+            atualizarExplosoes(dt) {
+                for (let i = this.explosões.length - 1; i >= 0; i--) {
+                    const e = this.explosões[i];
+
+                    if (e.fase === 'EXPANDINDO') {
+                        e.raioAtual += CONFIG.EXPLOSÃO_VEL_EXPANSAO * dt;
+                        
+                        // Transiciona para espera ao chegar no topo
+                        if (e.raioAtual >= CONFIG.EXPLOSÃO_RAIO_MAX) {
+                            e.raioAtual = CONFIG.EXPLOSÃO_RAIO_MAX;
+                            e.fase = 'ESPERA';
+                            e.timerEspera = CONFIG.EXPLOSÃO_DURACAO_CHEIA;
+                        }
+                    } else if (e.fase === 'ESPERA') {
+                        e.timerEspera -= dt;
+                        if (e.timerEspera <= 0) {
+                            e.fase = 'ENCOLHENDO';
+                        }
+                    } else if (e.fase === 'ENCOLHENDO') {
+                        e.raioAtual -= CONFIG.EXPLOSÃO_VEL_CONTRACAO * dt;
+                        if (e.raioAtual <= 0.1) {
+                            // Fim da explosão, deleta
+                            this.motor3D.scene.remove(e.mesh);
+                            this.explosões.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    // Atualiza a malha 3D da explosão
+                    e.mesh.scale.set(e.raioAtual, e.raioAtual, e.raioAtual);
+                    
+                    // Modula cor de amarelo brilhante para vermelho enfraquecido na contração
+                    const s = e.raioAtual / CONFIG.EXPLOSÃO_RAIO_MAX;
+                    e.mesh.material.color.setHSL(0.12 * s, 1.0, 0.4 + 0.1 * s);
+                    e.mesh.material.opacity = 0.85 * (e.fase === 'ENCOLHENDO' ? s : 1);
+                }
+            }
+
+            // ============================================================================
+            // 8. PROCESSADOR DE COLISÃO DE ARMAS (AABB / Esferas de Interceptação)
+            // ============================================================================
+            processarColisoes() {
+                // Iteramos sobre as explosões aliadas ativas e os mísseis inimigos ativos
+                for (let e of this.explosões) {
+                    // Ignora explosões muito no início da contração final para feedback justo
+                    if (e.fase === 'ENCOLHENDO' && e.raioAtual < 0.6) continue;
+
+                    const centroExplosao = new THREE.Vector3(e.x, e.y, e.z);
+
+                    for (let i = this.misseisInimigos.length - 1; i >= 0; i--) {
+                        const m = this.misseisInimigos[i];
+                        const posMissel = m.mesh.position;
+
+                        // Mede a distância entre a ogiva inimiga e o centro da explosão
+                        const dist = centroExplosao.distanceTo(posMissel);
+
+                        // Se a ogiva entrou na área da esfera de fogo neon
+                        if (dist <= e.raioAtual) {
+                            // Interceptado! Centelhas neon rosa
+                            this.particulas.spawnarExplosaoCentelhas(posMissel.x, posMissel.y, 0, 0xff007f, 15);
+                            this.som.playExplosaoAliada();
+
+                            // Sistema de combo: destruições na mesma janela somam pontos maiores
+                            const comboPts = 100 * this.comboMult;
+                            this.score += comboPts;
+
+                            // Atualiza combo temporário
+                            this.comboMult++;
+                            this.tempoFimCombo = performance.now() + 1500; // Combo dura 1.5s
+
+                            // Remove projétil
+                            this.motor3D.scene.remove(m.mesh);
+                            this.motor3D.scene.remove(m.line);
+                            this.misseisInimigos.splice(i, 1);
+
+                            this.atualizarHUD();
+                        }
+                    }
+                }
+
+                // Reseta combo caso o tempo expire
+                if (performance.now() > this.tempoFimCombo && this.comboMult > 1) {
+                    this.comboMult = 1;
+                    this.atualizarHUD();
+                }
+            }
+
+            verificarFimDeOnda() {
+                // Condição de sucesso:
+                // Se todos os mísseis da onda foram criados E não restam mísseis inimigos nem explosões na tela
+                if (this.ondaCriadosInimigos >= this.ondaTotalInimigos && 
+                    this.misseisInimigos.length === 0 && 
+                    this.explosões.length === 0) {
+                    
+                    this.avancarOnda();
+                }
+            }
+
+            avancarOnda() {
+                this.estadoJogo = 'MENU_PROGRES'; // Trava loop de jogo temporariamente
+                this.som.playVitoriaOnda();
+
+                // Calcula Bônus
+                let cidadesVivas = 0;
+                this.cidades.forEach(c => { if (!c.destruida) cidadesVivas++; });
+
+                let muniçãoRestante = 0;
+                this.bases.forEach(b => { if (!b.destruida) muniçãoRestante += b.muniçãoTotal; });
+
+                const bonusCidade = cidadesVivas * 250;
+                const bonusMunicao = muniçãoRestante * 50;
+                this.score += (bonusCidade + bonusMunicao);
+
+                // Mecânica de Reconstrução de Cidades
+                // A cada 10.000 pontos, reconstrói uma cidade devastada ao final da onda
+                let qtdeCidadesDestruidas = 0;
+                this.cidades.forEach(c => { if (c.destruida) qtdeCidadesDestruidas++; });
+
+                if (qtdeCidadesDestruidas > 0 && this.score >= 10000 * this.onda) {
+                    // Procura a primeira destruída e levanta
+                    for (let c of this.cidades) {
+                        if (c.destruida) {
+                            c.reconstituted = true; // Feedback
+                            c.reconstruir();
+                            break;
+                        }
+                    }
+                }
+
+                // Reconstrói silos das bases que foram destruídas
+                this.bases.forEach(b => {
+                    if (b.destruida) {
+                        b.reconstruir();
+                    }
+                });
+
+                this.onda++;
+                this.atualizarHUD();
+
+                // Exibe aviso rápido na tela e inicia próxima onda após 2.5s
+                setTimeout(() => {
+                    if (this.estadoJogo === 'MENU_PROGRES') {
+                        this.som.startMusic();
+                        this.configurarOnda();
+                        this.estadoJogo = 'PLAYING';
+                    }
+                }, 2600);
+            }
+
+            verificarDerrota() {
+                let cidadesVivas = 0;
+                this.cidades.forEach(c => { if (!c.destruida) cidadesVivas++; });
+
+                if (cidadesVivas === 0) {
+                    this.processarDerrota();
+                }
+            }
+
+            processarDerrota() {
+                this.estadoJogo = 'GAME_OVER';
+                this.som.stopMusic();
+                this.som.playGameOverMelodia();
+
+                // Atualiza Highscore no local storage
+                if (this.score > this.highscore) {
+                    this.highscore = this.score;
+                    localStorage.setItem('misselcommand_highscore', this.highscore);
+                }
+
+                // Renderiza tela final de estatísticas
+                document.getElementById('summary-wave').innerText = this.onda;
+                document.getElementById('summary-score').innerText = String(this.score).padStart(5, '0');
+                document.getElementById('summary-highscore').innerText = String(this.highscore).padStart(5, '0');
+                document.getElementById('summary-total').innerText = String(this.score).padStart(5, '0');
+
+                document.getElementById('screen-gameover').classList.remove('hidden');
+            }
+
+            atualizarHUD() {
+                document.getElementById('hud-wave').innerText = this.onda;
+                document.getElementById('hud-score').innerText = String(this.score).padStart(5, '0');
+                document.getElementById('hud-mult').innerText = `x${this.comboMult}`;
+
+                let cidadesVivas = 0;
+                this.cidades.forEach(c => { if (!c.destruida) cidadesVivas++; });
+                document.getElementById('hud-cities').innerText = `${cidadesVivas}/6`;
+
+                // Recarrega as barras de munição na base da tela
+                this.bases.forEach(base => {
+                    let cardId = 'silo-left';
+                    if (base.name === 'BETA') cardId = 'silo-center';
+                    if (base.name === 'GAMMA') cardId = 'silo-right';
+
+                    const card = document.getElementById(cardId);
+                    const container = card.querySelector('.silo-bullets');
+                    
+                    // Limpa
+                    container.innerHTML = '';
+
+                    if (base.destruida) {
+                        card.classList.remove('active-silo');
+                        container.innerHTML = '<span style="color:var(--neon-pink); font-size:10px; font-weight:700; font-family:Orbitron">DESTRUÍDO</span>';
+                    } else {
+                        // Desenha as bolinhas/linhas de mísseis restantes
+                        for (let i = 0; i < CONFIG.MUNIÇÃO_MAX_SILO; i++) {
+                            const bullet = document.createElement('div');
+                            bullet.className = 'bullet-indicator';
+                            if (i >= base.muniçãoTotal) {
+                                bullet.className += ' empty';
+                            }
+                            container.appendChild(bullet);
+                        }
+
+                        // Destaca base ativa se houver munição
+                        if (base.muniçãoTotal > 0) {
+                            card.classList.add('active-silo');
+                        } else {
+                            card.classList.remove('active-silo');
+                        }
+                    }
+                });
+            }
+        }
+
+
+        // ============================================================================
+        // 9. INICIALIZAÇÃO DO JOGO
+        // ============================================================================
+        window.addEventListener('load', () => {
+            const jogo = new MotorJogo();
+        });
+    </script>
+</body>
+</html>

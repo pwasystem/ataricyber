@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Enduro 3D - Neon Highway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #03030c;
+            --glass-bg: rgba(6, 6, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        .hud-value.orange {
+            color: var(--neon-orange);
+            text-shadow: 0 0 10px rgba(255, 94, 0, 0.5);
+        }
+
+        /* Indicador do Ciclo */
+        .ciclo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ciclo-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 1px solid var(--neon-cyan);
+            box-shadow: var(--text-glow);
+            background: rgba(0, 240, 255, 0.1);
+            transition: all 0.5s ease;
+        }
+
+        /* Painel do Velocímetro Central na Base */
+        #velocimetro-container {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 12px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            min-width: 180px;
+            transition: border-color 0.2s ease;
+        }
+
+        #velocimetro-container.colisao-alerta {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+            animation: tremor 0.15s infinite;
+        }
+
+        .vel-num {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+            line-height: 1;
+        }
+
+        .vel-unit {
+            font-size: 10px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+            color: var(--neon-cyan);
+            margin-top: 4px;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+            border-radius: 3px;
+            transition: width 0.1s linear;
+        }
+
+        /* Alerta de Tempo Ruim (Gelo/Neblina) */
+        #tempo-alerta {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(255, 0, 127, 0.2);
+            border: 1px solid var(--neon-pink);
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 3px;
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-shadow: var(--pink-glow);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.25);
+            display: none;
+            text-transform: uppercase;
+            animation: pulse-alerta 1s infinite alternate;
+        }
+
+        /* Botão de Som no HUD */
+        .sound-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .sound-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .sound-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        /* Controles Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: none;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            background: rgba(6, 6, 20, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 24px;
+            pointer-events: auto;
+            touch-action: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s ease;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.25);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        .control-group-left, .control-group-right {
+            display: flex;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        /* Telas de Overlay */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: rgba(2, 2, 8, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border-top: 2px solid var(--neon-cyan);
+            animation: float-card 6s ease-in-out infinite;
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            margin: 0 0 8px 0;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, #ffffff 30%, var(--neon-cyan) 60%, var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: var(--neon-pink);
+            margin-bottom: 30px;
+            text-shadow: var(--pink-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .instructions h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            margin-top: 0;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #d1d5db;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), #00a8ff);
+            border: none;
+            color: #03030c;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.7);
+            background: linear-gradient(135deg, #00f0ff, var(--neon-pink));
+            color: #ffffff;
+        }
+
+        /* Detalhes de Fim de Jogo */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .summary-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px 18px;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            font-family: 'Orbitron', sans-serif;
+            color: #8a8fa3;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .summary-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        .summary-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        /* Animações */
+        @keyframes float-card {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes pulse-alerta {
+            from { opacity: 0.5; transform: translateX(-50%) scale(0.98); }
+            to { opacity: 1; transform: translateX(-50%) scale(1.02); }
+        }
+
+        @keyframes tremor {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            20% { transform: translateX(-52%) translateY(-1px); }
+            40% { transform: translateX(-48%) translateY(1px); }
+            60% { transform: translateX(-51%) translateY(1px); }
+            80% { transform: translateX(-49%) translateY(-1px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay do Menu Principal -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER ENDURO 3D</h1>
+            <div class="game-subtitle">NEON HIGHWAY CHALLENGE</div>
+
+            <div class="instructions">
+                <h3>Diretrizes de Pilotagem:</h3>
+                <ul>
+                    <li>Você deve ultrapassar a meta de <strong>Veículos Inimigos</strong> antes do final de cada dia de corrida.</li>
+                    <li><strong>PC:</strong> Use as teclas <strong>Setas (ou WASD)</strong> para Acelerar, Frear e Virar.</li>
+                    <li><strong>Mobile:</strong> Toque nos botões virtuais das laterais para pilotar.</li>
+                    <li><strong>Clima Dinâmico:</strong> O tempo mudará! O período da **Noite** exigirá atenção às lanternas dos oponentes. O período de **Gelo** deixará a pista escorregadia.</li>
+                    <li>Evite colisões! Bater reduzirá sua velocidade drasticamente, custando tempo valioso.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR CORRIDA NEON</button>
+        </div>
+    </div>
+
+    <!-- Overlay de Transição (Vitória do Dia) -->
+    <div id="screen-victory" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="background: linear-gradient(135deg, #ffffff 20%, var(--neon-green) 80%); -webkit-background-clip: text;">DIA COMPLETADO!</h1>
+            <div class="game-subtitle" style="color: var(--neon-green); text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);">QUALIFICADO PARA O PRÓXIMO DIA</div>
+
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Dia Finalizado</div>
+                    <div id="victory-day" class="summary-value cyan">DIA 1</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Ultrapassagens Acumuladas</div>
+                    <div id="victory-total" class="summary-value pink">000</div>
+                </div>
+            </div>
+
+            <button id="btn-next-day" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-green), #00c73c); box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);">AVANÇAR DIA</button>
+        </div>
+    </div>
+
+    <!-- Overlay de Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="background: linear-gradient(135deg, #ffffff 20%, var(--neon-pink) 80%); -webkit-background-clip: text;">OPERAÇÃO ABORTADA</h1>
+            <div class="game-subtitle">QUALIFICAÇÃO FALHOU</div>
+
+            <div class="instructions" style="background: rgba(255, 0, 127, 0.05); border-color: rgba(255, 0, 127, 0.15);">
+                <p style="margin: 0; text-align: center; font-size: 15px; color: #fecdd3;">Você não ultrapassou a quantidade mínima de veículos antes do fim do ciclo do dia.</p>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Recorde do Dia</div>
+                    <div id="gameover-day" class="summary-value cyan">DIA 1</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Ultrapassagens Totais</div>
+                    <div id="gameover-total" class="summary-value pink">000</div>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">TENTAR NOVAMENTE</button>
+        </div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- Alerta de Clima -->
+    <div id="tempo-alerta">PISTA COM GELO - DERRAPAGEM CRÍTICA</div>
+
+    <!-- HUD de Controle de Jogo -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Nível</div>
+                <div id="hud-day" class="hud-value cyan">DIA 1</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Restam</div>
+                <div id="hud-restam" class="hud-value pink">200</div>
+            </div>
+            <div class="hud-group">
+                <div class="hud-label">Ultrapassados</div>
+                <div id="hud-total" class="hud-value green">0</div>
+            </div>
+        </div>
+
+        <div class="hud-panel">
+            <div class="hud-group ciclo-container">
+                <div class="hud-label">Período</div>
+                <div class="ciclo-icon" id="hud-ciclo-icon">☀</div>
+                <div class="hud-value orange" id="hud-ciclo-nome" style="font-size: 14px; letter-spacing: 1px;">DIA</div>
+            </div>
+            <button id="btn-sound" class="sound-btn active" title="Ativar/Mudar Som">
+                🔊
+            </button>
+        </div>
+    </div>
+
+    <!-- HUD Central do Velocímetro -->
+    <div id="velocimetro-container">
+        <div class="vel-num" id="hud-velocidade">000</div>
+        <div class="vel-unit">KM/H</div>
+        <div class="bar-container">
+            <div class="bar-fill" id="hud-velocidade-bar"></div>
+        </div>
+    </div>
+
+    <!-- Controles de Toque para Mobile -->
+    <div id="mobile-controls">
+        <div class="control-group-left">
+            <div class="mobile-btn" id="btn-left">◀</div>
+            <div class="mobile-btn" id="btn-right">▶</div>
+        </div>
+        <div class="control-group-right">
+            <div class="mobile-btn" id="btn-brake" style="background: rgba(255, 0, 127, 0.2);">⤓</div>
+            <div class="mobile-btn" id="btn-gas" style="background: rgba(57, 255, 20, 0.2);">⇑</div>
+        </div>
+    </div>
+
+    <!-- Scripts externos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // ============================================================================
+        // 1. SINTETIZADOR DE ÁUDIO PROCEDURAL (Web Audio API)
+        // ============================================================================
+        class SomEnduro {
+            constructor() {
+                this.ctx = null;
+                this.mutado = false;
+                
+                // Nós do motor
+                this.oscMotor = null;
+                this.oscSubMotor = null;
+                this.filterMotor = null;
+                this.gainMotor = null;
+
+                // Sequenciador Synthwave
+                this.musicInterval = null;
+                this.passoMusica = 0;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+                this.criarEngineMotor();
+            }
+
+            criarEngineMotor() {
+                if (!this.ctx) return;
+
+                // Oscilador principal dente de serra para ronco do motor
+                this.oscMotor = this.ctx.createOscillator();
+                this.oscMotor.type = 'sawtooth';
+                this.oscMotor.frequency.value = 50;
+
+                // Oscilador triangular sub-grave para vibração estrutural
+                this.oscSubMotor = this.ctx.createOscillator();
+                this.oscSubMotor.type = 'triangle';
+                this.oscSubMotor.frequency.value = 25;
+
+                // Filtro passa-baixa analógico dinâmico
+                this.filterMotor = this.ctx.createBiquadFilter();
+                this.filterMotor.type = 'lowpass';
+                this.filterMotor.frequency.value = 250;
+
+                // Ganho do motor
+                this.gainMotor = this.ctx.createGain();
+                this.gainMotor.gain.value = 0.05; // Som suave no fundo
+
+                // Conexão
+                this.oscMotor.connect(this.filterMotor);
+                this.oscSubMotor.connect(this.filterMotor);
+                this.filterMotor.connect(this.gainMotor);
+                this.gainMotor.connect(this.ctx.destination);
+
+                this.oscMotor.start(0);
+                this.oscSubMotor.start(0);
+            }
+
+            atualizarSomMotor(velocidadePercent, acelerando) {
+                if (!this.ctx || this.mutado || !this.oscMotor) return;
+
+                // Mapeamento dinâmico de frequência e filtro de acordo com a velocidade do carro
+                const freqBase = 45 + velocidadePercent * 90; // 45Hz a 135Hz
+                const freqFiltro = 180 + velocidadePercent * 850 + (acelerando ? 150 : 0); // Freq. corte sobe com aceleração
+
+                this.oscMotor.frequency.setTargetAtTime(freqBase, this.ctx.currentTime, 0.1);
+                this.oscSubMotor.frequency.setTargetAtTime(freqBase * 0.5, this.ctx.currentTime, 0.1);
+                this.filterMotor.frequency.setTargetAtTime(freqFiltro, this.ctx.currentTime, 0.1);
+                
+                // Motor ruge um pouco mais alto ao acelerar
+                const volumeDinamico = 0.03 + (acelerando ? 0.04 : 0.01) + (velocidadePercent * 0.04);
+                this.gainMotor.gain.setTargetAtTime(this.mutado ? 0 : volumeDinamico, this.ctx.currentTime, 0.15);
+            }
+
+            playColisao() {
+                if (!this.ctx || this.mutado) return;
+
+                const t = this.ctx.currentTime;
+                
+                // Gerador de Ruído para Impacto
+                const bufferSize = this.ctx.sampleRate * 0.4;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, t);
+                filter.frequency.exponentialRampToValueAtTime(10, t + 0.35);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.38);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(t);
+
+                // Baixo de impacto senoidal grave
+                const sub = this.ctx.createOscillator();
+                sub.type = 'sine';
+                sub.frequency.setValueAtTime(120, t);
+                sub.frequency.exponentialRampToValueAtTime(30, t + 0.25);
+
+                const subGain = this.ctx.createGain();
+                subGain.gain.setValueAtTime(0.5, t);
+                subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+
+                sub.connect(subGain);
+                subGain.connect(this.ctx.destination);
+                sub.start(t);
+                sub.stop(t + 0.3);
+            }
+
+            playUltrapassagem() {
+                if (!this.ctx || this.mutado) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                osc.type = 'sine';
+                
+                // Efeito Doppler (frequência cai rápido de 450Hz para 220Hz)
+                osc.frequency.setValueAtTime(450, t);
+                osc.frequency.exponentialRampToValueAtTime(220, t + 0.25);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.0, t);
+                gain.gain.linearRampToValueAtTime(0.12, t + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+                const pan = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
+                if (pan) {
+                    pan.pan.setValueAtTime(0.7, t);
+                    pan.pan.linearRampToValueAtTime(-0.7, t + 0.25);
+                    osc.connect(pan);
+                    pan.connect(gain);
+                } else {
+                    osc.connect(gain);
+                }
+                
+                gain.connect(this.ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.3);
+            }
+
+            playDerrapagem(ativo) {
+                if (!this.ctx || this.mutado) return;
+
+                if (ativo) {
+                    if (this.skidSource) return; // Já está tocando
+                    
+                    const t = this.ctx.currentTime;
+                    // Gerador de ruído contínuo
+                    const bufferSize = this.ctx.sampleRate * 2.0;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    this.skidSource = this.ctx.createBufferSource();
+                    this.skidSource.buffer = buffer;
+                    this.skidSource.loop = true;
+
+                    this.skidFilter = this.ctx.createBiquadFilter();
+                    this.skidFilter.type = 'bandpass';
+                    this.skidFilter.frequency.setValueAtTime(1400, t);
+                    this.skidFilter.Q.setValueAtTime(3.0, t);
+
+                    this.skidGain = this.ctx.createGain();
+                    this.skidGain.gain.setValueAtTime(0.06, t);
+
+                    this.skidSource.connect(this.skidFilter);
+                    this.skidFilter.connect(this.skidGain);
+                    this.skidGain.connect(this.ctx.destination);
+                    this.skidSource.start(t);
+                } else {
+                    if (this.skidSource) {
+                        try {
+                            this.skidGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+                            const src = this.skidSource;
+                            setTimeout(() => {
+                                try { src.stop(); } catch(e){}
+                            }, 200);
+                        } catch(e){}
+                        this.skidSource = null;
+                        this.skidFilter = null;
+                        this.skidGain = null;
+                    }
+                }
+            }
+
+            playFanfarraVitoria() {
+                if (!this.ctx || this.mutado) return;
+                
+                const t = this.ctx.currentTime;
+                const notas = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // Arpejo Dó Maior
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1500, t + idx * 0.08);
+
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.08, t + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.45);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(t + idx * 0.08);
+                    osc.stop(t + idx * 0.08 + 0.5);
+                });
+            }
+
+            playGameOver() {
+                if (!this.ctx || this.mutado) return;
+
+                const t = this.ctx.currentTime;
+                // Acordes tristes menores descendentes
+                const acordes = [
+                    [196.00, 233.08, 293.66], // Sol menor
+                    [174.61, 207.65, 261.63], // Fá menor
+                    [130.81, 155.56, 196.00]  // Dó menor (sustentado longo)
+                ];
+
+                acordes.forEach((freqs, grupoIdx) => {
+                    freqs.forEach((freq) => {
+                        const osc = this.ctx.createOscillator();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, t + grupoIdx * 0.5);
+
+                        const filter = this.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(400, t + grupoIdx * 0.5);
+
+                        const gain = this.ctx.createGain();
+                        gain.gain.setValueAtTime(0.06, t + grupoIdx * 0.5);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + grupoIdx * 0.5 + 0.7);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.ctx.destination);
+
+                        osc.start(t + grupoIdx * 0.5);
+                        osc.stop(t + grupoIdx * 0.5 + 0.8);
+                    });
+                });
+            }
+
+            startMusicaSynthwave() {
+                if (!this.ctx || this.mutado) return;
+                this.stopMusica();
+
+                const tempoCompasso = 60 / 125 / 2; // Oitavas a 125 BPM
+                const bassline = [
+                    146.83, 146.83, 146.83, 146.83, // Ré
+                    164.81, 164.81, 164.81, 164.81, // Mi
+                    110.00, 110.00, 110.00, 110.00, // Lá
+                    130.81, 130.81, 146.83, 164.81  // Dó-Dó-Ré-Mi
+                ];
+
+                this.musicInterval = setInterval(() => {
+                    if (this.mutado || !this.ctx) return;
+                    const t = this.ctx.currentTime;
+                    const freqNota = bassline[this.passoMusica % bassline.length];
+
+                    // Bass Synth
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freqNota * 0.5, t); // Sub-bass
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(150, t);
+                    filter.frequency.exponentialRampToValueAtTime(80, t + 0.2);
+
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.08, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.24);
+
+                    // Bumbo Rítmico (Kick) a cada 4 passos (Batida principal 4/4)
+                    if (this.passoMusica % 4 === 0) {
+                        const kick = this.ctx.createOscillator();
+                        kick.type = 'sine';
+                        kick.frequency.setValueAtTime(150, t);
+                        kick.frequency.exponentialRampToValueAtTime(45, t + 0.15);
+
+                        const kickGain = this.ctx.createGain();
+                        kickGain.gain.setValueAtTime(0.4, t);
+                        kickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+                        kick.connect(kickGain);
+                        kickGain.connect(this.ctx.destination);
+                        kick.start(t);
+                        kick.stop(t + 0.2);
+                    }
+
+                    // Caixa (Hi-hat de Ruído) intercalada nos passos ímpares
+                    if (this.passoMusica % 4 === 2) {
+                        const hatSize = this.ctx.sampleRate * 0.05;
+                        const hatBuffer = this.ctx.createBuffer(1, hatSize, this.ctx.sampleRate);
+                        const hatData = hatBuffer.getChannelData(0);
+                        for (let i = 0; i < hatSize; i++) {
+                            hatData[i] = Math.random() * 2 - 1;
+                        }
+
+                        const hat = this.ctx.createBufferSource();
+                        hat.buffer = hatBuffer;
+
+                        const hatFilter = this.ctx.createBiquadFilter();
+                        hatFilter.type = 'highpass';
+                        hatFilter.frequency.setValueAtTime(8000, t);
+
+                        const hatGain = this.ctx.createGain();
+                        hatGain.gain.setValueAtTime(0.03, t);
+                        hatGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+                        hat.connect(hatFilter);
+                        hatFilter.connect(hatGain);
+                        hatGain.connect(this.ctx.destination);
+                        hat.start(t);
+                    }
+
+                    this.passoMusica++;
+                }, tempoCompasso * 1000);
+            }
+
+            stopMusica() {
+                if (this.musicInterval) {
+                    clearInterval(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+
+            alternarMute() {
+                this.mutado = !this.mutado;
+                if (this.mutado) {
+                    if (this.gainMotor) this.gainMotor.gain.setValueAtTime(0, this.ctx?.currentTime || 0);
+                    this.playDerrapagem(false);
+                }
+                return this.mutado;
+            }
+        }
+
+        const som = new SomEnduro();
+
+
+        // ============================================================================
+        // 2. CONFIGURAÇÕES E ESTADOS GLOBAIS DO JOGO
+        // ============================================================================
+        const CONFIG = {
+            VELOCIDADE_MAX: 120,          // Velocidade limite linear de cálculo
+            VEL_KMH_MULT: 2.33,           // Multiplicador visual para exibir Km/h (280 km/h máx)
+            ACELERACAO: 45,               // Taxa de aceleração por segundo
+            DECEL_NATURAL: 12,            // Atrito natural do asfalto / vento
+            FREIO: 90,                    // Taxa de frenagem ao pisar no freio
+            LARGURA_PISTA: 18,            // Largura física 3D da pista
+            DIST_SEGMENTO: 6,             // Comprimento Z de cada bloco de pista
+            MAX_SEGMENTOS_VISIVEIS: 75,   // Quantos blocos renderizamos no horizonte
+            DURACAO_CICLO_DIA: 100,       // Segundos para completar um dia/ciclo
+        };
+
+
+        // ============================================================================
+        // 3. ENGINE GRÁFICA TRIDIMENSIONAL (Three.js Setup)
+        // ============================================================================
+        class Motor3D {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+
+                // Armazenamento de malhas otimizadas
+                this.gridSegmentos = [];
+                
+                this.init();
+            }
+
+            init() {
+                this.scene = new THREE.Scene();
+                // Cor de fundo inicial (Dia)
+                this.scene.background = new THREE.Color(0x0c112b);
+                this.scene.fog = new THREE.FogExp2(0x0c112b, 0.005);
+
+                this.camera = new THREE.PerspectiveCamera(
+                    55,
+                    window.innerWidth / window.innerHeight,
+                    0.2,
+                    1500
+                );
+                // Posição base em terceira pessoa
+                this.camera.position.set(0, 5, 12);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.1;
+
+                this.container.appendChild(this.renderer.domElement);
+
+                this.configurarLuzes();
+
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            configurarLuzes() {
+                // Luz global ambiente azulada
+                this.ambientLight = new THREE.AmbientLight(0x1a244d, 1.2);
+                this.scene.add(this.ambientLight);
+
+                // Luz solar principal direcional
+                this.sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                this.sunLight.position.set(50, 150, 50);
+                this.sunLight.castShadow = true;
+                this.scene.add(this.sunLight);
+
+                // Luz do luar auxiliar
+                this.moonLight = new THREE.DirectionalLight(0x00f0ff, 0.0);
+                this.moonLight.position.set(-50, 100, -50);
+                this.scene.add(this.moonLight);
+            }
+
+            // Transição dinâmica de cores do céu e neblina de acordo com a hora do dia
+            atualizarCicloClimatico(tempoPercent) {
+                let corCeu, densidadeFog, luzSunInt, luzMoonInt, corLuz;
+                
+                if (tempoPercent >= 0 && tempoPercent < 0.35) {
+                    // DIA: Céu limpo e azulado ciano
+                    corCeu = new THREE.Color(0x0a1030);
+                    densidadeFog = 0.006;
+                    luzSunInt = 1.2;
+                    luzMoonInt = 0.1;
+                    corLuz = new THREE.Color(0xffffff);
+                } else if (tempoPercent >= 0.35 && tempoPercent < 0.50) {
+                    // PÔR DO SOL: Céu magenta alaranjado
+                    const p = (tempoPercent - 0.35) / 0.15;
+                    corCeu = new THREE.Color().lerpColors(new THREE.Color(0x0a1030), new THREE.Color(0x5a183c), p);
+                    densidadeFog = 0.007;
+                    luzSunInt = 1.2 * (1 - p);
+                    luzMoonInt = 0.4 * p;
+                    corLuz = new THREE.Color().lerpColors(new THREE.Color(0xffffff), new THREE.Color(0xff5e00), p);
+                } else if (tempoPercent >= 0.50 && tempoPercent < 0.72) {
+                    // NOITE: Escuridão completa, somente postes e lanternas acesos
+                    corCeu = new THREE.Color(0x020208);
+                    densidadeFog = 0.008;
+                    luzSunInt = 0.0;
+                    luzMoonInt = 0.2;
+                    corLuz = new THREE.Color(0x1e293b);
+                } else if (tempoPercent >= 0.72 && tempoPercent < 0.88) {
+                    // NÉVOA / GELO: Visibilidade crítica com tom esverdeado/ciano neon
+                    const p = (tempoPercent - 0.72) / 0.16;
+                    corCeu = new THREE.Color().lerpColors(new THREE.Color(0x020208), new THREE.Color(0x052e2c), p);
+                    // Rápido aumento da densidade da névoa
+                    densidadeFog = 0.008 + p * 0.026; // Muito densa
+                    luzSunInt = 0.0;
+                    luzMoonInt = 0.4;
+                    corLuz = new THREE.Color(0x00f0ff);
+                } else {
+                    // AMANHECER: Transição de volta para o dia
+                    const p = (tempoPercent - 0.88) / 0.12;
+                    corCeu = new THREE.Color().lerpColors(new THREE.Color(0x052e2c), new THREE.Color(0x0a1030), p);
+                    densidadeFog = 0.034 - p * 0.028;
+                    luzSunInt = p * 1.2;
+                    luzMoonInt = 0.4 * (1 - p);
+                    corLuz = new THREE.Color().lerpColors(new THREE.Color(0x00f0ff), new THREE.Color(0xffffff), p);
+                }
+
+                this.scene.background.copy(corCeu);
+                this.scene.fog.color.copy(corCeu);
+                this.scene.fog.density = densidadeFog;
+                
+                this.sunLight.intensity = luzSunInt;
+                this.sunLight.color.copy(corLuz);
+                this.moonLight.intensity = luzMoonInt;
+                
+                this.ambientLight.intensity = 0.4 + luzSunInt * 0.8;
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+
+        // ============================================================================
+        // 4. MODELOS PROCEDURAIS CYBERPUNK 3D
+        // ============================================================================
+        
+        // 4.1 Carro do Jogador (Cyber-GT)
+        class CarroJogador3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.construirCarro();
+            }
+
+            construirCarro() {
+                // Corpo / Chassi Principal (Cromado aerodinâmico)
+                const chassiGeom = new THREE.BoxGeometry(2.3, 0.4, 4.4);
+                const chassiMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x989898,
+                    roughness: 0.1,
+                    metalness: 0.9,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.1
+                });
+                const chassi = new THREE.Mesh(chassiGeom, chassiMat);
+                chassi.position.y = 0.3;
+                chassi.castShadow = true;
+                chassi.receiveShadow = true;
+                this.mesh.add(chassi);
+
+                // Cabine superior (Vidro fumê neon ciano)
+                const cabineGeom = new THREE.BoxGeometry(1.6, 0.45, 1.8);
+                const cabineMat = new THREE.MeshStandardMaterial({
+                    color: 0x00f0ff,
+                    roughness: 0.0,
+                    metalness: 0.8,
+                    transparent: true,
+                    opacity: 0.65
+                });
+                const cabine = new THREE.Mesh(cabineGeom, cabineMat);
+                cabine.position.set(0, 0.65, -0.2);
+                this.mesh.add(cabine);
+
+                // Linha de luz neon decorativa na cabine
+                const glowMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                const neonStrip = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.05, 1.82), glowMat);
+                neonStrip.position.set(0, 0.45, -0.2);
+                this.mesh.add(neonStrip);
+
+                // Frente em formato de cunha (Estilo DeLorean)
+                const frenteGeom = new THREE.BoxGeometry(2.2, 0.25, 1.0);
+                const frente = new THREE.Mesh(frenteGeom, chassiMat);
+                frente.position.set(0, 0.25, -2.2);
+                frente.rotation.x = 0.08;
+                this.mesh.add(frente);
+
+                // Faróis dianteiros neon ciano (acesos)
+                const farolGeom = new THREE.BoxGeometry(0.5, 0.08, 0.1);
+                const farolEsquerdo = new THREE.Mesh(farolGeom, glowMat);
+                farolEsquerdo.position.set(-0.8, 0.25, -2.71);
+                const farolDireito = farolEsquerdo.clone();
+                farolDireito.position.x = 0.8;
+                this.mesh.add(farolEsquerdo, farolDireito);
+
+                // Traseira com Spoiler
+                const spoilerSuporteEsquerdo = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.4, 0.4), chassiMat);
+                spoilerSuporteEsquerdo.position.set(-0.9, 0.6, 2.0);
+                const spoilerSuporteDireito = spoilerSuporteEsquerdo.clone();
+                spoilerSuporteDireito.position.x = 0.9;
+                
+                const spoilerGeom = new THREE.BoxGeometry(2.4, 0.08, 0.6);
+                const spoiler = new THREE.Mesh(spoilerGeom, chassiMat);
+                spoiler.position.set(0, 0.8, 2.0);
+                spoiler.rotation.x = -0.05;
+                this.mesh.add(spoilerSuporteEsquerdo, spoilerSuporteDireito, spoiler);
+
+                // Lanternas traseiras de freio (Neon Vermelho)
+                this.freioMat = new THREE.MeshBasicMaterial({ color: 0xff0055 }); // vermelho forte
+                const lanternaGeom = new THREE.BoxGeometry(2.1, 0.12, 0.1);
+                const lanterna = new THREE.Mesh(lanternaGeom, this.freioMat);
+                lanterna.position.set(0, 0.35, 2.21);
+                this.mesh.add(lanterna);
+
+                // Propulsores traseiros (escapamentos neon de faíscas)
+                const escapeGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.4, 8);
+                escapeGeom.rotateX(Math.PI / 2);
+                const escapeMat = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.9 });
+                
+                this.propulsorEsquerdo = new THREE.Mesh(escapeGeom, escapeMat);
+                this.propulsorEsquerdo.position.set(-0.5, 0.2, 2.1);
+                this.propulsorDireito = this.propulsorEsquerdo.clone();
+                this.propulsorDireito.position.x = 0.5;
+                
+                // Chamas de propulsão neon ciano
+                const chamaGeom = new THREE.ConeGeometry(0.12, 0.6, 8);
+                chamaGeom.rotateX(-Math.PI / 2);
+                this.chamaMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.8 });
+                this.chamaEsq = new THREE.Mesh(chamaGeom, this.chamaMat);
+                this.chamaEsq.position.set(-0.5, 0.2, 2.5);
+                this.chamaDir = this.chamaEsq.clone();
+                this.chamaDir.position.x = 0.5;
+
+                this.mesh.add(this.propulsorEsquerdo, this.propulsorDireito, this.chamaEsq, this.chamaDir);
+
+                // Quatro Rodas futuristas largas
+                const rodaGeom = new THREE.CylinderGeometry(0.38, 0.38, 0.5, 12);
+                rodaGeom.rotateZ(Math.PI / 2);
+                const rodaMat = new THREE.MeshStandardMaterial({ color: 0x0b0b0f, roughness: 0.9 });
+                const rodaFriso = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.1, 12), glowMat);
+                rodaFriso.geometry.rotateZ(Math.PI / 2);
+
+                const rodasPos = [
+                    { x: -1.2, y: 0.18, z: -1.3 }, // Dianteira Esquerda
+                    { x: 1.2, y: 0.18, z: -1.3 },  // Dianteira Direita
+                    { x: -1.2, y: 0.18, z: 1.3 },  // Traseira Esquerda
+                    { x: 1.2, y: 0.18, z: 1.3 }    // Traseira Direita
+                ];
+
+                rodasPos.forEach((pos) => {
+                    const rodaGrupo = new THREE.Group();
+                    const r = new THREE.Mesh(rodaGeom, rodaMat);
+                    const f = rodaFriso.clone();
+                    f.position.x = pos.x > 0 ? 0.21 : -0.21; // Friso na lateral externa
+                    
+                    rodaGrupo.add(r, f);
+                    rodaGrupo.position.set(pos.x, pos.y, pos.z);
+                    this.mesh.add(rodaGrupo);
+                });
+            }
+
+            atualizarChamasFumaca(velocidadePercent, freando) {
+                // Brilho dos propulsores aumenta com a velocidade
+                const escalaChama = 0.2 + velocidadePercent * 1.5;
+                this.chamaEsq.scale.set(1, 1, escalaChama);
+                this.chamaDir.scale.set(1, 1, escalaChama);
+                
+                // Mapeia cor das chamas se estiver acelerando (ciano) ou freando/parando (rosa/laranja)
+                if (freando) {
+                    this.chamaMat.color.setHex(0xff00ff);
+                    this.freioMat.color.setHex(0xff0000); // Acende luz de freio vermelha forte
+                } else {
+                    this.chamaMat.color.setHex(0x00f0ff);
+                    this.freioMat.color.setHex(0x990022); // Luz de freio traseira comum
+                }
+            }
+        }
+
+        // 4.2 Carros Oponentes (Rivais)
+        class CarroRival3D {
+            constructor(tipo = 0) {
+                this.mesh = new THREE.Group();
+                this.tipo = tipo; // 0: Esportivo, 1: Compacto, 2: Caminhão Neon
+                this.construirRival();
+            }
+
+            construirRival() {
+                let cores = [0xff007f, 0x39ff14, 0xffff00]; // Rosa, Verde Limão, Amarelo Neon
+                let corCarro = cores[this.tipo % cores.length];
+
+                const materialChassi = new THREE.MeshPhysicalMaterial({
+                    color: corCarro,
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    clearcoat: 0.8
+                });
+
+                const lanternaVermelhaMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+                if (this.tipo === 2) {
+                    // CAMINHÃO DE CARGA NEON
+                    // Cabine
+                    const cabine = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.4, 2.0), materialChassi);
+                    cabine.position.set(0, 0.8, -2.0);
+                    cabine.castShadow = true;
+                    this.mesh.add(cabine);
+
+                    // Janela / Parabrisa
+                    const parabrisa = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.1), new THREE.MeshStandardMaterial({ color: 0x050510, roughness: 0.1 }));
+                    parabrisa.position.set(0, 1.1, -3.01);
+                    this.mesh.add(parabrisa);
+
+                    // Contêiner de Carga Traseiro com Linhas Neon
+                    const cargaGeom = new THREE.BoxGeometry(2.7, 1.8, 5.0);
+                    const cargaMat = new THREE.MeshStandardMaterial({ color: 0x0f1118, roughness: 0.6 });
+                    const carga = new THREE.Mesh(cargaGeom, cargaMat);
+                    carga.position.set(0, 1.1, 1.3);
+                    carga.castShadow = true;
+                    this.mesh.add(carga);
+
+                    // Faixas Neon decorativas no contêiner
+                    const faixaNeon = new THREE.Mesh(new THREE.BoxGeometry(2.74, 0.1, 4.8), new THREE.MeshBasicMaterial({ color: corCarro }));
+                    faixaNeon.position.set(0, 1.1, 1.3);
+                    this.mesh.add(faixaNeon);
+
+                    // Lanternas traseiras vermelhas
+                    const lanternaEsq = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.2, 0.1), lanternaVermelhaMat);
+                    lanternaEsq.position.set(-0.9, 0.4, 3.82);
+                    const lanternaDir = lanternaEsq.clone();
+                    lanternaDir.position.x = 0.9;
+                    this.mesh.add(lanternaEsq, lanternaDir);
+
+                } else if (this.tipo === 1) {
+                    // COMPACTO CYBERPUNK (Estilo Tron)
+                    const corpo = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 3.8), materialChassi);
+                    corpo.position.y = 0.4;
+                    corpo.castShadow = true;
+                    this.mesh.add(corpo);
+
+                    const teto = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 1.8), new THREE.MeshStandardMaterial({ color: 0x111116 }));
+                    teto.position.set(0, 0.85, 0.2);
+                    this.mesh.add(teto);
+
+                    // Lanternas traseiras de barra horizontal
+                    const lanterna = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.1, 0.1), lanternaVermelhaMat);
+                    lanterna.position.set(0, 0.45, 1.91);
+                    this.mesh.add(lanterna);
+                } else {
+                    // ESPORTIVO RIVAL
+                    const corpo = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.45, 4.2), materialChassi);
+                    corpo.position.y = 0.35;
+                    corpo.castShadow = true;
+                    this.mesh.add(corpo);
+
+                    const cabine = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 2.0), new THREE.MeshStandardMaterial({ color: 0x050510, roughness: 0.1 }));
+                    cabine.position.set(0, 0.7, -0.1);
+                    this.mesh.add(cabine);
+
+                    // Lanternas circulares
+                    const lanternaGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.1, 8);
+                    lanternaGeom.rotateX(Math.PI / 2);
+                    const latE = new THREE.Mesh(lanternaGeom, lanternaVermelhaMat);
+                    latE.position.set(-0.7, 0.35, 2.11);
+                    const latD = latE.clone();
+                    latD.position.x = 0.7;
+                    this.mesh.add(latE, latD);
+                }
+
+                // Rodas para todos os modelos
+                const rodaGeom = new THREE.CylinderGeometry(0.38, 0.38, 0.45, 8);
+                rodaGeom.rotateZ(Math.PI / 2);
+                const rodaMat = new THREE.MeshStandardMaterial({ color: 0x07070a });
+                
+                const posRodas = [
+                    { x: -1.15, z: -1.1 },
+                    { x: 1.15, z: -1.1 },
+                    { x: -1.15, z: 1.1 },
+                    { x: 1.15, z: 1.1 }
+                ];
+                posRodas.forEach((p) => {
+                    const r = new THREE.Mesh(rodaGeom, rodaMat);
+                    r.position.set(p.x, 0.2, p.z);
+                    this.mesh.add(r);
+                });
+            }
+        }
+
+        // ============================================================================
+        // 5. CONSTRUTOR DE PISTA INFINITA (Road Spline e Object Pooling)
+        // ============================================================================
+        class PistaInfinita {
+            constructor(scene) {
+                this.scene = scene;
+                this.segmentos = [];
+                this.largura = CONFIG.LARGURA_PISTA;
+                this.comprimentoSegmento = CONFIG.DIST_SEGMENTO;
+                this.numSegmentos = CONFIG.MAX_SEGMENTOS_VISIVEIS;
+
+                // Materiais neon emissivos de alta performance
+                this.cyanNeonMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                this.pinkNeonMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+                this.asfaltoMat = new THREE.MeshStandardMaterial({
+                    color: 0x040409,
+                    roughness: 0.85,
+                    metalness: 0.9
+                });
+
+                this.construirPoolDeSegmentos();
+            }
+
+            construirPoolDeSegmentos() {
+                // Criamos um pool reutilizável de segmentos geométricos 3D
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    const grupo = new THREE.Group();
+
+                    // 1. Placa de Asfalto
+                    const asfaltoGeom = new THREE.PlaneGeometry(this.largura, this.comprimentoSegmento);
+                    asfaltoGeom.rotateX(-Math.PI / 2);
+                    const asfalto = new THREE.Mesh(asfaltoGeom, this.asfaltoMat);
+                    asfalto.receiveShadow = true;
+                    grupo.add(asfalto);
+
+                    // 2. Guias laterais Neon esquerda e direita (Brilham de longe)
+                    const guiaGeom = new THREE.BoxGeometry(0.3, 0.08, this.comprimentoSegmento);
+                    const guiaEsq = new THREE.Mesh(guiaGeom, this.cyanNeonMat);
+                    guiaEsq.position.set(-this.largura / 2, 0.04, 0);
+
+                    const guiaDir = new THREE.Mesh(guiaGeom, this.pinkNeonMat);
+                    guiaDir.position.set(this.largura / 2, 0.04, 0);
+                    
+                    grupo.add(guiaEsq, guiaDir);
+
+                    // 3. Faixa central tracejada (Neon ciano/branco)
+                    // Colocamos faixas centrais em segmentos alternados
+                    if (i % 2 === 0) {
+                        const faixaCentro = new THREE.Mesh(
+                            new THREE.PlaneGeometry(0.15, this.comprimentoSegmento * 0.4),
+                            new THREE.MeshBasicMaterial({ color: 0xffffff })
+                        );
+                        faixaCentro.geometry.rotateX(-Math.PI / 2);
+                        faixaCentro.position.set(0, 0.02, 0);
+                        grupo.add(faixaCentro);
+                    }
+
+                    // 4. Postes de iluminação lateral neon (Efeito de velocidade)
+                    // Colocados nas bordas de alguns segmentos (ex: a cada 6 segmentos)
+                    let posteEsq = null;
+                    let posteDir = null;
+                    if (i % 6 === 0) {
+                        const hasteMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.8 });
+                        
+                        // Poste Esquerda
+                        posteEsq = new THREE.Group();
+                        const hasteE = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6.0), hasteMat);
+                        hasteE.position.y = 3.0;
+                        const luzE = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.2, 0.16), this.cyanNeonMat);
+                        luzE.position.set(0, 5.4, 0);
+                        posteEsq.add(hasteE, luzE);
+                        posteEsq.position.set(-this.largura / 2 - 1.2, 0, 0);
+                        grupo.add(posteEsq);
+
+                        // Poste Direita
+                        posteDir = new THREE.Group();
+                        const hasteD = hasteE.clone();
+                        const luzD = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.2, 0.16), this.pinkNeonMat);
+                        luzD.position.set(0, 5.4, 0);
+                        posteDir.add(hasteD, luzD);
+                        posteDir.position.set(this.largura / 2 + 1.2, 0, 0);
+                        grupo.add(posteDir);
+                    }
+
+                    this.scene.add(grupo);
+
+                    this.segmentos.push({
+                        mesh: grupo,
+                        x: 0,
+                        y: 0,
+                        z: -i * this.comprimentoSegmento,
+                        curvatura: 0, // Valor de curva procedural
+                        posteEsq: posteEsq,
+                        posteDir: posteDir
+                    });
+                }
+            }
+
+            // Calcula a posição e curvatura da pista em tempo real simulando movimento infinito
+            atualizar(distanciaPercorrida, curvaturaPistaTotal) {
+                // O jogador se move de forma longitudinal. Usamos aritmética modular para
+                // fazer com que os segmentos que ficam para trás reapareçam na frente (Horizonte)
+                const totalComprimento = this.numSegmentos * this.comprimentoSegmento;
+                const offsetJogador = distanciaPercorrida % this.comprimentoSegmento;
+                const segmentoInicialIndex = Math.floor(distanciaPercorrida / this.comprimentoSegmento);
+
+                let desvioCurvaAcumulado = 0;
+
+                for (let i = 0; i < this.numSegmentos; i++) {
+                    const seg = this.segmentos[i];
+                    
+                    // Índice lógico baseado na posição global da pista
+                    const indexLogico = (segmentoInicialIndex + i) % this.numSegmentos;
+                    
+                    // Z local relativo ao carro do jogador
+                    const localZ = -i * this.comprimentoSegmento + offsetJogador;
+
+                    // Cálculo procedural da curva da pista no horizonte
+                    // As curvas são geradas projetando desvios em X
+                    let fatorCurva = Math.sin((segmentoInicialIndex + i) * 0.08) * curvaturaPistaTotal;
+                    
+                    // Acumula curva conforme se afasta no horizonte (perspectiva)
+                    desvioCurvaAcumulado += fatorCurva * (i * 0.08);
+
+                    // Posiciona a malha 3D
+                    seg.mesh.position.set(desvioCurvaAcumulado, 0, localZ);
+
+                    // Salva os dados no objeto para cálculo de física
+                    seg.x = desvioCurvaAcumulado;
+                    seg.z = localZ;
+                    seg.curvatura = fatorCurva;
+
+                    // Ajusta intensidade emissiva dos postes caso esteja de noite ou névoa
+                    if (seg.posteEsq) {
+                        // Faz os postes oscilarem levemente a luz
+                        const brilhoDinamico = 0.7 + Math.sin(performance.now() * 0.01 + i) * 0.3;
+                        seg.posteEsq.children[1].material.opacity = brilhoDinamico;
+                        seg.posteDir.children[1].material.opacity = brilhoDinamico;
+                    }
+                }
+            }
+
+            // Retorna o desvio lateral X da pista a uma certa distância Z à frente do carro
+            getDesvioPistaEmZ(localZ) {
+                // Mapeia qual segmento de pista corresponde ao Z solicitado
+                const index = Math.min(
+                    this.numSegmentos - 1,
+                    Math.max(0, Math.floor(Math.abs(localZ) / this.comprimentoSegmento))
+                );
+                return this.segmentos[index] ? this.segmentos[index].x : 0;
+            }
+        }
+
+
+        // ============================================================================
+        // 6. MOTOR PRINCIPAL DO JOGO (Física, IA e Loop)
+        // ============================================================================
+        class MotorJogo {
+            constructor() {
+                this.motor3D = new Motor3D();
+                this.som = som;
+                this.pista = new PistaInfinita(this.motor3D.scene);
+
+                // Carro do jogador
+                this.jogador = new CarroJogador3D();
+                this.motor3D.scene.add(this.jogador.mesh);
+
+                // Oponentes
+                this.rivais = [];
+                this.maxRivais = 4;
+
+                // Controles de entrada de usuário (Teclado)
+                this.teclas = {
+                    KeyW: false, ArrowUp: false,
+                    KeyS: false, ArrowDown: false,
+                    KeyA: false, ArrowLeft: false,
+                    KeyD: false, ArrowRight: false
+                };
+
+                // Detector Mobile
+                this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+                // Dados de Corrida do Jogador
+                this.distancia = 0;              // Distância longitudinal acumulada
+                this.velocidade = 0;             // Velocidade atual (0 a CONFIG.VELOCIDADE_MAX)
+                this.lateralX = 0;               // Posição horizontal do carro na pista (-LARGURA/2 a LARGURA/2)
+                
+                // Variáveis físicas e de derrapagem
+                this.derrapagemAtiva = false;
+                this.velocidadeLateralInercia = 0;
+
+                // Status de Jogo e Ciclo do Dia
+                this.estadoJogo = 'MENU';        // MENU, PLAYING, GAME_OVER, VICTORY
+                this.dia = 1;
+                this.totalUltrapassados = 0;     // Ultrapassados no jogo inteiro
+                this.restamUltrapassar = 200;    // Quantidade exigida para o Dia atual
+                
+                this.tempoDia = 0.0;             // Progresso do tempo (0.0 a 1.0)
+                this.curvaturaPista = 0.0;       // Curvatura procedural ativa da pista
+                this.proximaCurvaTimer = 2.0;    // Tempo até a pista mudar de direção
+                this.curvaAlvo = 0.0;
+
+                // Alerta de colisão invulnerabilidade temporária
+                this.invulneravelTimer = 0;
+                this.colisaoInterfaceAlerta = 0;
+
+                // Shake da câmera
+                this.shakeAmount = 0;
+
+                this.construirObstaculosLaterais();
+                this.setupUIEventos();
+                this.configurarInput();
+
+                // Loop Principal
+                this.lastTime = performance.now();
+                this.animate();
+            }
+
+            // Edifícios poligonais cyberpunk bem no fundo do horizonte
+            construirObstaculosLaterais() {
+                const predioGeom = new THREE.BoxGeometry(10, 50, 10);
+                const predioMat = new THREE.MeshStandardMaterial({
+                    color: 0x090e1f,
+                    roughness: 0.7,
+                    metalness: 0.9
+                });
+
+                // Spawna alguns prédios distantes
+                for (let i = 0; i < 24; i++) {
+                    const predio = new THREE.Mesh(predioGeom, predioMat);
+                    const lado = Math.random() > 0.5 ? 1 : -1;
+                    predio.position.set(
+                        lado * (40 + Math.random() * 80),
+                        20,
+                        -50 - Math.random() * 600
+                    );
+                    this.motor3D.scene.add(predio);
+                }
+            }
+
+            setupUIEventos() {
+                document.getElementById('btn-start').addEventListener('click', () => {
+                    this.som.init();
+                    this.som.startMusicaSynthwave();
+                    this.iniciarJogo(true);
+                });
+
+                document.getElementById('btn-next-day').addEventListener('click', () => {
+                    this.dia++;
+                    this.iniciarJogo(false);
+                });
+
+                document.getElementById('btn-restart').addEventListener('click', () => {
+                    this.iniciarJogo(true);
+                });
+
+                // Mutar som
+                const btnSound = document.getElementById('btn-sound');
+                btnSound.addEventListener('click', () => {
+                    this.som.init();
+                    const mutado = this.som.alternarMute();
+                    btnSound.classList.toggle('active', !mutado);
+                    btnSound.innerText = mutado ? '🔇' : '🔊';
+                });
+
+                if (this.isTouchDevice) {
+                    document.getElementById('mobile-controls').style.display = 'flex';
+                }
+            }
+
+            configurarInput() {
+                // Teclado PC
+                window.addEventListener('keydown', (e) => {
+                    if (e.code in this.teclas) {
+                        this.teclas[e.code] = true;
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    if (e.code in this.teclas) {
+                        this.teclas[e.code] = false;
+                    }
+                });
+
+                // Controles de Toque Mobile
+                const addTouchEvents = (elementId, keyTrue, keyFalse) => {
+                    const el = document.getElementById(elementId);
+                    el.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.teclas[keyTrue] = true;
+                    });
+                    el.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.teclas[keyTrue] = false;
+                    });
+                };
+
+                if (this.isTouchDevice) {
+                    addTouchEvents('btn-left', 'KeyA', 'KeyA');
+                    addTouchEvents('btn-right', 'KeyD', 'KeyD');
+                    addTouchEvents('btn-gas', 'KeyW', 'KeyW');
+                    addTouchEvents('btn-brake', 'KeyS', 'KeyS');
+                }
+            }
+
+            iniciarJogo(reiniciarTudo = false) {
+                if (reiniciarTudo) {
+                    this.dia = 1;
+                    this.totalUltrapassados = 0;
+                }
+
+                // Ajusta meta do dia (Dia 1 = 200, Dia 2 = 250, etc)
+                this.restamUltrapassar = 150 + this.dia * 50;
+                this.tempoDia = 0.0;
+                this.velocidade = 0;
+                this.lateralX = 0;
+                this.distancia = 0;
+                this.derrapagemAtiva = false;
+                this.velocidadeLateralInercia = 0;
+                this.invulneravelTimer = 0;
+
+                // Deleta rivais anteriores da cena
+                for (let r of this.rivais) {
+                    this.motor3D.scene.remove(r.carro.mesh);
+                }
+                this.rivais = [];
+
+                // Altera estado de jogo
+                this.estadoJogo = 'PLAYING';
+
+                // Esconde overlays
+                document.getElementById('screen-menu').classList.add('hidden');
+                document.getElementById('screen-victory').classList.add('hidden');
+                document.getElementById('screen-gameover').classList.add('hidden');
+
+                // Atualiza o HUD imediatamente no início do jogo
+                document.getElementById('hud-day').innerText = `DIA ${this.dia}`;
+                document.getElementById('hud-restam').innerText = this.restamUltrapassar;
+                document.getElementById('hud-total').innerText = this.totalUltrapassados;
+            }
+
+            // Loop Principal
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const now = performance.now();
+                let dt = (now - this.lastTime) / 1000;
+                this.lastTime = now;
+
+                if (dt > 0.1) dt = 0.1; // Limite contra lags brutais
+
+                if (this.estadoJogo === 'PLAYING') {
+                    this.atualizarCurvasPista(dt);
+                    this.atualizarFisicaJogador(dt);
+                    this.atualizarTempoECiclo(dt);
+                    this.atualizarRivais(dt);
+                    this.verificarColisoes();
+                    this.atualizarCamera(dt);
+                }
+
+                // Renderiza
+                this.motor3D.renderer.render(this.motor3D.scene, this.motor3D.camera);
+            }
+
+            atualizarCurvasPista(dt) {
+                this.proximaCurvaTimer -= dt;
+                if (this.proximaCurvaTimer <= 0) {
+                    // Sorteia nova curva (entre -2.0 e 2.0 de força de curva)
+                    this.curvaAlvo = (Math.random() * 2 - 1) * 2.2;
+                    this.proximaCurvaTimer = 4.0 + Math.random() * 5.0; // Duração do trecho
+                }
+                // Transição suave para a nova curva
+                this.curvaturaPista = THREE.MathUtils.lerp(this.curvaturaPista, this.curvaAlvo, dt * 1.2);
+            }
+
+            atualizarFisicaJogador(dt) {
+                const acelerando = this.teclas.KeyW || this.teclas.ArrowUp;
+                const freando = this.teclas.KeyS || this.teclas.ArrowDown;
+                const esquerda = this.teclas.KeyA || this.teclas.ArrowLeft;
+                const direita = this.teclas.KeyD || this.teclas.ArrowRight;
+
+                // 1. Aceleração / Frenagem / Desaceleração por atrito
+                if (acelerando) {
+                    this.velocidade += CONFIG.ACELERACAO * dt;
+                } else if (freando) {
+                    this.velocidade -= CONFIG.FREIO * dt;
+                } else {
+                    this.velocidade -= CONFIG.DECEL_NATURAL * dt;
+                }
+
+                // Limita a velocidade (entre 0 e máxima)
+                this.velocidade = Math.max(0, Math.min(CONFIG.VELOCIDADE_MAX, this.velocidade));
+
+                // 2. Acumula distância percorrida
+                this.distancia += this.velocidade * dt;
+
+                // 3. Clima Escorregadio (Gelo / Neblina)
+                // O período de névoa escorregadia vai de 72% a 88% do ciclo
+                const periodoGelo = this.tempoDia >= 0.72 && this.tempoDia < 0.88;
+                document.getElementById('tempo-alerta').style.display = periodoGelo ? 'block' : 'none';
+
+                // Força centrífuga lateral aplicada ao carro pela curvatura da pista
+                // Mais rápida a força se a velocidade do carro for maior
+                const forcaCentrifuga = this.curvaturaPista * (this.velocidade / CONFIG.VELOCIDADE_MAX) * 6.0;
+
+                // 4. Controle Lateral do Carro
+                let velocidadeLateral = 0;
+                const velGiro = 14.0; // Velocidade lateral máxima
+
+                if (esquerda) {
+                    velocidadeLateral = -velGiro;
+                } else if (direita) {
+                    velocidadeLateral = velGiro;
+                }
+
+                if (periodoGelo) {
+                    // Pista de Gelo: o carro derrapa e perde tração
+                    // O movimento lateral tem inércia extrema
+                    this.velocidadeLateralInercia = THREE.MathUtils.lerp(
+                        this.velocidadeLateralInercia,
+                        velocidadeLateral - forcaCentrifuga,
+                        dt * 1.5 // Atrito lateral reduzido (lento)
+                    );
+                    
+                    this.lateralX += this.velocidadeLateralInercia * dt;
+                    
+                    // Som de derrapagem ativa se estiver deslizando rápido
+                    this.derrapagemAtiva = Math.abs(this.velocidadeLateralInercia - velocidadeLateral) > 5.0 && this.velocidade > 15;
+                } else {
+                    // Pista Comum: Tração firme
+                    this.velocidadeLateralInercia = THREE.MathUtils.lerp(
+                        this.velocidadeLateralInercia,
+                        velocidadeLateral - forcaCentrifuga,
+                        dt * 8.0 // Resposta rápida
+                    );
+                    this.lateralX += this.velocidadeLateralInercia * dt;
+
+                    // Derrapa apenas em curvas extremas em alta velocidade
+                    this.derrapagemAtiva = Math.abs(forcaCentrifuga) > 1.8 && Math.abs(velocidadeLateral) > 5.0 && this.velocidade > 60;
+                }
+
+                // Toca som procedural de skid
+                this.som.playDerrapagem(this.derrapagemAtiva);
+
+                // Impede o carro de sair fisicamente do acostamento
+                const limitePista = CONFIG.LARGURA_PISTA * 0.5 - 0.2;
+                this.lateralX = Math.max(-limitePista, Math.min(limitePista, this.lateralX));
+
+                // 5. Posiciona o modelo 3D do carro do jogador
+                // X absoluto = desvio X da pista atual + desvio lateral do carro
+                const desvioPistaAtual = this.pista.getDesvioPistaEmZ(0);
+                this.jogador.mesh.position.set(desvioPistaAtual + this.lateralX, 0.05, 0);
+
+                // Aplica rotação leve (inclinação) ao fazer curvas laterais para efeito realista
+                this.jogador.mesh.rotation.y = -this.velocidadeLateralInercia * 0.025;
+                this.jogador.mesh.rotation.z = -this.velocidadeLateralInercia * 0.015;
+
+                // Atualiza fumaça de faíscas neon e luzes traseiras
+                this.jogador.atualizarChamasFumaca(this.velocidade / CONFIG.VELOCIDADE_MAX, freando);
+
+                // Sons do motor procedural
+                this.som.atualizarSomMotor(this.velocidade / CONFIG.VELOCIDADE_MAX, acelerando);
+
+                // Diminui timer de invulnerabilidade
+                if (this.invulneravelTimer > 0) {
+                    this.invulneravelTimer -= dt;
+                    // Pisca o carro
+                    this.jogador.mesh.visible = Math.floor(performance.now() / 80) % 2 === 0;
+                } else {
+                    this.jogador.mesh.visible = true;
+                }
+
+                // HUD do velocímetro e dados
+                const velocidadeKmh = Math.floor(this.velocidade * CONFIG.VEL_KMH_MULT);
+                document.getElementById('hud-velocidade').innerText = String(velocidadeKmh).padStart(3, '0');
+                document.getElementById('hud-velocidade-bar').style.width = `${(this.velocidade / CONFIG.VELOCIDADE_MAX) * 100}%`;
+
+                // Diminui efeito de alerta de batida visual no velocímetro
+                if (this.colisaoInterfaceAlerta > 0) {
+                    this.colisaoInterfaceAlerta -= dt;
+                    if (this.colisaoInterfaceAlerta <= 0) {
+                        document.getElementById('velocimetro-container').classList.remove('colisao-alerta');
+                    }
+                }
+            }
+
+            atualizarTempoECiclo(dt) {
+                // Avanço do relógio do dia
+                this.tempoDia += dt / CONFIG.DURACAO_CICLO_DIA;
+                
+                if (this.tempoDia >= 1.0) {
+                    // Fim do Dia! Verifica se cumpriu a meta
+                    if (this.restamUltrapassar <= 0) {
+                        this.vencerDia();
+                    } else {
+                        this.perderJogo();
+                    }
+                    return;
+                }
+
+                // Atualiza iluminação tridimensional do cenário
+                this.motor3D.atualizarCicloClimatico(this.tempoDia);
+                this.pista.atualizar(this.distancia, this.curvaturaPista);
+
+                // Atualiza HUD do Ciclo
+                const icone = document.getElementById('hud-ciclo-icon');
+                const nome = document.getElementById('hud-ciclo-nome');
+
+                if (this.tempoDia < 0.35) {
+                    icone.innerText = '☀';
+                    nome.innerText = 'DIA';
+                    nome.className = 'hud-value orange';
+                } else if (this.tempoDia < 0.50) {
+                    icone.innerText = '🌇';
+                    nome.innerText = 'PÔR SOL';
+                    nome.className = 'hud-value pink';
+                } else if (this.tempoDia < 0.72) {
+                    icone.innerText = '🌙';
+                    nome.innerText = 'NOITE';
+                    nome.className = 'hud-value cyan';
+                } else if (this.tempoDia < 0.88) {
+                    icone.innerText = '❄';
+                    nome.innerText = 'GELO';
+                    nome.className = 'hud-value pink';
+                } else {
+                    icone.innerText = '🌅';
+                    nome.innerText = 'AMANHECER';
+                    nome.className = 'hud-value orange';
+                }
+            }
+
+            atualizarRivais(dt) {
+                // Spawna novos rivais se necessário
+                if (this.rivais.length < this.maxRivais && Math.random() < 0.02) {
+                    this.spawnarRival();
+                }
+
+                for (let i = this.rivais.length - 1; i >= 0; i--) {
+                    const r = this.rivais[i];
+                    
+                    // O rival se move à frente. O Z é relativo ao jogador.
+                    // Velocidade relativa: se a velocidade do jogador for Vj e a do rival for Vr:
+                    // dZ = (Vj - Vr) * dt
+                    const velocidadeRelativa = this.velocidade - r.velocidade;
+                    r.localZ += velocidadeRelativa * dt;
+
+                    // Movimento em zigue-zague para oponentes agressivos
+                    if (r.zigZag) {
+                        r.zigZagTimer += dt * 2.0;
+                        r.lateralX = r.zigZagCentro + Math.sin(r.zigZagTimer) * 4.5;
+                    }
+
+                    // Posiciona no mundo 3D
+                    // X absoluto do rival = desvio de pista em Z do rival + desvio lateral do rival
+                    const desvioPistaRival = this.pista.getDesvioPistaEmZ(r.localZ);
+                    r.carro.mesh.position.set(
+                        desvioPistaRival + r.lateralX,
+                        0.05,
+                        r.localZ
+                    );
+
+                    // Deleta carro que ficou para trás ou muito à frente
+                    if (r.localZ > 15) {
+                        // Passou atrás do jogador (ULTRAPASSADO!)
+                        this.motor3D.scene.remove(r.carro.mesh);
+                        this.rivais.splice(i, 1);
+                        
+                        this.totalUltrapassados++;
+                        if (this.restamUltrapassar > 0) {
+                            this.restamUltrapassar--;
+                        }
+
+                        // Atualiza HUD
+                        document.getElementById('hud-restam').innerText = this.restamUltrapassar;
+                        document.getElementById('hud-total').innerText = this.totalUltrapassados;
+                        
+                        // Toca efeito Doppler sonoro de ultrapassagem
+                        this.som.playUltrapassagem();
+                        
+                    } else if (r.localZ < -CONFIG.MAX_SEGMENTOS_VISIVEIS * CONFIG.DIST_SEGMENTO - 20) {
+                        // Ficou muito à frente, remove sem som
+                        this.motor3D.scene.remove(r.carro.mesh);
+                        this.rivais.splice(i, 1);
+                    }
+                }
+            }
+
+            spawnarRival() {
+                const tipos = [0, 1, 2]; // Esportivo, Compacto, Caminhão
+                const tipoSorteado = tipos[Math.floor(Math.random() * tipos.length)];
+                const rival = new CarroRival3D(tipoSorteado);
+                
+                // Nasce longe no horizonte (Z negativo)
+                const localZ = -CONFIG.MAX_SEGMENTOS_VISIVEIS * CONFIG.DIST_SEGMENTO + 10;
+                
+                // Faixa aleatória (-6.0, 0.0, 6.0)
+                const faixas = [-5.5, 0, 5.5];
+                const faixaSorteada = faixas[Math.floor(Math.random() * faixas.length)];
+
+                // Define velocidade constante do rival
+                // Caminhões são lentos, esportivos são rápidos
+                let velRival = 35 + Math.random() * 20; // Padrão
+                if (tipoSorteado === 2) velRival = 25 + Math.random() * 10; // Caminhão devagar
+                if (tipoSorteado === 0) velRival = 55 + Math.random() * 20; // Esportivo rápido
+
+                const zigZag = Math.random() > 0.65; // Alguns oponentes bloqueiam o jogador
+
+                this.motor3D.scene.add(rival.mesh);
+                this.rivais.push({
+                    carro: rival,
+                    localZ: localZ,
+                    lateralX: faixaSorteada,
+                    velocidade: velRival,
+                    zigZag: zigZag,
+                    zigZagCentro: faixaSorteada,
+                    zigZagTimer: Math.random() * 10
+                });
+            }
+
+            verificarColisoes() {
+                if (this.invulneravelTimer > 0) return;
+
+                const jogadorPos = this.jogador.mesh.position;
+                const larguraJogador = 2.0;
+                const comprimentoJogador = 4.0;
+
+                for (let r of this.rivais) {
+                    const rivalPos = r.carro.mesh.position;
+                    
+                    // Caixa de colisão retangular simplificada em 2D (plano XZ do solo)
+                    // Como os carros estão alinhados com a pista:
+                    const dx = Math.abs(jogadorPos.x - rivalPos.x);
+                    const dz = Math.abs(jogadorPos.z - rivalPos.z);
+
+                    // Caminhão tem tamanho de colisão maior
+                    const larguraRival = r.carro.tipo === 2 ? 2.5 : 2.0;
+                    const comprimentoRival = r.carro.tipo === 2 ? 6.0 : 4.0;
+
+                    if (dx < (larguraJogador + larguraRival) * 0.45 &&
+                        dz < (comprimentoJogador + comprimentoRival) * 0.45) {
+                        
+                        // BATIDA!
+                        this.som.playColisao();
+                        this.shakeAmount = 0.45;
+                        this.invulneravelTimer = 1.6; // 1.6s sem poder bater novamente
+                        this.colisaoInterfaceAlerta = 0.8;
+
+                        // Perda de velocidade drástica
+                        this.velocidade = Math.min(18, this.velocidade * 0.15);
+
+                        // Alerta visual no velocímetro
+                        document.getElementById('velocimetro-container').classList.add('colisao-alerta');
+                        
+                        // Empurra o rival um pouco para a frente para dar espaço
+                        r.localZ -= 8;
+                        break;
+                    }
+                }
+            }
+
+            atualizarCamera(dt) {
+                // A câmera fica posicionada atrás do carro do jogador
+                // Ela se desloca lateralmente de forma suave acompanhando o centro da curva
+                const desvioPistaCamera = this.pista.getDesvioPistaEmZ(-14);
+                
+                // Posição ideal da câmera
+                let camX = desvioPistaCamera + this.lateralX * 0.75;
+                let camY = 3.6 + (this.velocidade / CONFIG.VELOCIDADE_MAX) * 0.6; // sobe um pouco em velocidade
+                let camZ = 12.0; // Atrás
+
+                // Efeito Shake de impactos
+                if (this.shakeAmount > 0) {
+                    camX += (Math.random() * 2 - 1) * this.shakeAmount * 4.0;
+                    camY += (Math.random() * 2 - 1) * this.shakeAmount * 4.0;
+                    camZ += (Math.random() * 2 - 1) * this.shakeAmount * 4.0;
+                    this.shakeAmount -= dt * 2.5;
+                }
+
+                this.motor3D.camera.position.set(camX, camY, camZ);
+                
+                // Ponto de foco à frente do carro na pista
+                const desvioPistaFoco = this.pista.getDesvioPistaEmZ(-45);
+                this.motor3D.camera.lookAt(desvioPistaFoco + this.lateralX * 0.4, 0.8, -40);
+            }
+
+            vencerDia() {
+                this.estadoJogo = 'VICTORY';
+                this.som.stopMusica();
+                this.som.playDerrapagem(false);
+                this.som.playFanfarraVitoria();
+
+                document.getElementById('victory-day').innerText = `DIA ${this.dia}`;
+                document.getElementById('victory-total').innerText = this.totalUltrapassados;
+                document.getElementById('screen-victory').classList.remove('hidden');
+            }
+
+            perderJogo() {
+                this.estadoJogo = 'GAME_OVER';
+                this.som.stopMusica();
+                this.som.playDerrapagem(false);
+                this.som.playGameOver();
+
+                document.getElementById('gameover-day').innerText = `DIA ${this.dia}`;
+                document.getElementById('gameover-total').innerText = this.totalUltrapassados;
+                document.getElementById('screen-gameover').classList.remove('hidden');
+            }
+        }
+
+        // Inicialização global quando a janela terminar de carregar
+        window.addEventListener('load', () => {
+            new MotorJogo();
+        });
+    </script>
+</body>
+</html>

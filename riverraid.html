@@ -1,0 +1,3497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Raiva 3D - Cyber Canyon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-orange: #ff5e00;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffff00;
+            --dark-bg: #030308;
+            --glass-bg: rgba(8, 8, 16, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* HUD - Painéis Superiores */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: var(--text-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Painel de Combustível Inferior */
+        #fuel-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        .fuel-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .fuel-bar-container {
+            width: 100%;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            overflow: hidden;
+            padding: 2px;
+        }
+
+        #fuel-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow) 40%, var(--neon-green));
+            border-radius: 4px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 8px var(--neon-green);
+        }
+
+        #fuel-bar.low {
+            background: var(--neon-pink);
+            box-shadow: 0 0 12px var(--neon-pink);
+            animation: pulse-fuel 0.8s infinite alternate;
+        }
+
+        @keyframes pulse-fuel {
+            from {
+                filter: brightness(0.8);
+            }
+
+            to {
+                filter: brightness(1.2);
+            }
+        }
+
+        /* Botão de Som */
+        .sound-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .sound-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .sound-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        /* TELAS DE INTERFACE OVERLAY */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(8, 8, 18, 0.8) 0%, rgba(3, 3, 8, 0.96) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(10, 10, 22, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 35px 50px;
+            width: 90%;
+            max-width: 580px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 240, 255, 0.03);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ffffff 20%, var(--neon-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: var(--neon-orange);
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 6px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .control-key {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), #00aaff);
+            color: #000000;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .score-summary {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 10px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* CONTROLES MÓVEIS (VIRTUAIS) */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: none;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .touch-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+
+        .touch-btn:active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--neon-cyan);
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 4px;
+        }
+
+        #btn-left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #btn-up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        #btn-right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        #btn-down {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .action-pad {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #btn-shoot {
+            width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            background: rgba(255, 0, 127, 0.15);
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            font-size: 11px;
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background-color: #010103;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+            text-shadow: var(--text-glow);
+        }
+
+        /* Seletor de Dificuldade Cyberpunk */
+        .difficulty-selector {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .btn-diff {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 12px 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-diff:hover {
+            color: #ffffff;
+            border-color: rgba(0, 240, 255, 0.3);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .btn-diff.active[data-diff="facil"] {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            background: rgba(57, 255, 20, 0.1);
+            box-shadow: 0 0 12px rgba(57, 255, 20, 0.2);
+        }
+
+        .btn-diff.active[data-diff="medio"] {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.15);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+
+        .btn-diff.active[data-diff="dificil"] {
+            color: var(--neon-pink);
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 127, 0.15);
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">SINCRO-CANYON INICIALIZANDO...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="hud">
+        <div class="hud-panel" style="gap: 25px;">
+            <div>
+                <div class="hud-label">Seção</div>
+                <div id="hud-section" class="hud-value">1</div>
+            </div>
+            <div>
+                <div class="hud-label">Dificuldade</div>
+                <div id="hud-difficulty" class="hud-value cyan" style="font-size: 15px;">MÉDIO</div>
+            </div>
+            <div>
+                <div class="hud-label">Score</div>
+                <div id="hud-score" class="hud-value">00000</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div>
+                <div class="hud-label">Vidas</div>
+                <div id="hud-lives" class="hud-value pink">❤️❤️❤️</div>
+            </div>
+            <button id="btn-sound" class="sound-btn active" title="Mudar som">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="fuel-panel" class="hud-panel">
+        <div class="fuel-header">
+            <span style="color: var(--neon-orange);">E (Vazio)</span>
+            <span class="hud-label" style="font-size:11px; color:#ffffff;">COMBUSTÍVEL</span>
+            <span style="color: var(--neon-green);">F (Cheio)</span>
+        </div>
+        <div class="fuel-bar-container">
+            <div id="fuel-bar"></div>
+        </div>
+    </div>
+
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <button id="btn-left" class="touch-btn">◀</button>
+            <button id="btn-up" class="touch-btn">▲</button>
+            <button id="btn-right" class="touch-btn">▶</button>
+            <button id="btn-down" class="touch-btn">▼</button>
+        </div>
+        <div class="action-pad">
+            <button id="btn-shoot" class="touch-btn">FOGO</button>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">RIVER RAIVA 3D</h1>
+            <div class="game-subtitle">Cyber Canyon Patrol</div>
+
+            <div class="instructions">
+                <h3>Diretrizes de Sobrevivência:</h3>
+                <ul>
+                    <li>Pilote seu caça pelo canyon evitando colidir com as <strong>margens rochosas</strong> ou
+                        <strong>ilhas centrais</strong>.
+                    </li>
+                    <li>Destrua os caças, navios e helicópteros inimigos.</li>
+                    <li><strong>Mecânica Crucial:</strong> Destrua a <strong>Ponte Neon</strong> para passar para a
+                        próxima seção de segurança.</li>
+                    <li>Fique de olho no <strong>Combustível</strong>! Voe por cima dos tanques <strong>"FUEL"</strong>
+                        para reabastecer. Não atire neles a menos que queira pontos extras.</li>
+                    <li><strong>Controles do Avião:</strong> Setas Direcionais (<span class="control-key">◀</span> <span
+                            class="control-key">▲</span> <span class="control-key">▼</span> <span
+                            class="control-key">▶</span>) para controlar a velocidade e movimentação. <span
+                            class="control-key">Espaço</span> para atirar.</li>
+                    <li><strong>Controles do Ponto de Vista (Câmera):</strong> <span class="control-key">W</span> (Zoom
+                        In), <span class="control-key">S</span> (Zoom Out), <span class="control-key">A</span> (Girar p/
+                        Esquerda), <span class="control-key">D</span> (Girar p/ Direita).</li>
+                </ul>
+            </div>
+
+            <div class="difficulty-selector">
+                <button class="btn-diff" data-diff="facil">Recruta</button>
+                <button class="btn-diff active" data-diff="medio">Veterano</button>
+                <button class="btn-diff" data-diff="dificil">Elite</button>
+            </div>
+
+            <button id="btn-start" class="btn-primary">INICIAR PATRULHA</button>
+        </div>
+    </div>
+
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: 0 0 30px rgba(255, 0, 127, 0.45);">CAÇA
+                DESTRUÍDO</h1>
+            <div id="gameover-reason" class="game-subtitle">Sem combustível em combate</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Seção Alcançada:</span>
+                    <span id="summary-section" class="value">1</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Pontos de Combate:</span>
+                    <span id="summary-score" class="value">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Recorde Geral:</span>
+                    <span id="summary-highscore" class="value">00000</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">Pontuação Final:</span>
+                    <span id="summary-total" class="value">00000</span>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-primary">REINICIAR OPERAÇÃO</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Sempre utilize português do Brasil para passar informações e desenvolver os comentários em arquivos.
+
+        // ============================================================================
+        // 1. GERENCIADOR DE SOM SINTETIZADO (Web Audio API)
+        // ============================================================================
+        // ============================================================================
+        // 1. GERENCIADOR DE SOM SINTETIZADO (Web Audio API - CORRIGIDO)
+        // ============================================================================
+        class SomRiverRaid {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+
+                // Nós de som do motor contínuo
+                this.motorOsc = null;
+                this.motorFilter = null;
+                this.motorGain = null;
+                this.motorActive = false;
+
+                // Sequenciador de fundo
+                this.themeActive = false;
+                this.seqInterval = null;
+                this.beat = 0;
+
+                this.muted = false;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+
+                this.iniciarSomMotor();
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Som do motor constante (Hum de baixa frequência com modulação)
+            iniciarSomMotor() {
+                if (this.motorActive || !this.ctx) return;
+
+                const t = this.ctx.currentTime;
+                this.motorOsc = this.ctx.createOscillator();
+                this.motorFilter = this.ctx.createBiquadFilter();
+                this.motorGain = this.ctx.createGain();
+
+                this.motorOsc.type = 'sawtooth';
+                this.motorOsc.frequency.setValueAtTime(80, t); // Frequência fundamental baixa
+
+                this.motorFilter.type = 'lowpass';
+                this.motorFilter.frequency.setValueAtTime(140, t);
+
+                this.motorGain.gain.setValueAtTime(0.08, t); // Volume do motor bem sutil
+
+                // Conexões
+                this.motorOsc.connect(this.motorFilter);
+                this.motorFilter.connect(this.motorGain);
+                this.motorGain.connect(this.masterGain);
+
+                this.motorOsc.start(t);
+                this.motorActive = true;
+            }
+
+            // Altera dinamicamente o som do motor baseado na velocidade do caça
+            atualizarSomMotor(speedRatio) {
+                if (!this.ctx || !this.motorActive) return;
+
+                const t = this.ctx.currentTime;
+                // Ratio varia de 0.5 (desacelerado) a 1.8 (acelerado)
+                const freq = 60 + speedRatio * 45; // Frequência varia de 82.5Hz a 141Hz
+                const filterFreq = 110 + speedRatio * 75;
+
+                this.motorOsc.frequency.setTargetAtTime(freq, t, 0.1);
+                this.motorFilter.frequency.setTargetAtTime(filterFreq, t, 0.1);
+            }
+
+            desligarSomMotor() {
+                if (this.motorOsc && this.motorActive) {
+                    try {
+                        this.motorOsc.stop();
+                        this.motorOsc.disconnect();
+                    } catch (e) { }
+                    this.motorActive = false;
+                }
+            }
+
+            // Som de disparo laser (varredura rápida de frequência descendente)
+            playLaser() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                const t = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(1000, t);
+                osc.frequency.exponentialRampToValueAtTime(150, t + 0.15);
+
+                gain.gain.setValueAtTime(0.28, t);
+                gain.gain.linearRampToValueAtTime(0.01, t + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.16);
+            }
+
+            // Som de disparo laser inimigo (onda triangular rápida e sutil)
+            playLaserInimigo() {
+                if (!this.ctx || this.muted) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                const t = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(450, t);
+                osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
+
+                gain.gain.setValueAtTime(0.06, t); // Volume bem baixo para ficar sutil em segundo plano
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.13);
+            }
+
+            // Efeito sonoro de explosão (ruído branco filtrado com decay)
+            playExplosao() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.35; // 0.35 segundos
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(250, t);
+                filter.frequency.linearRampToValueAtTime(30, t + 0.34);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.8, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.34);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+
+                noise.start(t);
+                noise.stop(t + 0.35);
+            }
+
+            // Som de recarga de combustível (tique-tique metálico rápido e agradável)
+            playCombustivelTick() {
+                if (!this.ctx || this.muted) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+
+                const t = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(650, t);
+                osc.frequency.setValueAtTime(900, t + 0.03);
+
+                gain.gain.setValueAtTime(0.15, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.06);
+            }
+
+            // Alerta sonoro de combustível acabando (Bip duplo alarmante)
+            playAlertaCombustivel() {
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(330, t);
+
+                gain.gain.setValueAtTime(0.35, t);
+                gain.gain.linearRampToValueAtTime(0.01, t + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.16);
+            }
+
+            // Sequenciador de fundo (Batida Techno-Synthwave Cyberpunk)
+            startMusic() {
+                this.init();
+                if (this.themeActive) return;
+                this.themeActive = true;
+
+                const step = 0.14; // Tempo da colcheia (~107 BPM)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    // O avanço do tempo (nextTick) DEVE acontecer mesmo se estiver silenciado,
+                    // caso contrário o laço superior entrará em loop infinito.
+                    if (!this.muted && this.themeActive) {
+                        // Baixo Synth (Steps 0, 2, 4, 6)
+                        if (this.beat % 2 === 0) {
+                            const note = (this.beat % 8 === 0 || this.beat % 8 === 4) ? 55.00 : 110.00;
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(note, t);
+
+                            const filter = this.ctx.createBiquadFilter();
+                            filter.type = 'lowpass';
+                            filter.frequency.setValueAtTime(190, t);
+
+                            gain.gain.setValueAtTime(0.18, t);
+                            gain.gain.exponentialRampToValueAtTime(0.01, t + step * 1.5);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(this.masterGain);
+
+                            osc.start(t);
+                            osc.stop(t + step * 1.8);
+                        }
+
+                        // Bumbo eletrônico nos passos 0 e 4
+                        if (this.beat % 4 === 0) {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            currentWidth: 36;
+                            osc.frequency.setValueAtTime(130, t);
+                            osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+
+                            gain.gain.setValueAtTime(0.35, t);
+                            gain.gain.linearRampToValueAtTime(0.01, t + 0.1);
+
+                            osc.connect(gain);
+                            gain.connect(this.masterGain);
+                            osc.start(t);
+                            osc.stop(t + 0.11);
+                        }
+
+                        // Chapéu no contratempo (Hi-hat) nos passos 2 e 6
+                        if (this.beat % 4 === 2) {
+                            const osc = this.ctx.createOscillator();
+                            const filter = this.ctx.createBiquadFilter();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(9000, t);
+                            filter.type = 'highpass';
+                            filter.frequency.value = 6000;
+
+                            gain.gain.setValueAtTime(0.03, t);
+                            gain.gain.linearRampToValueAtTime(0.001, t + 0.04);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(this.masterGain);
+                            osc.start(t);
+                            osc.stop(t + 0.05);
+                        }
+                    }
+
+                    this.beat++;
+                    nextTick += step;
+                };
+
+                const scheduler = () => {
+                    if (!this.themeActive) return;
+
+                    // Proteção contra abas em segundo plano (evita travar o loop)
+                    if (nextTick < this.ctx.currentTime) {
+                        nextTick = this.ctx.currentTime;
+                    }
+
+                    while (nextTick < this.ctx.currentTime + 0.1) {
+                        tickLoop();
+                    }
+
+                    this.seqInterval = setTimeout(scheduler, 25);
+                };
+                scheduler();
+            }
+
+            stopMusic() {
+                this.themeActive = false;
+                if (this.seqInterval) {
+                    clearTimeout(this.seqInterval);
+                    this.seqInterval = null;
+                }
+            }
+
+            // Fanfarra triste de morte
+            playMorteArpejo() {
+                this.stopMusic();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 174.61, 146.83, 110.00]; // Am triste descendente
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.15);
+                    gain.gain.setValueAtTime(0.3, t + idx * 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + idx * 0.15 + 0.5);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.15);
+                    osc.stop(t + idx * 0.15 + 0.52);
+                });
+            }
+
+            // Fanfarra alegre de nível concluído
+            playVitoriaArpejo() {
+                this.stopMusic();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // Acorde alegre C maior subindo
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.06);
+                    gain.gain.setValueAtTime(0.25, t + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + idx * 0.06 + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(t + idx * 0.06);
+                    osc.stop(t + idx * 0.06 + 0.32);
+                });
+            }
+        }
+
+        const som = new SomRiverRaid();
+
+        // Botão de volume HUD
+        const btnSound = document.getElementById('btn-sound');
+        btnSound.addEventListener('click', (e) => {
+            e.stopPropagation();
+            som.init();
+            const muted = som.toggleMute();
+            if (muted) {
+                btnSound.classList.remove('active');
+                btnSound.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                        <path d="M9 9v6a3 3 0 0 0 3 3h1.586l4.707 4.707A1 1 0 0 0 20 22V4a1 1 0 0 0-1.707-.707L13.586 8H12a3 3 0 0 0-3 3z"></path>
+                    </svg>
+                `;
+            } else {
+                btnSound.classList.add('active');
+                btnSound.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                `;
+            }
+        });
+
+
+        // ============================================================================
+        // 2. CONSTANTES DE CONFIGURAÇÃO DO RIVER RAID 3D
+        // ============================================================================
+        const CONFIG = {
+            RIO_LARGURA_PADRAO: 35, // Largura padrão da água
+            SEGMENTO_COMPRIMENTO: 20,// Comprimento Z de cada bloco de canyon
+            MAX_SEGMENTOS: 14,      // Quantidade de blocos mantidos na cena
+            CANYON_LARGURA: 120,    // Largura total de cobertura do canyon (paredes externas)
+            CAMARA_OFFSET: new THREE.Vector3(12, 15, 12), // Posição X, Y, Z para a câmera lateral-traseira superior original (45 graus)
+            CAMARA_OFFSET_MOBILE: new THREE.Vector3(0, 7, 10), // Câmera estritamente traseira/baixa para telas pequenas
+            COMBUSTIVEL_MAX: 100,   // Tanque cheio
+            COMBUSTIVEL_CONSUMO: 3.0,// Taxa de queima por segundo em velocidade normal
+            FORCA_TIRO: 85,         // Velocidade de propagação do laser (Z negativo)
+            ATRACTION_TIRO: 0.15,   // Delay para disparar outro laser
+            VELOCIDADE_PADRAO: 24,  // Rolagem de canyon em velocidade normal
+            VELOCIDADE_MIN: 14,     // Desacelerando (Seta Baixo)
+            VELOCIDADE_MAX: 44,     // Acelerando (Seta Cima)
+            VELOCIDADE_LATERAL: 18  // Deslocamento X do caça por segundo
+        };
+
+
+        // ============================================================================
+        // 2.1 GERADOR DE MAPA FIXO E DETERMINÍSTICO (Estilo Atari)
+        // ============================================================================
+        class SeededRNG {
+            constructor(seed) {
+                this.seed = seed;
+            }
+            next() {
+                // Gerador Linear Congruencial (LCG)
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        let MAPA_SEGMENTOS = [];
+
+        function inicializarMapaFixo(dificuldade = 'medio') {
+
+            const rng = new SeededRNG(1982); // Semente do River Raid original
+
+            // Geramos 500 segmentos (suficientes para cobrir as 49 seções clássicas e mais)
+            for (let i = 0; i < 500; i++) {
+                const secao = Math.floor(i / 8) + 1;
+                const indexNaSecao = i % 8; // 0 a 7 (sendo 7 a ponte e 1 a transição segura após a ponte)
+
+                let currentWidth = 36;
+                let currentCenterX = 0;
+                let hasBridge = false;
+                let hasIsland = false;
+                let hasFuel = false;
+                let fuelX = 0;
+                let enemy = null;
+
+                // Determina o estilo da seção de 1 a 49 (ciclos de 6 estilos característicos do RiverRaid.png)
+                const estiloSecao = ((secao - 1) % 6) + 1; // 1 a 6
+
+                // Determina a largura e o centro do canyon baseados no estilo e progresso
+                if (indexNaSecao === 0) {
+                    // Ponte
+                    hasBridge = i > 0;
+                    currentWidth = 38;
+                    // Alinha o centro da ponte com o final da seção anterior
+                    if (i > 0 && MAPA_SEGMENTOS[i - 1]) {
+                        currentCenterX = MAPA_SEGMENTOS[i - 1].centerX;
+                    } else {
+                        currentCenterX = 0;
+                    }
+                } else if (indexNaSecao === 1) {
+                    // Respawn / Transição segura após ponte
+                    currentWidth = 36;
+                    if (MAPA_SEGMENTOS[i - 1]) {
+                        currentCenterX = MAPA_SEGMENTOS[i - 1].centerX;
+                    } else {
+                        currentCenterX = 0;
+                    }
+                } else {
+                    // Corpo da seção
+                    const prevSeg = MAPA_SEGMENTOS[i - 1];
+                    let baseWidth = prevSeg ? prevSeg.width : 36;
+                    let baseCenter = prevSeg ? prevSeg.centerX : 0;
+
+                    if (estiloSecao === 1) {
+                        // STRAIGHT_NARROW (Estilo 1): Rio reto, estreitando gradualmente (ex: Seção 1)
+                        currentWidth = Math.max(20, Math.min(32, baseWidth - 2 + rng.next() * 3));
+                        currentCenterX = baseCenter * 0.8 + (rng.next() * 2 - 1);
+                    } else if (estiloSecao === 2) {
+                        // SPLIT_ISLAND (Estilo 2): Rio largo com ilha central dividindo o canal (ex: Seção 2)
+                        currentWidth = Math.max(38, Math.min(46, baseWidth + 2 - rng.next() * 3));
+                        currentCenterX = baseCenter * 0.9 + (rng.next() * 3 - 1.5);
+                        // Ilha central nos segmentos do meio
+                        if (indexNaSecao >= 3 && indexNaSecao <= 6) {
+                            hasIsland = true;
+                        }
+                    } else if (estiloSecao === 3) {
+                        // CURVY_WINDING (Estilo 3): Rio sinuoso que desvia para as laterais (ex: Seção 3)
+                        currentWidth = Math.max(22, Math.min(30, baseWidth - 1 + rng.next() * 2));
+                        // Sinuosidade dependendo do progresso na seção
+                        const angulo = (indexNaSecao / 6) * Math.PI * 1.5;
+                        const direcaoDesvio = (secao % 2 === 0) ? 1 : -1;
+                        currentCenterX = baseCenter + direcaoDesvio * 2.5 * Math.sin(angulo);
+                    } else if (estiloSecao === 4) {
+                        // WIDE_OBSTACLE (Estilo 4): Rio bem largo com ilhas redondas isoladas e aviões rápidos (ex: Seção 4)
+                        currentWidth = Math.max(40, Math.min(48, baseWidth + 1));
+                        currentCenterX = baseCenter * 0.9;
+                        // Ilhas redondas isoladas
+                        if (indexNaSecao === 3 || indexNaSecao === 5) {
+                            hasIsland = true;
+                        }
+                    } else if (estiloSecao === 5) {
+                        // SHARP_CHOKE (Estilo 5): Apertos e estrangulamentos repentinos (ex: Seção 5)
+                        if (indexNaSecao === 3 || indexNaSecao === 4) {
+                            currentWidth = 18; // Gargalo estreito
+                            currentCenterX = baseCenter * 0.7;
+                        } else {
+                            currentWidth = Math.max(34, Math.min(42, baseWidth + 4 - rng.next() * 4));
+                            currentCenterX = baseCenter + (rng.next() * 4 - 2);
+                        }
+                    } else {
+                        // DIAGONAL_CROSSED (Estilo 6): Canal diagonal cortando para um lado (ex: Seção 6)
+                        currentWidth = Math.max(24, Math.min(36, baseWidth));
+                        const lado = (secao % 2 === 0) ? 1 : -1;
+                        currentCenterX = baseCenter + lado * 2.2;
+                    }
+                }
+
+                // Limita                 // Adiciona combustível e inimigos
+                if (!hasBridge && indexNaSecao > 1) {
+                    // Função auxiliar para selecionar tipo de inimigo com base na progressão
+                    const selectTipoInimigo = () => {
+                        const rType = rng.next();
+                        if (secao <= 3) {
+                            return rType < 0.6 ? 'navio' : (rType < 0.9 ? 'helicoptero' : 'balao');
+                        } else if (secao <= 8) {
+                            return rType < 0.4 ? 'navio' : (rType < 0.8 ? 'helicoptero' : 'balao');
+                        } else if (secao <= 15) {
+                            return rType < 0.3 ? 'navio' : (rType < 0.65 ? 'helicoptero' : (rType < 0.85 ? 'aviao' : 'balao'));
+                        } else {
+                            return rType < 0.25 ? 'navio' : (rType < 0.5 ? 'helicoptero' : (rType < 0.8 ? 'aviao' : 'balao'));
+                        }
+                    };
+
+                    const dir = rng.next() > 0.5 ? 1 : -1;
+
+                    // Posicionamento estratégico e equilibrado para seguir as posições clássicas
+                    // e garantir pelo menos 2 combustíveis por seção, permitindo passar com folga e sobra.
+                    if (estiloSecao === 1) {
+                        // STRAIGHT_NARROW (Estilo 1): Rio reto
+                        if (indexNaSecao === 2) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 4) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 6) {
+                            enemy = { tipo: selectTipoInimigo(), dir: -dir, x: currentCenterX + (rng.next() * 6 - 3), lado: null };
+                        } else if (indexNaSecao === 7) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        }
+                    } else if (estiloSecao === 2) {
+                        // SPLIT_ISLAND (Estilo 2): Canal com ilha central dividida
+                        if (indexNaSecao === 2) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX + (rng.next() * 10 - 5), lado: null };
+                        } else if (indexNaSecao === 3) {
+                            // Combustível à esquerda da ilha, inimigo à direita
+                            hasFuel = true;
+                            fuelX = currentCenterX - (currentWidth / 4);
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX + (currentWidth / 4), lado: 'direita' };
+                        } else if (indexNaSecao === 5) {
+                            // Inimigo à esquerda da ilha, combustível à direita
+                            hasFuel = true;
+                            fuelX = currentCenterX + (currentWidth / 4);
+                            enemy = { tipo: selectTipoInimigo(), dir: -dir, x: currentCenterX - (currentWidth / 4), lado: 'esquerda' };
+                        } else if (indexNaSecao === 6) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX + (rng.next() * 10 - 5), lado: null };
+                        }
+                    } else if (estiloSecao === 3) {
+                        // CURVY_WINDING (Estilo 3): Rio sinuoso
+                        if (indexNaSecao === 2) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 4) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 6) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 7) {
+                            enemy = { tipo: 'aviao', dir: dir, x: dir * -55, lado: null };
+                        }
+                    } else if (estiloSecao === 4) {
+                        // WIDE_OBSTACLE (Estilo 4): Rio largo com ilhas redondas isoladas
+                        if (indexNaSecao === 2) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 3) {
+                            hasFuel = true;
+                            fuelX = currentCenterX - (currentWidth / 4);
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX + (currentWidth / 4), lado: 'direita' };
+                        } else if (indexNaSecao === 5) {
+                            hasFuel = true;
+                            fuelX = currentCenterX + (currentWidth / 4);
+                            enemy = { tipo: selectTipoInimigo(), dir: -dir, x: currentCenterX - (currentWidth / 4), lado: 'esquerda' };
+                        } else if (indexNaSecao === 6) {
+                            enemy = { tipo: 'aviao', dir: -dir, x: -dir * -55, lado: null };
+                        }
+                    } else if (estiloSecao === 5) {
+                        // SHARP_CHOKE (Estilo 5): Gargalos estreitos
+                        if (indexNaSecao === 2) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 3 || indexNaSecao === 4) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 5) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 6) {
+                            enemy = { tipo: selectTipoInimigo(), dir: -dir, x: currentCenterX + (rng.next() * 4 - 2), lado: null };
+                        }
+                    } else {
+                        // DIAGONAL_CROSSED (Estilo 6): Canal diagonal
+                        if (indexNaSecao === 2) {
+                            enemy = { tipo: selectTipoInimigo(), dir: dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 4) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        } else if (indexNaSecao === 6) {
+                            enemy = { tipo: selectTipoInimigo(), dir: -dir, x: currentCenterX, lado: null };
+                        } else if (indexNaSecao === 7) {
+                            hasFuel = true;
+                            fuelX = currentCenterX;
+                        }
+                    }
+                }
+
+                // Adiciona mais inimigos se a dificuldade for Médio (Veterano) ou Difícil (Elite)
+                if (!hasBridge && indexNaSecao > 1 && !enemy && !hasFuel && !hasIsland) {
+                    const chanceExtra = dificuldade === 'medio' ? 0.35 : (dificuldade === 'dificil' ? 0.70 : 0.0);
+                    if (rng.next() < chanceExtra) {
+                        const dir = rng.next() > 0.5 ? 1 : -1;
+                        const selectTipoInimigo = () => {
+                            const rType = rng.next();
+                            if (secao <= 3) {
+                                return rType < 0.6 ? 'navio' : (rType < 0.9 ? 'helicoptero' : 'balao');
+                            } else if (secao <= 8) {
+                                return rType < 0.4 ? 'navio' : (rType < 0.8 ? 'helicoptero' : 'balao');
+                            } else if (secao <= 15) {
+                                return rType < 0.3 ? 'navio' : (rType < 0.65 ? 'helicoptero' : (rType < 0.85 ? 'aviao' : 'balao'));
+                            } else {
+                                return rType < 0.25 ? 'navio' : (rType < 0.5 ? 'helicoptero' : (rType < 0.8 ? 'aviao' : 'balao'));
+                            }
+                        };
+
+                        const offsetLimite = (currentWidth / 3);
+                        const enemyX = currentCenterX + (rng.next() * 2 - 1) * offsetLimite;
+
+                        enemy = { tipo: selectTipoInimigo(), dir: dir, x: enemyX, lado: null };
+                    }
+                }
+
+                MAPA_SEGMENTOS.push({
+                    index: i,
+                    width: currentWidth,
+                    centerX: currentCenterX,
+                    hasBridge: hasBridge,
+                    hasIsland: hasIsland,
+                    hasFuel: hasFuel,
+                    fuelX: fuelX,
+                    enemy: enemy
+                });
+            }
+        }
+
+
+        // ============================================================================
+        // 3. ENGINE GRÁFICA (Configuração da Cena 3D)
+        // ============================================================================
+        function criarMapaReflexaoProcedural() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            // Gradiente vertical simulando um horizonte de estúdio cyberpunk altamente reflexivo
+            const grad = ctx.createLinearGradient(0, 0, 0, 256);
+            grad.addColorStop(0, '#020205');     // Topo escuro
+            grad.addColorStop(0.35, '#00b0ff');  // Céu ciano
+            grad.addColorStop(0.48, '#ffffff');  // Horizonte brilhante
+            grad.addColorStop(0.52, '#ff007f');  // Reflexo rosa
+            grad.addColorStop(0.65, '#0c0018');  // Chão roxo escuro
+            grad.addColorStop(1, '#010103');     // Base escura
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Adiciona listras verticais brilhantes para simular luzes tubulares de estúdio refletidas
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(35, 0, 10, 256);
+            ctx.fillRect(110, 0, 20, 256);
+            ctx.fillRect(190, 0, 15, 256);
+
+            // Adiciona luzes neon brilhantes horizontais secundárias
+            ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+            ctx.fillRect(0, 70, 256, 8);
+            ctx.fillStyle = 'rgba(255, 0, 127, 0.15)';
+            ctx.fillRect(0, 170, 256, 10);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            return texture;
+        }
+
+        class Motor3D {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.luzDirecional = null;
+
+                this.init();
+            }
+
+            init() {
+                // Cena com névoa celeste azulada escura e futurista combinando com o showroom
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x05060b);
+                this.scene.fog = new THREE.FogExp2(0x05060b, 0.006);
+
+                // Câmera em perspectiva
+                this.camera = new THREE.PerspectiveCamera(
+                    45,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+
+                // Determina se a tela é pequena (Mobile/Tablet < 768px de largura)
+                this.isMobileLayout = window.innerWidth < 768;
+
+                // Define offset inicial baseado no dispositivo
+                if (this.isMobileLayout) {
+                    this.camera.position.set(0, CONFIG.CAMARA_OFFSET_MOBILE.y, CONFIG.CAMARA_OFFSET_MOBILE.z);
+                } else {
+                    this.camera.position.set(CONFIG.CAMARA_OFFSET.x, CONFIG.CAMARA_OFFSET.y, CONFIG.CAMARA_OFFSET.z);
+                }
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                // Configurações de renderizador para cores físicas mais ricas
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.0;
+
+                this.container.appendChild(this.renderer.domElement);
+
+                // Adiciona o mapa de reflexão procedural global na cena
+                const envMap = criarMapaReflexaoProcedural();
+                this.scene.environment = envMap;
+
+                this.configurarIluminacao();
+
+                window.addEventListener('resize', () => this.onResize());
+                document.getElementById('loading-screen').style.display = 'none';
+            }
+
+            configurarIluminacao() {
+                // Luz ambiente suave para permitir que o environment map comande as reflexões
+                const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+                this.scene.add(ambient);
+
+                // Luz Direcional Principal (Sol que projeta sombras limpas)
+                this.luzDirecional = new THREE.DirectionalLight(0xffffff, 1.2);
+                this.luzDirecional.position.set(-20, 60, -30);
+                this.luzDirecional.castShadow = true;
+                this.luzDirecional.shadow.mapSize.width = 2048;
+                this.luzDirecional.shadow.mapSize.height = 2048;
+                this.luzDirecional.shadow.camera.near = 0.5;
+                this.luzDirecional.shadow.camera.far = 250;
+
+                const d = 60;
+                this.luzDirecional.shadow.camera.left = -d;
+                this.luzDirecional.shadow.camera.right = d;
+                this.luzDirecional.shadow.camera.top = d;
+                this.luzDirecional.shadow.camera.bottom = -d;
+                this.luzDirecional.shadow.bias = -0.0001;
+                this.scene.add(this.luzDirecional);
+
+                // Luz de Preenchimento Ciano Lateral (Fill Light) para sombras coloridas de alta tecnologia
+                const fillLight = new THREE.DirectionalLight(0x00f0ff, 0.65);
+                fillLight.position.set(30, 40, 50);
+                this.scene.add(fillLight);
+
+                // Luz de Realce Traseira Magenta (Rim Light) para destacar as silhuetas metálicas
+                const rimLight = new THREE.DirectionalLight(0xff007f, 0.45);
+                rimLight.position.set(-30, 20, -50);
+                this.scene.add(rimLight);
+            }
+
+            onResize() {
+                this.isMobileLayout = window.innerWidth < 768;
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+
+        // ============================================================================
+        // 4. MODELOS 3D PROCEDURAIS (Caça, Inimigos, Tanques e Pontes)
+        // ============================================================================
+
+        // 4.1 Caça do Jogador (Jato Realista de Alta Performance)
+        class CacaJogador3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                // Materiais inspirados em estética automotiva supercar
+                const tintaMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x00f0ff,            // Tinta ciano brilhante
+                    metalness: 0.95,
+                    roughness: 0.12,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.04,
+                    side: THREE.DoubleSide
+                });
+
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.04,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                const carbonMat = new THREE.MeshStandardMaterial({
+                    color: 0x141416,            // Fibra de carbono preta
+                    metalness: 0.25,
+                    roughness: 0.65
+                });
+
+                const vidroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xe0f7fa,
+                    transparent: true,
+                    opacity: 0.5,
+                    metalness: 0.1,
+                    roughness: 0.03,
+                    transmission: 0.95,         // Vidro real
+                    ior: 1.5,
+                    thickness: 0.5
+                });
+
+                const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                const neonRedMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
+                const jetEngMat = new THREE.MeshBasicMaterial({ color: 0xff3a00 }); // Fogo/Laranja interior
+
+                // 1. FUSELAGEM CENTRAL (Corpo cilíndrico aerodinâmico)
+                const fuselagemGeom = new THREE.CylinderGeometry(0.38, 0.45, 2.2, 12);
+                const fuselagem = new THREE.Mesh(fuselagemGeom, tintaMat);
+                fuselagem.rotation.x = Math.PI / 2;
+                fuselagem.position.set(0, 0, -0.4);
+                fuselagem.castShadow = true;
+                fuselagem.receiveShadow = true;
+                this.mesh.add(fuselagem);
+
+                // 2. ENTRADAS DE AR LATERAIS (Carbono com frisos cromados)
+                const intakeGeom = new THREE.BoxGeometry(0.28, 0.35, 0.8);
+                const intakeLE = new THREE.Mesh(intakeGeom, carbonMat);
+                intakeLE.position.set(-0.48, -0.05, -0.8);
+                intakeLE.rotation.y = 0.15;
+                const lipLE = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.1), cromoMat);
+                lipLE.position.set(-0.48, 0.15, -1.2);
+                this.mesh.add(intakeLE, lipLE);
+
+                const intakeLD = new THREE.Mesh(intakeGeom, carbonMat);
+                intakeLD.position.set(0.48, -0.05, -0.8);
+                intakeLD.rotation.y = -0.15;
+                const lipLD = new THREE.Mesh(lipLE.geometry, cromoMat);
+                lipLD.position.set(0.48, 0.15, -1.2);
+                this.mesh.add(intakeLD, lipLD);
+
+                // 3. CABINE DE PILOTAGEM (Glass Canopy com assento metálico visível)
+                const cockpitVidroGeom = new THREE.SphereGeometry(0.32, 16, 16);
+                cockpitVidroGeom.scale(1.0, 0.75, 2.2);
+                const cockpitVidro = new THREE.Mesh(cockpitVidroGeom, vidroMat);
+                cockpitVidro.position.set(0, 0.28, -0.7);
+                this.mesh.add(cockpitVidro);
+
+                const assento = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.25), carbonMat);
+                assento.position.set(0, 0.15, -0.6);
+                this.mesh.add(assento);
+
+                // 4. BICO PONTUDO (Cone com ponteira cromada de radar/sensores)
+                const bicoGeom = new THREE.ConeGeometry(0.38, 1.1, 12);
+                const bico = new THREE.Mesh(bicoGeom, tintaMat);
+                bico.rotation.x = -Math.PI / 2;
+                bico.position.set(0, 0, -2.05);
+                bico.castShadow = true;
+                this.mesh.add(bico);
+
+                const agulhaGeom = new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6);
+                const agulha = new THREE.Mesh(agulhaGeom, cromoMat);
+                agulha.rotation.x = -Math.PI / 2;
+                agulha.position.set(0, 0, -2.8);
+                this.mesh.add(agulha);
+
+                // 5. ASAS DELTA (Sleek com winglets verticais e luzes de navegação)
+                const asasGeom = new THREE.BufferGeometry();
+                const vertices = new Float32Array([
+                    0.0, 0.0, 0.8,       // Centro traseiro
+                    0.0, 0.0, -1.0,      // Centro frontal
+                    -2.8, -0.05, 1.2,    // Ponta esquerda traseira
+
+                    0.0, 0.0, 0.8,       // Centro traseiro
+                    2.8, -0.05, 1.2,     // Ponta direita traseira
+                    0.0, 0.0, -1.0       // Centro frontal
+                ]);
+                asasGeom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                asasGeom.computeVertexNormals();
+                const asas = new THREE.Mesh(asasGeom, tintaMat);
+                asas.castShadow = true;
+                this.mesh.add(asas);
+
+                // Flaps traseiros das asas (Detalhe em carbono)
+                const flapLE = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 0.25), carbonMat);
+                flapLE.position.set(-1.4, -0.04, 1.1);
+                const flapLD = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 0.25), carbonMat);
+                flapLD.position.set(1.4, -0.04, 1.1);
+                this.mesh.add(flapLE, flapLD);
+
+                // Luzes de navegação neon na ponta das asas
+                const luzLE = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), neonCyanMat);
+                luzLE.position.set(-2.8, -0.05, 1.2);
+                const luzLD = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), neonRedMat);
+                luzLD.position.set(2.8, -0.05, 1.2);
+                this.mesh.add(luzLE, luzLD);
+
+                // Filete de neon ciano decorativo na fuselagem
+                const fileteLE = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1.4), neonCyanMat);
+                fileteLE.position.set(-0.39, 0.12, 0.1);
+                fileteLE.rotation.y = 0.08;
+
+                const fileteLD = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1.4), neonCyanMat);
+                fileteLD.position.set(0.39, 0.12, 0.1);
+                fileteLD.rotation.y = -0.08;
+                this.mesh.add(fileteLE, fileteLD);
+
+                // 6. ESTABILIZADORES VERTICAIS DUPLOS (Tail Fins angulados)
+                const estabGeom = new THREE.BoxGeometry(0.06, 0.85, 0.7);
+
+                const estabE = new THREE.Mesh(estabGeom, tintaMat);
+                estabE.position.set(-0.35, 0.55, 1.1);
+                estabE.rotation.z = -0.2; // Angulado para fora
+                estabE.rotation.y = 0.05;
+                estabE.castShadow = true;
+
+                // Borda de ataque do estabilizador em carbono
+                const estabBordaE = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.9, 0.12), carbonMat);
+                estabBordaE.position.set(-0.43, 0.6, 0.85);
+                estabBordaE.rotation.z = -0.2;
+                estabBordaE.rotation.x = 0.35;
+                this.mesh.add(estabE, estabBordaE);
+
+                const estabD = new THREE.Mesh(estabGeom, tintaMat);
+                estabD.position.set(0.35, 0.55, 1.1);
+                estabD.rotation.z = 0.2;
+                estabD.rotation.y = -0.05;
+                estabD.castShadow = true;
+
+                const estabBordaD = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.9, 0.12), carbonMat);
+                estabBordaD.position.set(0.43, 0.6, 0.85);
+                estabBordaD.rotation.z = 0.2;
+                estabBordaD.rotation.x = 0.35;
+                this.mesh.add(estabD, estabBordaD);
+
+                // 7. DUPLAS TURBINAS TRASEIRAS (Com bocais de exaustão cromados e calor interior)
+                const bocalGeom = new THREE.CylinderGeometry(0.18, 0.22, 0.5, 10);
+
+                const bocalE = new THREE.Mesh(bocalGeom, cromoMat);
+                bocalE.rotation.x = Math.PI / 2;
+                bocalE.position.set(-0.24, -0.04, 0.7);
+                bocalE.castShadow = true;
+
+                const bocalD = new THREE.Mesh(bocalGeom, cromoMat);
+                bocalD.rotation.x = Math.PI / 2;
+                bocalD.position.set(0.24, -0.04, 0.7);
+                bocalD.castShadow = true;
+
+                this.mesh.add(bocalE, bocalD);
+
+                // Elementos incandescentes internos (Luz do motor)
+                const fogoGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
+                const fogoE = new THREE.Mesh(fogoGeom, jetEngMat);
+                fogoE.rotation.x = Math.PI / 2;
+                fogoE.position.set(-0.24, -0.04, 0.8);
+
+                const fogoD = new THREE.Mesh(fogoGeom, jetEngMat);
+                fogoD.rotation.x = Math.PI / 2;
+                fogoD.position.set(0.24, -0.04, 0.8);
+
+                this.mesh.add(fogoE, fogoD);
+
+                // Escala inicial ajustada para manter proporção de colisão
+                this.mesh.scale.set(0.7, 0.7, 0.7);
+            }
+        }
+
+        // 4.2 Helicóptero Inimigo (Sleek Gunship com rotor de carbono)
+        class HelicopInimigo3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.rotor = null;
+                this.rotorCauda = null;
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                const tintaMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xff6b00,            // Laranja cobre metálico
+                    metalness: 0.9,
+                    roughness: 0.15,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.05
+                });
+
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.04,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                const carbonMat = new THREE.MeshStandardMaterial({
+                    color: 0x18181b,
+                    metalness: 0.2,
+                    roughness: 0.7
+                });
+
+                const vidroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x111122,
+                    transparent: true,
+                    opacity: 0.65,
+                    metalness: 0.2,
+                    roughness: 0.05,
+                    transmission: 0.8
+                });
+
+                const neonPinkMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+
+                // 1. CABINE OVALADA (Aerodinâmica)
+                const cabineGeom = new THREE.SphereGeometry(0.55, 12, 12);
+                cabineGeom.scale(1.1, 0.9, 1.6);
+                const cabine = new THREE.Mesh(cabineGeom, tintaMat);
+                cabine.castShadow = true;
+                this.mesh.add(cabine);
+
+                // 2. PARABRISA DE VIDRO ESCURO
+                const vidroGeom = new THREE.SphereGeometry(0.48, 12, 12);
+                vidroGeom.scale(1.0, 0.75, 1.2);
+                const vidro = new THREE.Mesh(vidroGeom, vidroMat);
+                vidro.position.set(0, 0.1, -0.45);
+                this.mesh.add(vidro);
+
+                // 3. CAUDA DO HELICÓPTERO (Longa com estabilizador)
+                const caudaGeom = new THREE.CylinderGeometry(0.12, 0.06, 1.4, 8);
+                const cauda = new THREE.Mesh(caudaGeom, tintaMat);
+                cauda.rotation.x = Math.PI / 2;
+                cauda.position.set(0, 0.12, 1.1);
+                cauda.castShadow = true;
+                this.mesh.add(cauda);
+
+                const estabCauda = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.45, 0.2), carbonMat);
+                estabCauda.position.set(0, 0.3, 1.7);
+                estabCauda.rotation.x = -0.3;
+                this.mesh.add(estabCauda);
+
+                // 4. ROTOR PRINCIPAL (Cubo cromado + 4 pás de carbono)
+                const rotorGroup = new THREE.Group();
+                const haste = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.35, 8), cromoMat);
+                haste.position.y = 0.55;
+                this.mesh.add(haste);
+
+                const cuboRotor = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 8), cromoMat);
+                cuboRotor.position.y = 0.7;
+                rotorGroup.add(cuboRotor);
+
+                // 4 pás do rotor
+                for (let i = 0; i < 4; i++) {
+                    const pa = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.02, 0.11), carbonMat);
+                    pa.position.y = 0.7;
+                    pa.rotation.y = (Math.PI / 2) * i;
+                    pa.translateOnAxis(new THREE.Vector3(1, 0, 0), 0.85);
+
+                    // Tip de neon nas pontas da hélice
+                    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.11), neonPinkMat);
+                    tip.position.set(1.75, 0.7, 0);
+                    pa.add(tip);
+
+                    rotorGroup.add(pa);
+                }
+                this.rotor = rotorGroup;
+                this.mesh.add(this.rotor);
+
+                // 5. ROTOR DE CAUDA
+                this.rotorCauda = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.45, 0.05), carbonMat);
+                this.rotorCauda.position.set(0.06, 0.3, 1.7);
+                this.mesh.add(this.rotorCauda);
+
+                // 6. TREM DE POUSO (Esquis cromados realistas)
+                const suporteGeom = new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6);
+
+                const suporteE1 = new THREE.Mesh(suporteGeom, cromoMat); suporteE1.position.set(-0.35, -0.35, -0.2); suporteE1.rotation.z = -0.25;
+                const suporteE2 = new THREE.Mesh(suporteGeom, cromoMat); suporteE2.position.set(-0.35, -0.35, 0.6); suporteE2.rotation.z = -0.25;
+                const suporteD1 = new THREE.Mesh(suporteGeom, cromoMat); suporteD1.position.set(0.35, -0.35, -0.2); suporteD1.rotation.z = 0.25;
+                const suporteD2 = new THREE.Mesh(suporteGeom, cromoMat); suporteD2.position.set(0.35, -0.35, 0.6); suporteD2.rotation.z = 0.25;
+                this.mesh.add(suporteE1, suporteE2, suporteD1, suporteD2);
+
+                const esquiGeom = new THREE.CylinderGeometry(0.04, 0.04, 1.6, 6);
+
+                const esquiE = new THREE.Mesh(esquiGeom, cromoMat);
+                esquiE.rotation.x = Math.PI / 2;
+                esquiE.position.set(-0.43, -0.5, 0.2);
+
+                const esquiD = new THREE.Mesh(esquiGeom, cromoMat);
+                esquiD.rotation.x = Math.PI / 2;
+                esquiD.position.set(0.43, -0.5, 0.2);
+
+                this.mesh.add(esquiE, esquiD);
+
+                this.mesh.scale.set(0.85, 0.85, 0.85);
+            }
+
+            update(dt) {
+                // Rotaciona hélices
+                if (this.rotor) {
+                    this.rotor.rotation.y += dt * 32;
+                }
+                if (this.rotorCauda) {
+                    this.rotorCauda.rotation.x += dt * 45;
+                }
+            }
+        }
+
+        // 4.3 Navio Inimigo (Cruzador de batalha chumbo metálico)
+        class NavioInimigo3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.radar = null;
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                const tintaMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x475569,            // Cinza escuro metálico
+                    metalness: 0.95,
+                    roughness: 0.15,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.06
+                });
+
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.03,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                const carbonMat = new THREE.MeshStandardMaterial({
+                    color: 0x141416,
+                    metalness: 0.3,
+                    roughness: 0.6
+                });
+
+                const vidroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x00f0ff,
+                    transparent: true,
+                    opacity: 0.7,
+                    metalness: 0.2,
+                    roughness: 0.05
+                });
+
+                const neonPinkMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+
+                // 1. CASCO DO NAVIO (Design hidrodinâmico afunilado)
+                const cascoGeom = new THREE.BoxGeometry(1.05, 0.6, 3.2);
+                const casco = new THREE.Mesh(cascoGeom, tintaMat);
+                casco.position.y = 0.1;
+                casco.castShadow = true;
+                casco.receiveShadow = true;
+                this.mesh.add(casco);
+
+                // Proa afunilada
+                const proaGeom = new THREE.BoxGeometry(1.05, 0.6, 0.9);
+                const proa = new THREE.Mesh(proaGeom, tintaMat);
+                proa.position.set(0, 0.1, -1.95);
+                proa.rotation.y = Math.PI / 4;
+                proa.castShadow = true;
+                this.mesh.add(proa);
+
+                // Popa cortada angular
+                const popaGeom = new THREE.BoxGeometry(1.05, 0.6, 0.6);
+                const popa = new THREE.Mesh(popaGeom, tintaMat);
+                popa.position.set(0, 0.1, 1.8);
+                popa.rotation.y = -Math.PI / 4;
+                this.mesh.add(popa);
+
+                // 2. SUPERESTRUTURA DE COMANDO (Decks)
+                const deck1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.45, 1.5), carbonMat);
+                deck1.position.set(0, 0.55, 0.15);
+                deck1.castShadow = true;
+                this.mesh.add(deck1);
+
+                const deckCabine = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.75), tintaMat);
+                deckCabine.position.set(0, 0.9, -0.1);
+                deckCabine.castShadow = true;
+                this.mesh.add(deckCabine);
+
+                // Janelas da cabine de comando (vidro ciano reflexivo)
+                const janela = new THREE.Mesh(new THREE.BoxGeometry(0.57, 0.12, 0.4), vidroMat);
+                janela.position.set(0, 0.92, -0.22);
+                this.mesh.add(janela);
+
+                // 3. RADAR ROTATIVO
+                this.radar = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.08, 0.12), cromoMat);
+                this.radar.position.set(0, 1.25, 0.1);
+                const radarHaste = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 6), carbonMat);
+                radarHaste.position.set(0, 1.15, 0.1);
+                this.mesh.add(radarHaste, this.radar);
+
+                // 4. ARTILHARIA (Torreta frontal cromada que atira)
+                const torretaGeom = new THREE.CylinderGeometry(0.24, 0.26, 0.2, 8);
+                const torreta = new THREE.Mesh(torretaGeom, carbonMat);
+                torreta.position.set(0, 0.45, -0.9);
+                torreta.castShadow = true;
+                this.mesh.add(torreta);
+
+                const canoGeom = new THREE.CylinderGeometry(0.04, 0.04, 0.7, 6);
+                const canoE = new THREE.Mesh(canoGeom, cromoMat);
+                canoE.rotation.x = -Math.PI / 2.3;
+                canoE.position.set(-0.06, 0.55, -1.2);
+
+                const canoD = new THREE.Mesh(canoGeom, cromoMat);
+                canoD.rotation.x = -Math.PI / 2.3;
+                canoD.position.set(0.06, 0.55, -1.2);
+                this.mesh.add(canoE, canoD);
+
+                // Linha de neon lateral (Área de perigo)
+                const listraE = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.08, 3.4), neonPinkMat);
+                listraE.position.set(-0.54, 0.25, -0.15);
+                const listraD = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.08, 3.4), neonPinkMat);
+                listraD.position.set(0.54, 0.25, -0.15);
+                this.mesh.add(listraE, listraD);
+
+                this.mesh.scale.set(0.9, 0.9, 0.9);
+            }
+
+            // Radar rotativo animado (chamado no loop geral caso necessário)
+            update(dt) {
+                if (this.radar) {
+                    this.radar.rotation.y += dt * 3.5;
+                }
+            }
+        }
+
+        // 4.4 Avião Inimigo (Caça Interceptador Vermelho Cereja)
+        class AviaoInimigo3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                const tintaMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xd50000,            // Vermelho cereja brilhante
+                    metalness: 0.95,
+                    roughness: 0.12,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.04
+                });
+
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.03,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                const carbonMat = new THREE.MeshStandardMaterial({
+                    color: 0x141416,
+                    metalness: 0.3,
+                    roughness: 0.65
+                });
+
+                const vidroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xff0055,
+                    transparent: true,
+                    opacity: 0.55,
+                    metalness: 0.1,
+                    roughness: 0.04,
+                    transmission: 0.9
+                });
+
+                const neonPinkMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+
+                // 1. FUSELAGEM AFIADA (Design agressivo)
+                const fuselagemGeom = new THREE.CylinderGeometry(0.24, 0.28, 1.8, 8);
+                const fuselagem = new THREE.Mesh(fuselagemGeom, tintaMat);
+                fuselagem.rotation.x = Math.PI / 2;
+                fuselagem.position.set(0, 0.1, 0);
+                fuselagem.castShadow = true;
+                this.mesh.add(fuselagem);
+
+                // Bico pontudo longo (Z negativo)
+                const bicoGeom = new THREE.ConeGeometry(0.24, 0.9, 8);
+                const bico = new THREE.Mesh(bicoGeom, tintaMat);
+                bico.rotation.x = -Math.PI / 2;
+                bico.position.set(0, 0.1, -1.35);
+                bico.castShadow = true;
+                this.mesh.add(bico);
+
+                const agulha = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.35, 5), cromoMat);
+                agulha.rotation.x = -Math.PI / 2;
+                agulha.position.set(0, 0.1, -1.9);
+                this.mesh.add(agulha);
+
+                // 2. CABINE DE VIDRO VERMELHO-FUMÊ
+                const cockpitGeom = new THREE.SphereGeometry(0.2, 10, 10);
+                cockpitGeom.scale(1.0, 0.8, 1.6);
+                const cockpit = new THREE.Mesh(cockpitGeom, vidroMat);
+                cockpit.position.set(0, 0.28, -0.45);
+                this.mesh.add(cockpit);
+
+                // 3. ASAS ENFLECHADAS AGRESSIVAS (Geometria bufada com winglets)
+                const asasGeom = new THREE.BufferGeometry();
+                const vertices = new Float32Array([
+                    0.0, 0.1, 0.4,       // Centro traseiro
+                    0.0, 0.1, -0.6,      // Centro frontal
+                    -1.5, 0.08, 0.5,     // Ponta esquerda traseira
+
+                    0.0, 0.1, 0.4,       // Centro traseiro
+                    1.5, 0.08, 0.5,      // Ponta direita traseira
+                    0.0, 0.1, -0.6       // Centro frontal
+                ]);
+                asasGeom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                asasGeom.computeVertexNormals();
+                const asas = new THREE.Mesh(asasGeom, tintaMat);
+                asas.castShadow = true;
+                this.mesh.add(asas);
+
+                // Pontas de asa (Winglets em fibra de carbono)
+                const wingletE = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.4), carbonMat);
+                wingletE.position.set(-1.5, 0.2, 0.5);
+                wingletE.rotation.z = -0.25;
+                const wingletD = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.4), carbonMat);
+                wingletD.position.set(1.5, 0.2, 0.5);
+                wingletD.rotation.z = 0.25;
+                this.mesh.add(wingletE, wingletD);
+
+                // Luzes nas pontas
+                const luzE = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 5), neonPinkMat);
+                luzE.position.set(-1.5, 0.32, 0.5);
+                const luzD = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 5), neonPinkMat);
+                luzD.position.set(1.5, 0.32, 0.5);
+                this.mesh.add(luzE, luzD);
+
+                // 4. ESTABILIZADOR TRASEIRO (Monofin vertical de alta performance)
+                const leme = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.45), tintaMat);
+                leme.position.set(0, 0.5, 0.6);
+                leme.rotation.x = 0.25;
+                leme.castShadow = true;
+
+                const lemeBorda = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.65, 0.08), carbonMat);
+                lemeBorda.position.set(0, 0.52, 0.38);
+                lemeBorda.rotation.x = 0.25;
+                this.mesh.add(leme, lemeBorda);
+
+                // 5. BOCAL DE TURBINA ÚNICO COM BRILHO MAGENTA
+                const bocal = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 0.35, 8), cromoMat);
+                bocal.rotation.x = Math.PI / 2;
+                bocal.position.set(0, 0.1, 0.95);
+
+                const fogo = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.1, 8), neonPinkMat);
+                fogo.rotation.x = Math.PI / 2;
+                fogo.position.set(0, 0.1, 1.05);
+                this.mesh.add(bocal, fogo);
+
+                this.mesh.scale.set(0.9, 0.9, 0.9);
+            }
+        }
+
+        // 4.5 Tanque de Combustível (FUEL) (Cilindro de vidro e neon verde)
+        class Combustivel3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                const neonGreenMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
+
+                // Pintura metálica verde brilhante para o tanque principal
+                const cilindroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x00ff55,
+                    metalness: 0.9,
+                    roughness: 0.15,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.05
+                });
+
+                // Cromo polido para frisos e anéis de suporte
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.04,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                // Fibra de carbono preta para a base e tampas
+                const carbonMat = new THREE.MeshStandardMaterial({
+                    color: 0x141416,
+                    metalness: 0.25,
+                    roughness: 0.65
+                });
+
+                // 1. TAMPA E BASE DE CARBONO
+                const tampaGeom = new THREE.CylinderGeometry(0.82, 0.82, 0.15, 16);
+                const tampaSup = new THREE.Mesh(tampaGeom, carbonMat);
+                tampaSup.position.y = 1.95;
+                const tampaInf = new THREE.Mesh(tampaGeom, carbonMat);
+                tampaInf.position.y = 0.05;
+                this.mesh.add(tampaSup, tampaInf);
+
+                // 2. CORPO DO TANQUE (Verde metálico brilhante)
+                const tanque = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.8, 16), cilindroMat);
+                tanque.position.y = 1.0;
+                tanque.castShadow = true;
+                this.mesh.add(tanque);
+
+                // 3. ANÉIS DE SUPORTE CROMADOS
+                const anelG = new THREE.TorusGeometry(0.82, 0.05, 8, 24);
+
+                const anelSup = new THREE.Mesh(anelG, cromoMat);
+                anelSup.rotation.x = Math.PI / 2;
+                anelSup.position.y = 1.5;
+
+                const anelInf = new THREE.Mesh(anelG, cromoMat);
+                anelInf.rotation.x = Math.PI / 2;
+                anelInf.position.y = 0.5;
+
+                this.mesh.add(anelSup, anelInf);
+
+                // 4. ANÉIS DE INDICAÇÃO NEON VERDE
+                const anelNeonSup = new THREE.Mesh(new THREE.TorusGeometry(0.84, 0.02, 6, 24), neonGreenMat);
+                anelNeonSup.rotation.x = Math.PI / 2;
+                anelNeonSup.position.y = 1.75;
+
+                const anelNeonInf = new THREE.Mesh(new THREE.TorusGeometry(0.84, 0.02, 6, 24), neonGreenMat);
+                anelNeonInf.rotation.x = Math.PI / 2;
+                anelNeonInf.position.y = 0.25;
+
+                this.mesh.add(anelNeonSup, anelNeonInf);
+
+                // 5. LETRA "F" DE FUEL estilizada de neon verde na frente
+                const fMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
+
+                const fH = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.12), fMat);
+                fH.position.set(0, 1.0, 0.85);
+
+                const fT1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.12), fMat);
+                fT1.position.set(0.14, 1.34, 0.85);
+
+                const fT2 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.12), fMat);
+                fT2.position.set(0.08, 1.0, 0.85);
+
+                this.mesh.add(fH, fT1, fT2);
+
+                this.mesh.scale.set(0.9, 0.9, 0.9);
+            }
+        }
+
+        // 4.6 Balão Inimigo (Balão de Luxo com listras metálicas Ouro e Prata)
+        class BalaoInimigo3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                this.construirModelo();
+            }
+
+            construirModelo() {
+                // Materiais metálicos premium
+                const ouroMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffc107,            // Ouro metálico
+                    metalness: 0.95,
+                    roughness: 0.12,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.04
+                });
+
+                const prataMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xe2e8f0,            // Prata cromada/refletiva
+                    metalness: 0.95,
+                    roughness: 0.1,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.03
+                });
+
+                const cromoMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 1.0,
+                    roughness: 0.04,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.02
+                });
+
+                const queimadorGlow = new THREE.MeshBasicMaterial({ color: 0xff5e00 });
+
+                // 1. ENVELOPE DO BALÃO (Esfera listrada construída por gomos sobrepostos)
+                // Usamos uma estrutura de gomos dourados e prateados alternados para alta fidelidade visual
+                const balaoGroup = new THREE.Group();
+                const numGomos = 10;
+                const gomoBaseGeom = new THREE.SphereGeometry(0.9, 12, 16, 0, (Math.PI * 2) / numGomos * 1.05);
+                gomoBaseGeom.scale(1.0, 1.45, 1.0);
+
+                for (let i = 0; i < numGomos; i++) {
+                    const mat = i % 2 === 0 ? ouroMat : prataMat;
+                    const gomo = new THREE.Mesh(gomoBaseGeom, mat);
+                    gomo.rotation.y = ((Math.PI * 2) / numGomos) * i;
+                    gomo.castShadow = true;
+                    balaoGroup.add(gomo);
+                }
+                balaoGroup.position.y = 2.4;
+                this.mesh.add(balaoGroup);
+
+                // Frisos/cintas cromadas no topo e na base do envelope
+                const cintaTorusG = new THREE.TorusGeometry(0.3, 0.03, 6, 24);
+                const cintaB = new THREE.Mesh(cintaTorusG, cromoMat);
+                cintaB.rotation.x = Math.PI / 2;
+                cintaB.position.y = 1.35;
+
+                const cintaT = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.03, 6, 24), cromoMat);
+                cintaT.rotation.x = Math.PI / 2;
+                cintaT.position.y = 3.35;
+                this.mesh.add(cintaB, cintaT);
+
+                // 2. CESTA DO BALÃO (Grade cromada luxuosa de estúdio)
+                const cestaGroup = new THREE.Group();
+                const baseCesta = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.06, 0.45), cromoMat);
+                baseCesta.position.y = 0.7;
+                cestaGroup.add(baseCesta);
+
+                const topoCesta = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.45), cromoMat);
+                topoCesta.position.y = 0.95;
+                cestaGroup.add(topoCesta);
+
+                // Colunas verticais da cesta (hastes finas cromadas)
+                const colunaGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.25, 4);
+                const offsets = [
+                    [-0.2, -0.2], [-0.2, 0.2], [0.2, -0.2], [0.2, 0.2]
+                ];
+                offsets.forEach(offset => {
+                    const col = new THREE.Mesh(colunaGeom, cromoMat);
+                    col.position.set(offset[0], 0.825, offset[1]);
+                    cestaGroup.add(col);
+                });
+                cestaGroup.castShadow = true;
+                this.mesh.add(cestaGroup);
+
+                // 3. QUEIMADOR E CHAMA (Brilho dinâmico laranja)
+                const queimador = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.1, 6), cromoMat);
+                queimador.position.y = 1.02;
+                const chama = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 6), queimadorGlow);
+                chama.position.y = 1.14;
+                this.mesh.add(queimador, chama);
+
+                // 4. CABOS DE SUSTENTAÇÃO (4 tirantes de aço cromado finos)
+                const caboGeom = new THREE.CylinderGeometry(0.008, 0.008, 0.45, 4);
+                offsets.forEach((offset, idx) => {
+                    const cabo = new THREE.Mesh(caboGeom, cromoMat);
+                    // Inclina o cabo ligeiramente para fora, pois a boca do balão é mais larga
+                    cabo.position.set(offset[0] * 0.9, 1.18, offset[1] * 0.9);
+
+                    const angleX = offset[1] > 0 ? 0.05 : -0.05;
+                    const angleZ = offset[0] > 0 ? -0.05 : 0.05;
+                    cabo.rotation.x = angleX;
+                    cabo.rotation.z = angleZ;
+
+                    this.mesh.add(cabo);
+                });
+
+                this.mesh.scale.set(0.85, 0.85, 0.85);
+            }
+        }
+
+        // 4.7 Ponte Neon (Dividida em 3 seções: Esquerda, Direita e o Centro destrutível)
+        class Ponte3D {
+            constructor(canyonWidth, centerX) {
+                this.mesh = new THREE.Group();
+                this.larguraCanyon = canyonWidth;
+                this.centroX = centerX;
+
+                this.centroDestruido = false;
+                this.centroMesh = null;
+
+                this.construirPonte();
+            }
+
+            construirPonte() {
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x1a1a24, roughness: 0.4, metalness: 0.8 });
+                const neonOrangeMat = new THREE.MeshBasicMaterial({ color: 0xff5e00 });
+
+                // Vão central livre para passagem após a destruição: 10 unidades
+                const vaoLivre = 10.0;
+                const metadeVao = vaoLivre / 2;
+
+                // 1. Pilar Esquerdo (Lado esquerdo do canyon até a margem do vão livre)
+                const largEsq = Math.abs(-55 - (this.centroX - metadeVao));
+                const pilarE = new THREE.Mesh(new THREE.BoxGeometry(largEsq, 4.2, 2.5), metalMat);
+                pilarE.position.set((this.centroX - metadeVao - 55) / 2, 2.1, 0);
+                pilarE.castShadow = true;
+                this.mesh.add(pilarE);
+
+                // 2. Pilar Direito (Margem do vão livre até o lado direito do canyon)
+                const largDir = Math.abs(55 - (this.centroX + metadeVao));
+                const pilarD = new THREE.Mesh(new THREE.BoxGeometry(largDir, 4.2, 2.5), metalMat);
+                pilarD.position.set((this.centroX + metadeVao + 55) / 2, 2.1, 0);
+                pilarD.castShadow = true;
+                this.mesh.add(pilarD);
+
+                // 3. Seção Central Destrutível (Fecha o vão livre)
+                this.centroMesh = new THREE.Group();
+
+                const centroBase = new THREE.Mesh(new THREE.BoxGeometry(vaoLivre + 0.4, 1.8, 2.2), metalMat);
+                centroBase.position.y = 3.3;
+                centroBase.castShadow = true;
+                this.centroMesh.add(centroBase);
+
+                // Faixa de Neon laranja brilhante na ponte
+                const faixaNeon = new THREE.Mesh(new THREE.BoxGeometry(vaoLivre + 0.4, 0.25, 2.3), neonOrangeMat);
+                faixaNeon.position.y = 4.2;
+                this.centroMesh.add(faixaNeon);
+
+                this.centroMesh.position.set(this.centroX, 0, 0);
+                this.mesh.add(this.centroMesh);
+            }
+
+            destruirCentro() {
+                if (this.centroDestruido) return;
+                this.centroDestruido = true;
+                this.mesh.remove(this.centroMesh); // Remove visualmente a seção central
+            }
+        }
+
+
+        // ============================================================================
+        // 5. GERADOR PROCEDURAL DE CANYON (Margens, Rio e Estrutura física)
+        // ============================================================================
+        class CanyonSegmento {
+            constructor(scene, index, prevSegmento = null) {
+                this.scene = scene;
+                this.index = index;
+                if (prevSegmento) {
+                    this.z = prevSegmento.z - CONFIG.SEGMENTO_COMPRIMENTO;
+                } else {
+                    this.z = 0;
+                }
+
+                // Obtém dados do mapa fixo
+                const dados = MAPA_SEGMENTOS[this.index % MAPA_SEGMENTOS.length];
+                this.width = dados.width;
+                this.centerX = dados.centerX;
+
+                // Estados de spawns de itens neste segmento
+                this.hasIsland = dados.hasIsland;
+                this.hasBridge = dados.hasBridge;
+                this.hasFuel = dados.hasFuel;
+                this.enemy = null; // Instância ativa do inimigo
+                this.fuelObj = null; // Instância ativa do FUEL
+                this.ponteObj = null; // Instância ativa de Ponte
+
+                this.meshes = []; // Armazena meshes de margens e rio criados para deletar depois
+
+                this.construirSegmento(dados);
+            }
+
+            construirSegmento(dados) {
+                // Materiais mais claros e vibrantes para alta visibilidade
+                const terraMat = new THREE.MeshStandardMaterial({
+                    color: 0x3a7d44, // Verde floresta/grama estilizado
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+
+                const neonMargemMat = new THREE.MeshBasicMaterial({ color: 0xffea00 }); // Neon dourado/amarelo margens
+
+                const yAlturaMargem = 5.0; // Altura do canyon rochoso
+                const zComp = CONFIG.SEGMENTO_COMPRIMENTO;
+
+                // 1. ÁGUA DO RIO (Superfície azul-celeste viva)
+                const aguaMat = new THREE.MeshStandardMaterial({
+                    color: 0x0288d1, // Azul vibrante
+                    roughness: 0.15,
+                    metalness: 0.8
+                });
+                const agua = new THREE.Mesh(new THREE.BoxGeometry(160, 0.2, zComp + 0.1), aguaMat);
+                agua.position.set(0, -0.1, this.z);
+                agua.receiveShadow = true;
+                this.scene.add(agua);
+                this.meshes.push(agua);
+
+                // Ondas neon suaves no rio (linhas transversais ciano vibrante)
+                const onda = new THREE.Mesh(new THREE.BoxGeometry(this.width, 0.05, 0.12), new THREE.MeshBasicMaterial({ color: 0x80deea }));
+                onda.position.set(this.centerX, 0.02, this.z + (Math.random() * 10 - 5));
+                this.scene.add(onda);
+                this.meshes.push(onda);
+
+                // 2. Margem Esquerda do Canyon
+                const largEsq = Math.abs(-80 - (this.centerX - this.width / 2));
+                const margemE = new THREE.Mesh(
+                    new THREE.BoxGeometry(largEsq, yAlturaMargem, zComp + 0.02),
+                    terraMat
+                );
+                margemE.position.set((this.centerX - this.width / 2 - 80) / 2, yAlturaMargem / 2, this.z);
+                margemE.castShadow = true;
+                margemE.receiveShadow = true;
+                this.scene.add(margemE);
+                this.meshes.push(margemE);
+
+                // Linha de neon na borda da margem esquerda
+                const neonE = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, zComp + 0.05), neonMargemMat);
+                neonE.position.set(this.centerX - this.width / 2, yAlturaMargem, this.z);
+                this.scene.add(neonE);
+                this.meshes.push(neonE);
+
+                // 3. Margem Direita do Canyon
+                const largDir = Math.abs(80 - (this.centerX + this.width / 2));
+                const margemD = new THREE.Mesh(
+                    new THREE.BoxGeometry(largDir, yAlturaMargem, zComp + 0.02),
+                    terraMat
+                );
+                margemD.position.set((this.centerX + this.width / 2 + 80) / 2, yAlturaMargem / 2, this.z);
+                margemD.castShadow = true;
+                margemD.receiveShadow = true;
+                this.scene.add(margemD);
+                this.meshes.push(margemD);
+
+                // Linha de neon na borda da margem direita
+                const neonD = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, zComp + 0.05), neonMargemMat);
+                neonD.position.set(this.centerX + this.width / 2, yAlturaMargem, this.z);
+                this.scene.add(neonD);
+                this.meshes.push(neonD);
+
+                // 4. Elementos Especiais (Pontes, Ilhas, Inimigos)
+                if (this.hasBridge) {
+                    this.ponteObj = new Ponte3D(this.width, this.centerX);
+                    this.ponteObj.mesh.position.z = this.z;
+                    this.scene.add(this.ponteObj.mesh);
+                } else {
+                    if (this.hasIsland) {
+                        // Ilha central
+                        const ilha = new THREE.Mesh(new THREE.BoxGeometry(7, yAlturaMargem, 12), terraMat);
+                        ilha.position.set(this.centerX, yAlturaMargem / 2, this.z);
+                        ilha.castShadow = true;
+                        ilha.receiveShadow = true;
+                        this.scene.add(ilha);
+                        this.meshes.push(ilha);
+
+                        // Linhas neon contornando a ilha
+                        const neonIlhaE = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 12), neonMargemMat);
+                        neonIlhaE.position.set(this.centerX - 3.5, yAlturaMargem, this.z);
+                        const neonIlhaD = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 12), neonMargemMat);
+                        neonIlhaD.position.set(this.centerX + 3.5, yAlturaMargem, this.z);
+                        this.scene.add(neonIlhaE, neonIlhaD);
+                        this.meshes.push(neonIlhaE, neonIlhaD);
+                    }
+
+                    if (this.hasFuel) {
+                        this.fuelObj = new Combustivel3D();
+                        this.fuelObj.mesh.position.set(dados.fuelX, 0, this.z);
+                        this.scene.add(this.fuelObj.mesh);
+                    }
+
+                    if (dados.enemy) {
+                        const eInfo = dados.enemy;
+                        let obj = null;
+                        let vel = 0;
+
+                        if (eInfo.tipo === 'helicoptero') {
+                            obj = new HelicopInimigo3D();
+                            vel = 8;
+                        } else if (eInfo.tipo === 'navio') {
+                            obj = new NavioInimigo3D();
+                            vel = 4.5;
+                        } else if (eInfo.tipo === 'aviao') {
+                            obj = new AviaoInimigo3D();
+                            vel = 26;
+                        } else if (eInfo.tipo === 'balao') {
+                            obj = new BalaoInimigo3D();
+                            vel = 2.5;
+                        }
+
+                        this.enemy = {
+                            tipo: eInfo.tipo,
+                            obj: obj,
+                            vel: vel,
+                            dir: eInfo.dir,
+                            x: eInfo.x,
+                            originalLado: eInfo.lado,
+                            cooldownTiro: Math.random() * 3.0 + 1.0 // cooldown aleatório inicial
+                        };
+
+                        let yPos = 0.1;
+                        if (this.enemy.tipo === 'aviao') yPos = 1.6;
+                        if (this.enemy.tipo === 'balao') yPos = 0.5; // Balão tem Y elevado interno
+
+                        this.enemy.obj.mesh.position.set(this.enemy.x, yPos, this.z);
+                        if (this.enemy.tipo === 'aviao' || this.enemy.tipo === 'helicoptero' || this.enemy.tipo === 'navio') {
+                            this.enemy.obj.mesh.rotation.y = this.enemy.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+                        }
+                        this.scene.add(this.enemy.obj.mesh);
+                    }
+                }
+            }
+
+            atualizarPosicaoMeshes(deslocamentoZ) {
+                this.z += deslocamentoZ;
+
+                // Move os terrenos e água
+                this.meshes.forEach(m => m.position.z += deslocamentoZ);
+
+                // Move ponte se houver
+                if (this.ponteObj) {
+                    this.ponteObj.mesh.position.z += deslocamentoZ;
+                }
+
+                // Move combustível
+                if (this.fuelObj) {
+                    this.fuelObj.mesh.position.z += deslocamentoZ;
+                }
+
+                // Move inimigo
+                if (this.enemy) {
+                    this.enemy.obj.mesh.position.z += deslocamentoZ;
+                }
+            }
+
+            destruir() {
+                // Remove todos os elementos gráficos do Three.js da cena
+                this.meshes.forEach(m => this.scene.remove(m));
+
+                if (this.ponteObj) {
+                    this.scene.remove(this.ponteObj.mesh);
+                }
+
+                if (this.fuelObj) {
+                    this.scene.remove(this.fuelObj.mesh);
+                }
+
+                if (this.enemy) {
+                    this.scene.remove(this.enemy.obj.mesh);
+                }
+            }
+        }
+
+
+        // ============================================================================
+        // 6. SISTEMA DE PARTÍCULAS (Rastro do caça e explosões)
+        // ============================================================================
+        class SistemaParticulas {
+            constructor(scene) {
+                this.scene = scene;
+                this.particulas = [];
+            }
+
+            // Cria centelhas na explosão de inimigos
+            spawnarExplosao(x, y, z, cor = 0xff007f, qtd = 25) {
+                const geom = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+                const mat = new THREE.MeshBasicMaterial({ color: cor });
+
+                for (let i = 0; i < qtd; i++) {
+                    const p = new THREE.Mesh(geom, mat);
+                    p.position.set(x, y + (Math.random() * 0.4 - 0.2), z);
+
+                    const ang = Math.random() * Math.PI * 2;
+                    const pitch = (Math.random() * 2 - 1) * Math.PI / 4;
+                    const sp = 3 + Math.random() * 9;
+
+                    const vx = Math.cos(ang) * Math.cos(pitch) * sp;
+                    const vy = Math.sin(pitch) * sp + 3; // Lança um pouco para cima
+                    const vz = Math.sin(ang) * Math.cos(pitch) * sp;
+
+                    this.scene.add(p);
+                    this.particulas.push({
+                        mesh: p,
+                        vx: vx,
+                        vy: vy,
+                        vz: vz,
+                        vida: 0.5 + Math.random() * 0.5,
+                        vidaMax: 1.0
+                    });
+                }
+            }
+
+            // Rastro da turbina traseira do caça
+            spawnarRastroTurbina(x, y, z) {
+                const geom = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                // Mistura tons de laranja e ciano
+                const cor = Math.random() > 0.35 ? 0xff4a00 : 0x00f0ff;
+                const mat = new THREE.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.8 });
+
+                // Spawna na turbina esquerda e direita
+                const offsetsX = [-0.18, 0.18];
+                offsetsX.forEach(ox => {
+                    const p = new THREE.Mesh(geom, mat);
+                    p.position.set(x + ox, y, z + 1.1);
+
+                    // Cospe para trás (Z positivo)
+                    const vx = (Math.random() * 2 - 1) * 1.5;
+                    const vy = (Math.random() * 2 - 1) * 1.5;
+                    const vz = 12 + Math.random() * 8; // Rastro cospe pra trás rápido
+
+                    this.scene.add(p);
+                    this.particulas.push({
+                        mesh: p,
+                        vx: vx,
+                        vy: vy,
+                        vz: vz,
+                        vida: 0.2 + Math.random() * 0.15,
+                        vidaMax: 0.35
+                    });
+                });
+            }
+
+            update(dt, deslocamentoZ) {
+                for (let i = this.particulas.length - 1; i >= 0; i--) {
+                    const p = this.particulas[i];
+                    p.vida -= dt;
+
+                    if (p.vida <= 0) {
+                        this.scene.remove(p.mesh);
+                        this.particulas.splice(i, 1);
+                    } else {
+                        // Move a partícula
+                        p.mesh.position.x += p.vx * dt;
+                        p.mesh.position.y += p.vy * dt;
+                        // Aplica rolagem global do canyon Z nas partículas soltas
+                        p.mesh.position.z += (p.vz + deslocamentoZ / dt) * dt;
+
+                        // Reduz escala com a vida
+                        const s = p.vida / p.vidaMax;
+                        p.mesh.scale.set(s, s, s);
+                    }
+                }
+            }
+
+            limparTodas() {
+                this.particulas.forEach(p => this.scene.remove(p.mesh));
+                this.particulas = [];
+            }
+        }
+
+
+        // ============================================================================
+        // 7. LÓGICA DE JOGO DO RIVER RAID 3D
+        // ============================================================================
+        class MotorJogo {
+            constructor() {
+                this.dificuldade = 'medio'; // Dificuldade padrão
+                this.tirosInimigos = []; // Lista de tiros dos inimigos
+                inicializarMapaFixo(this.dificuldade);
+                this.motor3D = new Motor3D();
+                this.som = som;
+                this.particulas = new SistemaParticulas(this.motor3D.scene);
+
+                // Valores customizados dinâmicos para controle de rotação e zoom da câmera nas telas grandes
+                this.cameraDinamica = {
+                    rotacaoAngle: 0,       // Variável de rotação orbital lateral em radianos (modificada por A e D)
+                    zoomOffsetAdicional: 0 // Distância extra ou reduzida em relação ao caça (modificada por W e S)
+                };
+
+                // Jogador (Caça)
+                this.caça = {
+                    x: 0,
+                    y: 1.0, // Altura padrão de vôo acima da água
+                    z: 0,
+                    largura: 1.8,
+                    comprimento: 2.2,
+                    velScroll: CONFIG.VELOCIDADE_PADRAO,
+                    combustivel: CONFIG.COMBUSTIVEL_MAX,
+                    inclinacaoVisual: 0,
+                    model: new CacaJogador3D()
+                };
+
+                this.motor3D.scene.add(this.caça.model.mesh);
+                this.caça.model.mesh.position.set(this.caça.x, this.caça.y, this.caça.z);
+
+                // Armazenamento de canyon procedural
+                this.segmentos = [];
+                this.segmentoIndexAcumulado = 0;
+
+                // Lasers do Jogador
+                this.lasers = [];
+                this.cooldownTiro = 0;
+
+                // Estados de fluxo do jogo
+                this.estadoJogo = 'MENU'; // MENU, PLAYING, MORRENDO, GAME_OVER
+                this.score = 0;
+                this.secao = 1;
+                this.vidas = 3;
+                this.highscore = parseInt(localStorage.getItem('riverraid_highscore')) || 0;
+
+                // Inputs
+                this.teclas = {};
+                this.touchInput = { dx: 0, dy: 0, shoot: false };
+
+                this.configurarControles();
+                this.setupUIEventos();
+
+                // Balanço de câmera shake
+                this.shakeAmount = 0;
+
+                // Loop inicial
+                this.lastTime = performance.now();
+                this.animate();
+            }
+
+            configurarControles() {
+                window.addEventListener('keydown', (e) => {
+                    this.teclas[e.code] = true;
+                    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyS', 'KeyA', 'KeyD'].includes(e.code)) {
+                        e.preventDefault();
+                    }
+                    if (this.estadoJogo === 'PLAYING') {
+                        this.som.init();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.teclas[e.code] = false;
+                });
+
+                // Controles virtuais móveis
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                    document.getElementById('mobile-controls').style.display = 'flex';
+                    this.configurarControlesMoveis();
+                }
+            }
+
+            configurarControlesMoveis() {
+                const addTouch = (btnId, actions) => {
+                    const btn = document.getElementById(btnId);
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        actions.start();
+                    });
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        actions.end();
+                    });
+                };
+
+                addTouch('btn-left', {
+                    start: () => { this.touchInput.dx = -1; },
+                    end: () => { if (this.touchInput.dx === -1) this.touchInput.dx = 0; }
+                });
+                addTouch('btn-right', {
+                    start: () => { this.touchInput.dx = 1; },
+                    end: () => { if (this.touchInput.dx === 1) this.touchInput.dx = 0; }
+                });
+                addTouch('btn-up', {
+                    start: () => { this.touchInput.dy = 1; },
+                    end: () => { if (this.touchInput.dy === 1) this.touchInput.dy = 0; }
+                });
+                addTouch('btn-down', {
+                    start: () => { this.touchInput.dy = -1; },
+                    end: () => { if (this.touchInput.dy === -1) this.touchInput.dy = 0; }
+                });
+                addTouch('btn-shoot', {
+                    start: () => { this.touchInput.shoot = true; },
+                    end: () => { this.touchInput.shoot = false; }
+                });
+            }
+
+            setupUIEventos() {
+                document.getElementById('btn-start').addEventListener('click', () => {
+                    this.som.init();
+                    this.som.startMusic();
+                    this.iniciarJogo(true);
+                });
+
+                document.getElementById('btn-restart').addEventListener('click', () => {
+                    this.som.init();
+                    this.som.startMusic();
+                    this.iniciarJogo(true);
+                });
+
+                // Clique nos botões de dificuldade
+                const diffButtons = document.querySelectorAll('.btn-diff');
+                diffButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        diffButtons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.dificuldade = btn.getAttribute('data-diff');
+
+                        // Toca som sutil de tick para dar feedback do clique
+                        this.som.playCombustivelTick();
+                    });
+                });
+            }
+
+            iniciarJogo(resetCompleto = true) {
+                if (resetCompleto) {
+                    this.score = 0;
+                    this.vidas = 3;
+                    this.secao = 1;
+                }
+
+                // Recria o mapa com base na dificuldade selecionada
+                inicializarMapaFixo(this.dificuldade);
+
+                // O início seguro da fase atual é no segmento imediatamente após a ponte anterior.
+                // A ponte da seção anterior está no index = (this.secao - 1) * 8.
+                // Para a seção 1, começamos no segmento 0.
+                const startSegmentIndex = (this.secao === 1) ? 0 : (this.secao - 1) * 8 + 1;
+
+                // Limpa segmentos antigos
+                this.segmentos.forEach(s => s.destruir());
+                this.segmentos = [];
+                this.segmentoIndexAcumulado = startSegmentIndex;
+
+                // Limpa lasers do player
+                this.lasers.forEach(l => this.motor3D.scene.remove(l.mesh));
+                this.lasers = [];
+
+                // Limpa tiros dos inimigos
+                this.tirosInimigos.forEach(t => this.motor3D.scene.remove(t.mesh));
+                this.tirosInimigos = [];
+
+                this.particulas.limparTodas();
+
+                // Reseta Caça
+                // Posiciona o caça exatamente no centro do rio (centerX) correspondente ao segmento inicial,
+                // evitando nascer sobre paredes em rios curvos.
+                const startSegment = MAPA_SEGMENTOS[startSegmentIndex % MAPA_SEGMENTOS.length];
+                this.caça.x = startSegment ? startSegment.centerX : 0;
+                this.caça.z = 0;
+                this.caça.combustivel = CONFIG.COMBUSTIVEL_MAX;
+                this.caça.velScroll = CONFIG.VELOCIDADE_PADRAO;
+                this.caça.model.mesh.position.set(this.caça.x, this.caça.y, 0);
+                this.caça.model.mesh.rotation.set(0, 0, 0);
+
+                // Reseta parâmetros dinâmicos da câmera customizada
+                this.cameraDinamica.rotacaoAngle = 0;
+                this.cameraDinamica.zoomOffsetAdicional = 0;
+
+                // Snap inicial de posicionamento da câmera
+                this.posicionarCameraImediata();
+
+                // Inicializa primeiros segmentos do canyon
+                for (let i = 0; i < CONFIG.MAX_SEGMENTOS; i++) {
+                    const prev = this.segmentos[this.segmentos.length - 1] || null;
+                    const seg = new CanyonSegmento(this.motor3D.scene, this.segmentoIndexAcumulado, prev);
+                    this.segmentos.push(seg);
+                    this.segmentoIndexAcumulado++;
+                }
+
+                document.getElementById('screen-menu').classList.add('hidden');
+                document.getElementById('screen-gameover').classList.add('hidden');
+
+                this.estadoJogo = 'PLAYING';
+                this.atualizarHUD();
+            }
+
+            posicionarCameraImediata() {
+                if (this.motor3D.isMobileLayout) {
+                    const camX = this.caça.x + CONFIG.CAMARA_OFFSET_MOBILE.x;
+                    const camY = CONFIG.CAMARA_OFFSET_MOBILE.y;
+                    const camZ = this.caça.z + CONFIG.CAMARA_OFFSET_MOBILE.z;
+                    this.motor3D.camera.position.set(camX, camY, camZ);
+                    this.motor3D.camera.lookAt(this.caça.x, 0.8, -10.0);
+                } else {
+                    const camX = this.caça.x + CONFIG.CAMARA_OFFSET.x;
+                    const camY = CONFIG.CAMARA_OFFSET.y;
+                    const camZ = this.caça.z + CONFIG.CAMARA_OFFSET.z;
+                    this.motor3D.camera.position.set(camX, camY, camZ);
+                    this.motor3D.camera.lookAt(this.caça.x + 2.0, 0.8, -3.0);
+                }
+            }
+
+
+            // ============================================================================
+            // 8. LOOPS DE ATUALIZAÇÃO E ROLAGEM DO CANYON
+            // ============================================================================
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const now = performance.now();
+                let dt = (now - this.lastTime) / 1000;
+                this.lastTime = now;
+
+                if (dt > 0.1) dt = 0.1;
+
+                let deslocamentoZ = 0;
+
+                if (this.estadoJogo === 'PLAYING') {
+                    deslocamentoZ = this.caça.velScroll * dt;
+
+                    this.atualizarCaça(dt);
+                    this.atualizarEntradasCamera(dt);
+                    this.atualizarLasers(dt, deslocamentoZ);
+                    this.atualizarTirosInimigos(dt, deslocamentoZ);
+                    this.atualizarSegmentos(dt, deslocamentoZ);
+                    this.particulas.update(dt, deslocamentoZ);
+
+                    this.processarColisoes(dt);
+                    this.consumirCombustivel(dt);
+                } else if (this.estadoJogo === 'MORRENDO') {
+                    // Espera explosão terminar
+                    this.particulas.update(dt, 0);
+                    if (this.particulas.particulas.length === 0) {
+                        this.processarMorte();
+                    }
+                } else {
+                    // Menu: apenas atualiza rastro ou nada
+                    this.particulas.update(dt, 0);
+                }
+
+                // Render e Câmera
+                this.atualizarCamera(dt);
+                this.motor3D.renderer.render(this.motor3D.scene, this.motor3D.camera);
+            }
+
+            atualizarEntradasCamera(dt) {
+                // Se a tela for pequena, ignoramos as modificações de W, S, A, D para manter a câmera fixa na traseira do avião
+                if (this.motor3D.isMobileLayout) return;
+
+                // Teclas A e D mudam a rotação lateral orbital da câmera
+                if (this.teclas['KeyA']) {
+                    this.cameraDinamica.rotacaoAngle -= dt * 1.5; // Gira ponto de vista para esquerda
+                }
+                if (this.teclas['KeyD']) {
+                    this.cameraDinamica.rotacaoAngle += dt * 1.5; // Gira ponto de vista para direita
+                }
+
+                // Teclas W e S mudam a aproximação/zoom (distância em relação ao avião)
+                if (this.teclas['KeyW']) {
+                    this.cameraDinamica.zoomOffsetAdicional -= dt * 15.0; // Zoom In (aproxima)
+                }
+                if (this.teclas['KeyS']) {
+                    this.cameraDinamica.zoomOffsetAdicional += dt * 15.0; // Zoom Out (afasta)
+                }
+
+                // Aplica travas saudáveis de limite para o zoom não quebrar a perspectiva da cena
+                this.cameraDinamica.zoomOffsetAdicional = Math.max(-8, Math.min(25, this.cameraDinamica.zoomOffsetAdicional));
+            }
+
+            atualizarCamera(dt) {
+                let shakeX = 0;
+                let shakeY = 0;
+                if (this.shakeAmount > 0) {
+                    shakeX = (Math.random() * 2 - 1) * this.shakeAmount;
+                    shakeY = (Math.random() * 2 - 1) * this.shakeAmount;
+                    this.shakeAmount -= dt * 3.5; // atenua shake
+                }
+
+                if (this.motor3D.isMobileLayout) {
+                    // CONDICIONAL: Para telas pequenas deixa a câmera estritamente fixa na posição traseira baixa do avião
+                    const targetCamX = this.caça.x + CONFIG.CAMARA_OFFSET_MOBILE.x;
+                    const targetCamY = CONFIG.CAMARA_OFFSET_MOBILE.y;
+                    const targetCamZ = CONFIG.CAMARA_OFFSET_MOBILE.z;
+
+                    this.motor3D.camera.position.x += (targetCamX + shakeX - this.motor3D.camera.position.x) * dt * 5;
+                    this.motor3D.camera.position.y += (targetCamY + shakeY - this.motor3D.camera.position.y) * dt * 5;
+                    this.motor3D.camera.position.z += (targetCamZ - this.motor3D.camera.position.z) * dt * 5;
+
+                    // Olha reto para frente no horizonte Z negativo acompanhando o caça
+                    this.motor3D.camera.lookAt(this.caça.x, 0.8, -10.0);
+                } else {
+                    // Câmera dinâmica calculada por órbita e zoom para computadores/telas grandes
+                    const raioBase = Math.sqrt(CONFIG.CAMARA_OFFSET.x * CONFIG.CAMARA_OFFSET.x + CONFIG.CAMARA_OFFSET.z * CONFIG.CAMARA_OFFSET.z);
+                    const raioDinamico = raioBase + this.cameraDinamica.zoomOffsetAdicional;
+
+                    // Ângulo inicial correspondente ao offset padrão (Aproximadamente 45 graus / 0.785 radianos)
+                    const anguloInicial = Math.atan2(CONFIG.CAMARA_OFFSET.z, CONFIG.CAMARA_OFFSET.x);
+                    const anguloFinal = anguloInicial + this.cameraDinamica.rotacaoAngle;
+
+                    // Calcula novas coordenadas relativas X e Z baseadas nos comandos A e D
+                    const offsetXCalculado = Math.cos(anguloFinal) * raioDinamico;
+                    const offsetZCalculado = Math.sin(anguloFinal) * raioDinamico;
+
+                    // Altura da câmera acompanha proporcionalmente o zoom para manter um enquadramento agradável
+                    const offsetYCalculado = CONFIG.CAMARA_OFFSET.y * (raioDinamico / raioBase);
+
+                    const targetCamX = this.caça.x + offsetXCalculado;
+                    const targetCamY = Math.max(3.0, offsetYCalculado); // Impede que a câmera afunde abaixo do rio
+                    const targetCamZ = this.caça.z + offsetZCalculado;
+
+                    this.motor3D.camera.position.x += (targetCamX + shakeX - this.motor3D.camera.position.x) * dt * 6;
+                    this.motor3D.camera.position.y += (targetCamY + shakeY - this.motor3D.camera.position.y) * dt * 6;
+                    this.motor3D.camera.position.z += (targetCamZ - this.motor3D.camera.position.z) * dt * 6;
+
+                    // Câmera olha ligeiramente à frente do caça com compensações para manter o enquadramento em rotação
+                    this.motor3D.camera.lookAt(this.caça.x + 0.5, 0.8, -3.0);
+                }
+            }
+
+            atualizarCaça(dt) {
+                // Inputs horizontais (Virar esquerda/direita com as setas do teclado)
+                let inputX = 0;
+                if (this.teclas['ArrowLeft']) inputX = -1;
+                else if (this.teclas['ArrowRight']) inputX = 1;
+                else if (this.touchInput.dx !== 0) inputX = this.touchInput.dx;
+
+                // Move caça em X
+                this.caça.x += inputX * CONFIG.VELOCIDADE_LATERAL * dt;
+
+                // Inclinação visual lateral do jato (Balanço ao virar)
+                const targetRoll = -inputX * 0.45; // Angulo em radianos
+                this.caça.inclinacaoVisual += (targetRoll - this.caça.inclinacaoVisual) * dt * 8;
+
+                this.caça.model.mesh.rotation.z = this.caça.inclinacaoVisual;
+                // Leve rotação de guinada (yaw)
+                this.caça.model.mesh.rotation.y = this.caça.inclinacaoVisual * 0.3;
+
+                // Inputs verticais (Acelerar/Desacelerar com as setas do teclado)
+                let inputY = 0;
+                if (this.teclas['ArrowUp']) inputY = 1;
+                else if (this.teclas['ArrowDown']) inputY = -1;
+                else if (this.touchInput.dy !== 0) inputY = this.touchInput.dy;
+
+                // Define velocidade de rolagem global
+                if (inputY > 0) {
+                    this.caça.velScroll = CONFIG.VELOCIDADE_MAX;
+                } else if (inputY < 0) {
+                    this.caça.velScroll = CONFIG.VELOCIDADE_MIN;
+                } else {
+                    this.caça.velScroll = CONFIG.VELOCIDADE_PADRAO;
+                }
+
+                // Atualiza o pitch do motor sintetizado
+                const speedRatio = this.caça.velScroll / CONFIG.VELOCIDADE_PADRAO;
+                this.som.atualizarSomMotor(speedRatio);
+
+                // Limite físico lateral absoluto do Canyon
+                if (this.caça.x < -48) this.caça.x = -48;
+                if (this.caça.x > 48) this.caça.x = 48;
+
+                // Atualiza posição do modelo 3D do jato
+                this.caça.model.mesh.position.x = this.caça.x;
+
+                // Efeito de rastro das turbinas
+                this.particulas.spawnarRastroTurbina(this.caça.x, this.caça.y, this.caça.z);
+
+                // Lógica de Disparar Laser
+                this.cooldownTiro -= dt;
+                const atirar = this.teclas['Space'] || this.touchInput.shoot;
+                if (atirar && this.cooldownTiro <= 0) {
+                    this.dispararLaser();
+                    this.cooldownTiro = CONFIG.ATRACTION_TIRO;
+                }
+            }
+
+            dispararLaser() {
+                // Cria uma linha laser 3D verde/ciano neon
+                const geom = new THREE.CylinderGeometry(0.08, 0.08, 2.0, 6);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                const laserMesh = new THREE.Mesh(geom, mat);
+
+                laserMesh.rotation.x = Math.PI / 2; // Aponta no eixo Z
+                // Dispara a partir do bico do caça
+                laserMesh.position.set(this.caça.x, this.caça.y, -2.5);
+                this.motor3D.scene.add(laserMesh);
+
+                this.lasers.push({
+                    mesh: laserMesh,
+                    x: this.caça.x,
+                    y: this.caça.y,
+                    z: -2.5
+                });
+
+                this.som.playLaser();
+            }
+
+            atualizarLasers(dt, deslocamentoZ) {
+                // Os lasers avançam em Z negativo e também sofrem o recuo do deslocamento global do rio
+                for (let i = this.lasers.length - 1; i >= 0; i--) {
+                    const l = this.lasers[i];
+
+                    l.z -= CONFIG.FORCA_TIRO * dt; // Avança rápido pra frente
+                    l.z += deslocamentoZ; // Compensação de velocidade global
+
+                    l.mesh.position.z = l.z;
+
+                    // Remove lasers que sumiram no horizonte
+                    if (l.z < -160) {
+                        this.motor3D.scene.remove(l.mesh);
+                        this.lasers.splice(i, 1);
+                    }
+                }
+            }
+
+            dispararTiroInimigo(enemy) {
+                // Posição 3D atual do inimigo
+                const enemyX = enemy.obj.mesh.position.x;
+                const enemyY = enemy.obj.mesh.position.y;
+                const enemyZ = enemy.obj.mesh.position.z;
+
+                // Velocidade em Z (relativa ao canyon). O projétil se move para Z positivo (em direção ao jogador).
+                const velZRelativo = 22.0;
+                const velZTotal = this.caça.velScroll + velZRelativo;
+
+                // Tempo estimado de viagem até o jogador (Z = 0)
+                const timeToTarget = Math.abs(enemyZ) / velZTotal;
+
+                // Calcula a velocidade X necessária para interceptar a posição X atual do caça do jogador
+                const dx = this.caça.x - enemyX;
+                const vx = dx / Math.max(0.1, timeToTarget);
+
+                // Calcula a velocidade Y necessária para atingir a altura de voo do caça (this.caça.y = 1.0)
+                const dy = this.caça.y - enemyY;
+                const vy = dy / Math.max(0.1, timeToTarget);
+
+                // Cria esfera de neon magenta (rosa brilhante) para o tiro do inimigo
+                const geom = new THREE.SphereGeometry(0.24, 8, 8);
+                const mat = new THREE.MeshBasicMaterial({ color: 0xff00ff }); // Magenta neon
+                const tiroMesh = new THREE.Mesh(geom, mat);
+                tiroMesh.position.set(enemyX, enemyY, enemyZ);
+                this.motor3D.scene.add(tiroMesh);
+
+                this.tirosInimigos.push({
+                    mesh: tiroMesh,
+                    x: enemyX,
+                    y: enemyY,
+                    z: enemyZ,
+                    vx: vx,
+                    vy: vy,
+                    velZRelativo: velZRelativo
+                });
+
+                // Reproduz efeito sonoro de tiro do inimigo
+                this.som.playLaserInimigo();
+            }
+
+            atualizarTirosInimigos(dt, deslocamentoZ) {
+                // Atualiza a posição de cada projétil e os remove se passarem do jogador
+                for (let i = this.tirosInimigos.length - 1; i >= 0; i--) {
+                    const t = this.tirosInimigos[i];
+
+                    t.x += t.vx * dt;
+                    t.y += t.vy * dt;
+                    t.z += (t.velZRelativo * dt) + deslocamentoZ; // Movimento relativo em Z + rolagem global
+
+                    t.mesh.position.set(t.x, t.y, t.z);
+
+                    // Remove tiros que já passaram do caça do jogador (Z > 10)
+                    if (t.z > 10) {
+                        this.motor3D.scene.remove(t.mesh);
+                        this.tirosInimigos.splice(i, 1);
+                    }
+                }
+            }
+
+            atualizarSegmentos(dt, deslocamentoZ) {
+                // Move os segmentos existentes
+                this.segmentos.forEach(seg => {
+                    seg.atualizarPosicaoMeshes(deslocamentoZ);
+
+                    // Se o segmento tem inimigo, atualiza IA desse inimigo
+                    if (seg.enemy) {
+                        const enemy = seg.enemy;
+
+                        if (enemy.tipo === 'helicoptero' || enemy.tipo === 'navio' || enemy.tipo === 'balao') {
+                            // IA básica: se move lateralmente batendo nas margens (ou nas bordas da ilha)
+                            enemy.x += enemy.dir * enemy.vel * dt;
+
+                            let margemEsquerdaX = seg.centerX - seg.width / 2 + 1.2;
+                            let margemDireitaX = seg.centerX + seg.width / 2 - 1.2;
+
+                            if (seg.hasIsland) {
+                                if (enemy.originalLado === 'esquerda') {
+                                    margemDireitaX = seg.centerX - 3.8;
+                                } else if (enemy.originalLado === 'direita') {
+                                    margemEsquerdaX = seg.centerX + 3.8;
+                                }
+                            }
+
+                            if (enemy.x <= margemEsquerdaX) {
+                                enemy.x = margemEsquerdaX;
+                                enemy.dir = 1; // Inverte
+                            } else if (enemy.x >= margemDireitaX) {
+                                enemy.x = margemDireitaX;
+                                enemy.dir = -1;
+                            }
+
+                            // Efeito de bobbing vertical suave no balão
+                            if (enemy.tipo === 'balao') {
+                                enemy.obj.mesh.position.y = 0.5 + Math.sin(Date.now() * 0.003 + seg.index) * 0.15;
+                            }
+                        } else if (enemy.tipo === 'aviao') {
+                            // Jato rápido voa direto numa direção
+                            enemy.x += enemy.dir * enemy.vel * dt;
+                        }
+
+                        // Atualiza comportamentos internos específicos (hélices, radares, etc.)
+                        if (enemy.obj.update) {
+                            enemy.obj.update(dt);
+                        }
+
+                        // Rotaciona suavemente os veículos para frente em relação ao sentido de movimento no eixo X
+                        if (enemy.tipo === 'helicoptero' || enemy.tipo === 'navio' || enemy.tipo === 'aviao') {
+                            const targetAngle = enemy.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+                            let diff = targetAngle - enemy.obj.mesh.rotation.y;
+                            diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // Escolhe o caminho mais curto
+                            enemy.obj.mesh.rotation.y += diff * 12 * dt;       // Virada suave e fluida
+                        }
+
+                        // Lógica de disparo do inimigo (somente aviões, helicópteros e navios atiram se não estiver no Fácil)
+                        if (this.dificuldade !== 'facil' && (enemy.tipo === 'aviao' || enemy.tipo === 'helicoptero' || enemy.tipo === 'navio')) {
+                            // Decrementa o cooldown se o inimigo estiver à frente do jogador na tela (Z entre -85 e -15)
+                            const enemyZ = enemy.obj.mesh.position.z;
+                            if (enemyZ >= -85 && enemyZ <= -15) {
+                                enemy.cooldownTiro -= dt;
+                                if (enemy.cooldownTiro <= 0) {
+                                    this.dispararTiroInimigo(enemy);
+                                    // Reset do cooldown baseado na dificuldade
+                                    const baseCooldown = this.dificuldade === 'medio' ? 4.5 : 2.5;
+                                    enemy.cooldownTiro = baseCooldown + Math.random() * 0.8;
+                                }
+                            }
+                        }
+
+                        // Atualiza posição do mesh
+                        enemy.obj.mesh.position.x = enemy.x;
+                    }
+                });
+
+                // Se o segmento mais antigo (mais próximo Z > 25) passou da câmera, recicla
+                if (this.segmentos[0] && this.segmentos[0].z > 25) {
+                    const antigo = this.segmentos.shift();
+                    antigo.destruir();
+
+                    // Adiciona um novo no horizonte
+                    const prev = this.segmentos[this.segmentos.length - 1];
+                    const seg = new CanyonSegmento(this.motor3D.scene, this.segmentoIndexAcumulado, prev);
+                    this.segmentos.push(seg);
+                    this.segmentoIndexAcumulado++;
+                }
+            }
+
+            consumirCombustivel(dt) {
+                // Combustível gasta mais rápido se estiver acelerando
+                const multiplicadorVel = this.caça.velScroll / CONFIG.VELOCIDADE_PADRAO;
+                this.caça.combustivel -= CONFIG.COMBUSTIVEL_CONSUMO * multiplicadorVel * dt;
+
+                if (this.caça.combustivel <= 0) {
+                    this.caça.combustivel = 0;
+                    this.destruirCaça("Falta de Combustível!");
+                }
+
+                // Alerta de combustível baixo (< 20%)
+                if (this.caça.combustivel < 20 && Math.floor(this.caça.combustivel + dt * 2) !== Math.floor(this.caça.combustivel)) {
+                    this.som.playAlertaCombustivel();
+                }
+
+                this.atualizarHUD();
+            }
+
+            atualizarHUD() {
+                document.getElementById('hud-section').innerText = this.secao;
+                document.getElementById('hud-score').innerText = String(this.score).padStart(5, '0');
+                document.getElementById('hud-lives').innerText = '❤️'.repeat(this.vidas) || 'SEM VIDAS';
+
+                // Atualiza o display de dificuldade
+                const diffEl = document.getElementById('hud-difficulty');
+                if (diffEl) {
+                    diffEl.innerText = this.dificuldade === 'facil' ? 'FÁCIL' : (this.dificuldade === 'medio' ? 'MÉDIO' : 'ELITE');
+                    if (this.dificuldade === 'facil') {
+                        diffEl.style.color = 'var(--neon-green)';
+                        diffEl.style.textShadow = '0 0 10px rgba(57, 255, 20, 0.5)';
+                    } else if (this.dificuldade === 'medio') {
+                        diffEl.style.color = 'var(--neon-cyan)';
+                        diffEl.style.textShadow = 'var(--text-glow)';
+                    } else {
+                        diffEl.style.color = 'var(--neon-pink)';
+                        diffEl.style.textShadow = '0 0 10px rgba(255, 0, 127, 0.5)';
+                    }
+                }
+
+                // Combustível Bar
+                const fuelBar = document.getElementById('fuel-bar');
+                fuelBar.style.width = this.caça.combustivel + '%';
+
+                if (this.caça.combustivel < 22) {
+                    fuelBar.classList.add('low');
+                } else {
+                    fuelBar.classList.remove('low');
+                }
+            }
+
+
+            // ============================================================================
+            // 9. MECÂNICA DE COLISÃO (AABB 3D / 2D Avançada)
+            // ============================================================================
+            processarColisoes(dt) {
+                if (this.estadoJogo !== 'PLAYING') return;
+
+                // Colisão do caça com os tiros dos inimigos
+                const cx = this.caça.x;
+                const cy = this.caça.y;
+                const cz = 0;
+                const hitboxX = 1.3;
+                const hitboxY = 0.9;
+                const hitboxZ = 1.5;
+
+                for (let i = this.tirosInimigos.length - 1; i >= 0; i--) {
+                    const t = this.tirosInimigos[i];
+                    if (Math.abs(t.x - cx) < hitboxX && Math.abs(t.y - cy) < hitboxY && Math.abs(t.z - cz) < hitboxZ) {
+                        this.destruirCaça("Destruído por fogo inimigo!");
+                        this.motor3D.scene.remove(t.mesh);
+                        this.tirosInimigos.splice(i, 1);
+                        return;
+                    }
+                }
+
+                // 1. Determina qual o canyon ativo (o que está cobrindo Z = 0)
+                let segAtivo = null;
+                for (let seg of this.segmentos) {
+                    if (Math.abs(seg.z - 0) <= CONFIG.SEGMENTO_COMPRIMENTO / 2) {
+                        segAtivo = seg;
+                        break;
+                    }
+                }
+
+                if (segAtivo) {
+                    const limiteEsq = segAtivo.centerX - segAtivo.width / 2;
+                    const limiteDir = segAtivo.centerX + segAtivo.width / 2;
+
+                    // Colisão com as margens rochosas laterais do Canyon
+                    const asaEsqX = this.caça.x - this.caça.largura / 2;
+                    const asaDirX = this.caça.x + this.caça.largura / 2;
+
+                    if (asaEsqX < limiteEsq) {
+                        this.destruirCaça("Colisão lateral no canyon!");
+                        return;
+                    }
+                    if (asaDirX > limiteDir) {
+                        this.destruirCaça("Colisão lateral no canyon!");
+                        return;
+                    }
+
+                    // Colisão com ilha central do canyon se houver
+                    if (segAtivo.hasIsland) {
+                        const margemEsqIlha = segAtivo.centerX - 3.5;
+                        const margemDirIlha = segAtivo.centerX + 3.5;
+
+                        if (asaEsqX < margemDirIlha && asaDirX > margemEsqIlha) {
+                            this.destruirCaça("Bateu na ilha central!");
+                            return;
+                        }
+                    }
+
+                    // Colisão física com Pontes Neon ativas (Z=0)
+                    if (segAtivo.hasBridge && segAtivo.ponteObj && !segAtivo.ponteObj.centroDestruido) {
+                        if (Math.abs(segAtivo.z - 0) < 1.4) {
+                            this.destruirCaça("Colisão frontal com a ponte!");
+                            return;
+                        }
+                    }
+
+                    // Colisão do Jato com Combustível (FUEL) para reabastecimento
+                    if (segAtivo.hasFuel && segAtivo.fuelObj) {
+                        const fx = segAtivo.fuelObj.mesh.position.x;
+                        const fz = segAtivo.fuelObj.mesh.position.z;
+
+                        if (Math.abs(this.caça.x - fx) < 1.8 && Math.abs(fz - 0) < 1.6) {
+                            this.caça.combustivel += 85 * dt;
+                            if (this.caça.combustivel > CONFIG.COMBUSTIVEL_MAX) this.caça.combustivel = CONFIG.COMBUSTIVEL_MAX;
+
+                            if (!this.lastFuelTickTime || Date.now() - this.lastFuelTickTime > 80) {
+                                this.som.playCombustivelTick();
+                                this.lastFuelTickTime = Date.now();
+                            }
+                            this.atualizarHUD();
+                        }
+                    }
+
+                    // Colisão com Inimigos Ativos no segmento Z=0
+                    if (segAtivo.enemy) {
+                        const enemy = segAtivo.enemy;
+                        const ex = enemy.obj.mesh.position.x;
+                        const ez = enemy.obj.mesh.position.z;
+                        const ey = enemy.obj.mesh.position.y;
+
+                        if (Math.abs(this.caça.x - ex) < 1.8 && Math.abs(ez - 0) < 1.5 && Math.abs(this.caça.y - ey) < 1.2) {
+                            this.destruirCaça("Colisão em combate aéreo!");
+                            return;
+                        }
+                    }
+                }
+
+                // 2. Colisão dos LASERS com Inimigos, Pontes e Combustíveis
+                this.lasers.forEach((laser, lIdx) => {
+                    this.segmentos.forEach(seg => {
+                        // Colisão Laser vs Inimigo
+                        if (seg.enemy) {
+                            const enemy = seg.enemy;
+                            const ex = enemy.obj.mesh.position.x;
+                            const ez = enemy.obj.mesh.position.z;
+
+                            if (Math.abs(laser.x - ex) < 1.8 && Math.abs(laser.z - ez) < 1.8) {
+                                this.particulas.spawnarExplosao(ex, enemy.obj.mesh.position.y, ez, 0xff007f, 15);
+                                this.som.playExplosao();
+
+                                let pts = 100;
+                                if (enemy.tipo === 'helicoptero') pts = 150;
+                                if (enemy.tipo === 'aviao') pts = 250;
+                                if (enemy.tipo === 'balao') pts = 120;
+                                this.score += pts;
+
+                                seg.scene.remove(enemy.obj.mesh);
+                                seg.enemy = null;
+
+                                this.motor3D.scene.remove(laser.mesh);
+                                this.lasers.splice(lIdx, 1);
+
+                                this.shakeAmount = 0.35;
+                                this.atualizarHUD();
+                            }
+                        }
+
+                        // Colisão Laser vs Combustível (Destrói o FUEL dando pontos extras)
+                        if (seg.hasFuel && seg.fuelObj) {
+                            const fx = seg.fuelObj.mesh.position.x;
+                            const fz = seg.fuelObj.mesh.position.z;
+
+                            if (Math.abs(laser.x - fx) < 1.6 && Math.abs(laser.z - fz) < 1.6) {
+                                this.particulas.spawnarExplosao(fx, 1, fz, 0x39ff14, 12);
+                                this.som.playExplosao();
+
+                                this.score += 80;
+
+                                seg.scene.remove(seg.fuelObj.mesh);
+                                seg.fuelObj = null;
+                                seg.hasFuel = false;
+
+                                this.motor3D.scene.remove(laser.mesh);
+                                this.lasers.splice(lIdx, 1);
+                                this.atualizarHUD();
+                            }
+                        }
+
+                        // Colisão Laser vs Seção central da Ponte Neon
+                        if (seg.hasBridge && seg.ponteObj && !seg.ponteObj.centroDestruido) {
+                            const px = seg.ponteObj.centroX;
+                            const pz = seg.ponteObj.mesh.position.z;
+
+                            if (Math.abs(laser.x - px) < 6.0 && Math.abs(laser.z - pz) < 1.8) {
+                                seg.ponteObj.destruirCentro();
+                                this.particulas.spawnarExplosao(px, 3.3, pz, 0xff5e00, 30);
+                                this.som.playExplosao();
+
+                                this.score += 500;
+                                this.secao++;
+
+                                this.motor3D.scene.remove(laser.mesh);
+                                this.lasers.splice(lIdx, 1);
+
+                                this.shakeAmount = 0.8;
+                                this.atualizarHUD();
+                            }
+                        }
+                    });
+                });
+            }
+
+            destruirCaça(motivo) {
+                this.estadoJogo = 'MORRENDO';
+                this.vidas--;
+
+                this.som.desligarSomMotor();
+                this.som.playExplosao();
+                this.som.playMorteArpejo();
+
+                this.particulas.spawnarExplosao(this.caça.x, this.caça.y, this.caça.z, 0x00f0ff, 40);
+                this.particulas.spawnarExplosao(this.caça.x, this.caça.y, this.caça.z, 0xff0055, 20);
+
+                this.shakeAmount = 1.4;
+
+                this.caça.model.mesh.position.y = -500;
+            }
+
+            processarMorte() {
+                if (this.vidas <= 0) {
+                    this.gameOver("Operação Cancelada");
+                } else {
+                    this.iniciarJogo(false);
+                    this.som.iniciarSomMotor();
+                }
+            }
+
+            gameOver(motivo) {
+                this.estadoJogo = 'GAME_OVER';
+                this.som.stopMusic();
+                this.som.desligarSomMotor();
+
+                if (this.score > this.highscore) {
+                    this.highscore = this.score;
+                    localStorage.setItem('riverraid_highscore', this.highscore);
+                }
+
+                document.getElementById('gameover-reason').innerText = motivo;
+                document.getElementById('summary-section').innerText = this.secao;
+                document.getElementById('summary-score').innerText = String(this.score).padStart(5, '0');
+                document.getElementById('summary-highscore').innerText = String(this.highscore).padStart(5, '0');
+                document.getElementById('summary-total').innerText = String(this.score).padStart(5, '0');
+
+                document.getElementById('screen-gameover').classList.remove('hidden');
+            }
+        }
+
+        // ============================================================================
+        // 10. INICIALIZAÇÃO DO JOGO
+        // ============================================================================
+        window.addEventListener('load', () => {
+            const jogo = new MotorJogo();
+        });
+    </script>
+</body>
+
+</html>
