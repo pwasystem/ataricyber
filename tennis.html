@@ -1669,6 +1669,10 @@
         function setupControls() {
             // Teclado
             window.addEventListener('keydown', (e) => {
+                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) > -1) {
+                    e.preventDefault(); // Evita scroll do navegador ao jogar
+                }
+
                 if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
                 if (e.code === 'ArrowRight') keys.ArrowRight = true;
                 if (e.code === 'ArrowUp') keys.ArrowUp = true;
@@ -1688,6 +1692,10 @@
             });
 
             window.addEventListener('keyup', (e) => {
+                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) > -1) {
+                    e.preventDefault();
+                }
+
                 if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
                 if (e.code === 'ArrowRight') keys.ArrowRight = false;
                 if (e.code === 'ArrowUp') keys.ArrowUp = false;
