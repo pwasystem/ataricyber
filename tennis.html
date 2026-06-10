@@ -1242,8 +1242,8 @@
             }
 
             // Move a raquete da CPU suavemente
-            const cpuVelocityX = 6.8 + (playerGames * 0.4); // CPU acelera ligeiramente conforme a partida avança
-            const cpuVelocityZ = 4.0;
+            const cpuVelocityX = 8.2 + (playerGames * 0.6); // CPU mais ágil para reagir aos smashes e saques
+            const cpuVelocityZ = 5.5;
 
             const diffX = targetX - cpuPaddle.position.x;
             const diffZ = targetZ - cpuPaddle.position.z;
@@ -1270,15 +1270,15 @@
         // Colisão com raquetes (AABB)
         function checkPaddleCollision(paddle, ballPos, paddleWidth = PADDLE_WIDTH) {
             const paddleHalfW = paddleWidth / 2;
-            const paddleHalfD = 0.16; // Profundidade da colisão
+            const paddleHalfD = 0.32; // Profundidade de colisão ampliada para evitar que a bola passe direto em alta velocidade
 
             return (
                 ballPos.x >= paddle.position.x - paddleHalfW - BALL_RADIUS &&
                 ballPos.x <= paddle.position.x + paddleHalfW + BALL_RADIUS &&
                 ballPos.z >= paddle.position.z - paddleHalfD - BALL_RADIUS &&
                 ballPos.z <= paddle.position.z + paddleHalfD + BALL_RADIUS &&
-                ballPos.y >= paddle.position.y - 0.25 &&
-                ballPos.y <= paddle.position.y + 0.35
+                ballPos.y >= 0 &&
+                ballPos.y <= 2.5 // Altura vertical generosa (cobre bolas altas quicando ou no ar)
             );
         }
 
