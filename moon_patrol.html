@@ -1427,6 +1427,14 @@
             window.addEventListener('keydown', (e) => {
                 if (keys.hasOwnProperty(e.code)) {
                     keys[e.code] = true;
+                    // Evita scroll da tela
+                    if (e.code.startsWith('Arrow') || e.code.startsWith('Key')) {
+                        e.preventDefault();
+                    }
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault(); // Evita ativar clique fantasma em botão focado
                 }
 
                 if (gameState !== GAME_STATES.PLAYING || isDead) return;
@@ -1444,6 +1452,9 @@
             window.addEventListener('keyup', (e) => {
                 if (keys.hasOwnProperty(e.code)) {
                     keys[e.code] = false;
+                }
+                if (e.code === 'Space') {
+                    e.preventDefault();
                 }
             });
 
@@ -1472,11 +1483,12 @@
             document.getElementById('btn-cam-zoom-out').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyS = true; });
             document.getElementById('btn-cam-zoom-out').addEventListener('touchend', () => { keys.KeyS = false; });
 
-            btnStart.addEventListener('click', startGame);
-            btnRestartLost.addEventListener('click', restartGame);
-            btnRestartWin.addEventListener('click', restartGame);
+            btnStart.addEventListener('click', (e) => { e.currentTarget.blur(); startGame(); });
+            btnRestartLost.addEventListener('click', (e) => { e.currentTarget.blur(); restartGame(); });
+            btnRestartWin.addEventListener('click', (e) => { e.currentTarget.blur(); restartGame(); });
 
-            btnSound.addEventListener('click', () => {
+            btnSound.addEventListener('click', (e) => {
+                e.currentTarget.blur();
                 const isMuted = som.toggleMute();
                 if (isMuted) {
                     btnSound.classList.remove('active');
