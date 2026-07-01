@@ -1268,21 +1268,20 @@
 
         // Cria uma laje modular de chão
         function createGroundSegment(posX, isCratera = false) {
+            const height = isCratera ? -2.0 : (Math.sin(posX * 0.14) * 0.42 + Math.sin(posX * 0.32) * 0.16);
+
             if (isCratera) {
-                // Para uma cratera, apenas deixamos a lacuna (sem malha física).
-                // Mas salvamos um registro na lista de segmentos com isCratera = true
-                // para sabermos onde o jipe pode cair.
                 groundSegments.push({
                     mesh: null,
                     x: posX,
                     width: 2.0,
+                    y: -2.0,
                     isCratera: true
                 });
                 return;
             }
 
-            // Laje normal de rocha lunar com borda neon ciano
-            const geo = new THREE.BoxGeometry(2.0, 0.8, 4.0);
+            const geo = new THREE.BoxGeometry(2.0, 1.4, 4.0); // Aumentado para 1.4 para evitar fendas na base das colinas
             const mat = new THREE.MeshStandardMaterial({
                 color: 0x0a0c16,
                 roughness: 0.8,
@@ -1290,16 +1289,15 @@
             });
 
             const mesh = new THREE.Mesh(geo, mat);
-            // O topo da laje fica em Y = 0.0 (o bloco estende-se de Y = -0.8 a Y = 0.0)
-            mesh.position.set(posX, -0.4, 0);
+            // Posiciona o bloco para que o topo fique em Y = height
+            mesh.position.set(posX, height - 0.7, 0);
             mesh.receiveShadow = true;
             scene.add(mesh);
 
-            // Borda neon decorativa ciano na lateral do bloco
             const trimGeo = new THREE.BoxGeometry(2.0, 0.05, 0.05);
             const trimMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
             const trimF = new THREE.Mesh(trimGeo, trimMat);
-            trimF.position.set(0, 0.401, 2.01);
+            trimF.position.set(0, 0.701, 2.01);
             mesh.add(trimF);
 
             const trimB = trimF.clone();
@@ -1308,13 +1306,14 @@
 
             // Adiciona algumas rugosidades de crateras pequenas (cubos embutidos)
             const craterSmall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.3), new THREE.MeshStandardMaterial({ color: 0x04050a }));
-            craterSmall.position.set((Math.random() - 0.5) * 1.2, 0.4, (Math.random() - 0.5) * 2.5);
+            craterSmall.position.set((Math.random() - 0.5) * 1.2, 0.7, (Math.random() - 0.5) * 2.5);
             mesh.add(craterSmall);
 
             groundSegments.push({
                 mesh: mesh,
                 x: posX,
                 width: 2.0,
+                y: height,
                 isCratera: false
             });
         }
@@ -1327,6 +1326,7 @@
             // Decidimos aleatoriamente entre Rocha de Cristal Laranja ou Mina Terrestre Vermelha
             const isMina = Math.random() < 0.45;
             const spawnX = 22.0; // Spawn à direita fora da tela de visão comum
+            const height = Math.sin(spawnX * 0.14) * 0.42 + Math.sin(spawnX * 0.32) * 0.16;
 
             if (isMina) {
                 // Mina Laser Vermelha (Objeto cônico que pisca)
@@ -1337,7 +1337,7 @@
                     roughness: 0.3
                 });
                 const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(spawnX, 0.15, (Math.random() - 0.5) * 1.5);
+                mesh.position.set(spawnX, height + 0.15, (Math.random() - 0.5) * 1.5);
                 mesh.castShadow = true;
                 scene.add(mesh);
 
@@ -1346,7 +1346,8 @@
                     type: 'mina',
                     width: 0.36,
                     pulseTime: 0.0,
-                    material: mat
+                    material: mat,
+                    yOffset: 0.15
                 });
             } else {
                 // Rocha de Cristal Laranja (Objeto geométrico destrutível)
@@ -1359,14 +1360,15 @@
                     metalness: 0.8
                 });
                 const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(spawnX, 0.3, (Math.random() - 0.5) * 1.0);
+                mesh.position.set(spawnX, height + 0.3, (Math.random() - 0.5) * 1.0);
                 mesh.castShadow = true;
                 scene.add(mesh);
 
                 obstacles.push({
                     mesh: mesh,
                     type: 'rocha',
-                    width: 0.7
+                    width: 0.7,
+                    yOffset: 0.3
                 });
             }
         }
@@ -1580,22 +1582,22 @@
             const vehicleRadius = 0.65;
 
             // 1. Detecção de Queda em Crateras (espaço vazio sob o buggy)
-            // Encontra a laje de chão que está exatamente sob o jipe (X = -5.0)
             let hasFloorUnderneath = false;
+            let currentTerrainY = 0.0;
             
             for (let i = 0; i < groundSegments.length; i++) {
                 const seg = groundSegments[i];
-                // Se a laje cobre a coordenada X do jipe
                 if (vehicleX >= seg.x - 1.0 && vehicleX <= seg.x + 1.0) {
                     if (!seg.isCratera) {
                         hasFloorUnderneath = true;
+                        currentTerrainY = seg.y;
                     }
                     break;
                 }
             }
 
             // Se não tem bloco de chão e o jipe não está no ar (pulo), ele cai na cratera e explode
-            if (!hasFloorUnderneath && vehicleY <= 0.05) {
+            if (!hasFloorUnderneath && vehicleY <= currentTerrainY + 0.05) {
                 // Faz o jipe cair rápido no buraco antes de explodir
                 vehicleVy = -8.0;
                 setTimeout(() => {
@@ -1609,12 +1611,11 @@
                 const obs = obstacles[i];
                 const distObs = Math.abs(obs.mesh.position.x - vehicleX);
                 
-                // Se o obstáculo está no mesmo X e Z do buggy
                 if (distObs < (vehicleRadius + obs.width/2 - 0.1)) {
                     if (Math.abs(obs.mesh.position.z - playerVehicle.position.z) < 0.7) {
-                        // Se o jipe está baixo (não saltou o suficiente)
+                        // Compara a altura relativa à colina atual
                         const obsHeight = obs.type === 'mina' ? 0.35 : 0.6;
-                        if (vehicleY < obsHeight) {
+                        if (vehicleY < obs.mesh.position.y + obsHeight && vehicleY > obs.mesh.position.y - 0.35) {
                             triggerDamage();
                             return;
                         }
@@ -1892,17 +1893,37 @@
                 }
 
                 // 3. Física de Salto e Suspensão
+                // Calcula a altura ideal do solo sob o jipe (X = -5.0)
+                let targetGroundY = 0.0;
+                let hasFloorUnderneath = false;
+                
+                for (let i = 0; i < groundSegments.length; i++) {
+                    const seg = groundSegments[i];
+                    if (VEHICLE_START_X >= seg.x - 1.0 && VEHICLE_START_X <= seg.x + 1.0) {
+                        if (!seg.isCratera) {
+                            hasFloorUnderneath = true;
+                            targetGroundY = seg.y;
+                        } else {
+                            targetGroundY = -3.0;
+                        }
+                        break;
+                    }
+                }
+
                 if (isJumping) {
                     vehicleVy += GRAVITY * deltaTime;
                     vehicleY += vehicleVy * deltaTime;
 
-                    if (vehicleY <= GROUND_Y) {
-                        vehicleY = GROUND_Y;
+                    if (vehicleY <= targetGroundY) {
+                        vehicleY = targetGroundY;
                         vehicleVy = 0.0;
                         isJumping = false;
                         som.playWheelLand();
                         shakeCamera(0.12);
                     }
+                } else {
+                    // Jipe acompanha a ondulação do solo lunar de forma suave
+                    vehicleY += (targetGroundY - vehicleY) * 12.0 * deltaTime;
                 }
 
                 playerVehicle.position.y = vehicleY;
@@ -1964,6 +1985,11 @@
                 for (let i = obstacles.length - 1; i >= 0; i--) {
                     const obs = obstacles[i];
                     obs.mesh.position.x -= currentScrollSpeed * deltaTime;
+
+                    // Atualiza a altura Y da rocha/mina baseando-se nas colinas
+                    const obsX = obs.mesh.position.x;
+                    const obsHeight = Math.sin(obsX * 0.14) * 0.42 + Math.sin(obsX * 0.32) * 0.16;
+                    obs.mesh.position.y = obsHeight + obs.yOffset;
 
                     // Se for mina, ela pulsa o emissivo laser vermelho
                     if (obs.type === 'mina') {
@@ -2053,7 +2079,7 @@
                         for (let j = ufos.length - 1; j >= 0; j--) {
                             const ufo = ufos[j];
                             const dist = laser.mesh.position.distanceTo(ufo.mesh.position);
-                            if (dist < 0.9) {
+                            if (dist < 0.55) {
                                 spawnSparkExplosion(ufo.mesh.position, 0xff007f, 20);
                                 scene.remove(ufo.mesh);
                                 ufos.splice(j, 1);
