@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Regras do Workspace: Especialista em Criação de Jogos 3D Locais
 
 Esta regra orienta o agente de IA do Google Antigravity sobre como criar, modificar ou planejar novos jogos no workspace. Ela deve ser seguida rigidamente para garantir consistência técnica e estética com os jogos existentes do projeto (`index.html`, `missel.html`, `enduro.html`).
@@ -19,7 +23,10 @@ O jogo gerado deve rodar de forma totalmente autônoma e offline em ambiente loc
     *   **Proibido:** TailwindCSS, Bootstrap ou frameworks CSS semelhantes, a menos que o usuário solicite explicitamente.
     *   **Aparência:** Estética cyberpunk neon de alta qualidade. Use variáveis customizadas para paleta de cores (Cyan, Pink, Green, Orange, Yellow).
     *   **Interface:** Aplique glassmorphism moderno (`backdrop-filter: blur(12px)`) para HUD e overlays de menus, botões e telas de Game Over.
-    *   **Controles Virtuais:** Sempre implemente botões de toque virtuais integrados na tela para dispositivos móveis (D-pad e botões de ação), controlados via propriedades de CSS responsivo e `@media` queries. Eles devem ficar ocultos em computadores e aparecer somente em telas móveis/touch.
+    *   **Controles Virtuais e Teclado:** 
+        *   **Controles de Câmera:** Sempre use exclusivamente as teclas **A**, **W**, **S**, **D** (A/D para rotação lateral, W/S para zoom/profundidade) para controle de câmera em **todos** os jogos.
+        *   **Controles de Movimento:** Use exclusivamente as **Setas do Teclado** (Arrow keys) para movimentação do jogador (sapo, carro, personagem, etc.).
+        *   **Dispositivos Móveis:** Sempre implemente botões de toque virtuais integrados na tela para dispositivos móveis (D-pad e botões de ação), controlados via propriedades de CSS responsivo e `@media` queries. Eles devem ficar ocultos em computadores e aparecer somente em telas móveis/touch.
 *   **Three.js (r128):** Importe a biblioteca Three.js via CDN:
     ```html
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -50,7 +57,7 @@ O arquivo HTML do jogo deve seguir a seguinte estrutura de blocos e comentários
     *   **Gerador Determinístico:** Algoritmo LCG baseado em semente (`SeededRNG`) para geração consistente do mapa infinito ou posicionamento de obstáculos.
     *   **Geradores de Modelos 3D:** Funções ou classes de utilidades que criam e agrupam geometrias primitivas tridimensionais do Three.js para compor o visual dos objetos (caças, navios, estradas, carros, etc.).
     *   **Motor/Lógica de Loop:** A classe principal do jogo que gerencia o loop de animação (`requestAnimationFrame`), atualiza posições dos objetos, processa a câmera, gerencia colisões (AABB ou distância radial) e atualiza o estado da partida (vidas, pontuação, combustível).
-    *   **Eventos de Entrada:** Listeners de teclado (WASD, Setas, Espaço) e binds de eventos de clique/touch para os botões virtuais do celular.
+    *   **Eventos de Entrada:** Listeners de teclado (Setas, ASDW, Espaço) e binds de eventos de clique/touch para os botões virtuais do celular.
 
 ---
 
@@ -59,3 +66,9 @@ O jogo deve passar uma sensação premium de design.
 *   **Cores Neon Cyberpunk:** Combine cores de emissão forte contra o fundo escuro (`#020205` ou `#03030c`). Use sombras (`box-shadow` e `text-shadow`) para simular o brilho do neon na interface gráfica.
 *   **Materiais 3D Brilhantes:** Para as malhas tridimensionais, use `MeshStandardMaterial` ou `MeshPhysicalMaterial` com alta refletividade metálica e luzes direcionais que façam as superfícies brilharem. Adicione uma luz ambiente neon fraca e uma ou duas luzes direcionais coloridas para gerar reflexos dinâmicos nas carenagens.
 *   **Micro-animações:** Aplique transições suaves de CSS (`transition: all 0.3s ease`) nos botões e painéis, e efeitos de oscilação suave 3D (ex: os barcos, helicópteros ou balões devem balançar suavemente no eixo Y de forma senoidal).
+
+---
+
+## 5. Fluxo de Trabalho de Testes
+*   **Execução dos Testes:** O próprio usuário realiza a verificação de jogabilidade e testes visuais no navegador.
+*   **Restrição de Testes do Agente:** O agente da IA **não deve** realizar testes no navegador usando subagentes ou ferramentas automatizadas de renderização, a menos que o usuário solicite explicitamente isso em sua mensagem.

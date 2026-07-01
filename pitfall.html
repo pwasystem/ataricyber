@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cyber Pitfall 3D - Neon Jungle Simulator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --neon-cyan: #00f0ff;
@@ -32,7 +35,8 @@
             padding: 0;
         }
 
-        body, html {
+        body,
+        html {
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -57,10 +61,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(
-                rgba(18, 16, 16, 0) 50%, 
-                rgba(0, 0, 0, 0.3) 50%
-            );
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%,
+                    rgba(0, 0, 0, 0.3) 50%);
             background-size: 100% 4px;
             z-index: 5;
             pointer-events: none;
@@ -196,7 +198,7 @@
 
         .mobile-dpad {
             display: grid;
-            grid-template-areas: 
+            grid-template-areas:
                 ". up ."
                 "left . right"
                 ". down .";
@@ -216,7 +218,7 @@
             justify-content: center;
             font-size: 20px;
             touch-action: manipulation;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             outline: none;
         }
 
@@ -246,7 +248,7 @@
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 10px rgba(255, 0, 127, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 0, 127, 0.2);
             outline: none;
             touch-action: manipulation;
         }
@@ -448,7 +450,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Estilos responsivos */
@@ -456,19 +460,23 @@
             #mobile-controls {
                 display: flex;
             }
+
             .hud-panel {
                 padding: 8px 12px;
                 gap: 12px;
             }
+
             .hud-value {
                 font-size: 16px;
             }
+
             .game-title {
                 font-size: 28px;
             }
         }
     </style>
 </head>
+
 <body>
 
     <div class="scanlines"></div>
@@ -544,13 +552,21 @@
             <div class="instructions">
                 <h3>Instruções de Exploração:</h3>
                 <ul>
-                    <li>Você tem **20 minutos** para resgatar todos os **32 tesouros** perdidos na selva cibernética.</li>
-                    <li><strong>Mundo da Superfície:</strong> Desvie dos troncos de neon rolando, pule cobras estáticas e cruze os pântanos.</li>
-                    <li><strong>Lianas (Cipós):</strong> Pule em direção a uma liana pendurada para agarrar-se nela automaticamente. Pressione **Espaço** ou **Seta para Baixo** para soltar.</li>
-                    <li><strong>Jacarés:</strong> Você pode pular nas cabeças deles para atravessar o lago, mas apenas se a boca estiver fechada!</li>
-                    <li><strong>Mundo Subterrâneo:</strong> Desça por escadas para acessar atalhos. Avançar no subterrâneo pula 3 telas da superfície de uma vez, mas cuidado com escorpiões e becos sem saída!</li>
-                    <li><strong>Controles:</strong> **Setas do Teclado** para correr e subir/descer escadas. Tecla **Espaço** para saltar.</li>
-                    <li><strong>Câmera 3D:</strong> Teclas **A / D** giram a câmera orbitalmente, **W / S** ajustam a altura/distância.</li>
+                    <li>Você tem **20 minutos** para resgatar todos os **32 tesouros** perdidos na selva cibernética.
+                    </li>
+                    <li><strong>Mundo da Superfície:</strong> Desvie dos troncos de neon rolando, pule cobras estáticas
+                        e cruze os pântanos.</li>
+                    <li><strong>Lianas (Cipós):</strong> Pule em direção a uma liana pendurada para agarrar-se nela
+                        automaticamente. Pressione **Espaço** ou **Seta para Baixo** para soltar.</li>
+                    <li><strong>Jacarés:</strong> Você pode pular nas cabeças deles para atravessar o lago, mas apenas
+                        se a boca estiver fechada!</li>
+                    <li><strong>Mundo Subterrâneo:</strong> Desça por escadas para acessar atalhos. Avançar no
+                        subterrâneo pula 3 telas da superfície de uma vez, mas cuidado com escorpiões e becos sem saída!
+                    </li>
+                    <li><strong>Controles:</strong> **Setas do Teclado** para correr e subir/descer escadas. Tecla
+                        **Espaço** para saltar.</li>
+                    <li><strong>Câmera 3D:</strong> Teclas **A / D** giram a câmera orbitalmente, **W / S** ajustam a
+                        altura/distância.</li>
                 </ul>
             </div>
 
@@ -599,13 +615,13 @@
                 this.ctx = null;
                 this.masterGain = null;
                 this.muted = false;
-                
+
                 // Sequenciador
                 this.musicActive = false;
                 this.musicInterval = null;
                 this.musicBeat = 0;
             }
-            
+
             init() {
                 if (this.ctx) {
                     if (this.ctx.state === 'suspended') {
@@ -615,12 +631,12 @@
                 }
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 this.ctx = new AudioContextClass();
-                
+
                 this.masterGain = this.ctx.createGain();
                 this.masterGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
                 this.masterGain.connect(this.ctx.destination);
             }
-            
+
             toggleMute() {
                 this.muted = !this.muted;
                 if (!this.ctx) return this.muted;
@@ -631,78 +647,78 @@
                 }
                 return this.muted;
             }
-            
+
             playJump() {
                 this.init();
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                
+
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(250, t);
                 osc.frequency.exponentialRampToValueAtTime(800, t + 0.15);
-                
+
                 gain.gain.setValueAtTime(0.12, t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-                
+
                 osc.connect(gain);
                 gain.connect(this.masterGain);
                 osc.start(t);
                 osc.stop(t + 0.16);
             }
-            
+
             playSwing() {
                 this.init();
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                
+
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(500, t);
                 osc.frequency.linearRampToValueAtTime(300, t + 0.7);
-                
+
                 const mod = this.ctx.createOscillator();
                 const modGain = this.ctx.createGain();
                 mod.frequency.setValueAtTime(7, t);
                 modGain.gain.setValueAtTime(25, t);
-                
+
                 mod.connect(modGain);
                 modGain.connect(osc.frequency);
-                
+
                 gain.gain.setValueAtTime(0.1, t);
                 gain.gain.linearRampToValueAtTime(0.001, t + 0.7);
-                
+
                 osc.connect(gain);
                 gain.connect(this.masterGain);
-                
+
                 mod.start(t);
                 osc.start(t);
                 mod.stop(t + 0.7);
                 osc.stop(t + 0.7);
             }
-            
+
             playHurt() {
                 this.init();
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
-                
+
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(140, t);
                 osc.frequency.linearRampToValueAtTime(40, t + 0.25);
-                
+
                 gain.gain.setValueAtTime(0.18, t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-                
+
                 osc.connect(gain);
                 gain.connect(this.masterGain);
                 osc.start(t);
                 osc.stop(t + 0.26);
             }
-            
+
             playTreasure() {
                 this.init();
                 if (!this.ctx || this.muted) return;
@@ -713,17 +729,17 @@
                     const gain = this.ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, t + idx * 0.06);
-                    
+
                     gain.gain.setValueAtTime(0.08, t + idx * 0.06);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.18);
-                    
+
                     osc.connect(gain);
                     gain.connect(this.masterGain);
                     osc.start(t + idx * 0.06);
                     osc.stop(t + idx * 0.06 + 0.2);
                 });
             }
-            
+
             playGameOver() {
                 this.init();
                 if (!this.ctx || this.muted) return;
@@ -734,17 +750,17 @@
                     const gain = this.ctx.createGain();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(freq, t + idx * 0.2);
-                    
+
                     gain.gain.setValueAtTime(0.15, t + idx * 0.2);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.2 + 0.5);
-                    
+
                     osc.connect(gain);
                     gain.connect(this.masterGain);
                     osc.start(t + idx * 0.2);
                     osc.stop(t + idx * 0.2 + 0.52);
                 });
             }
-            
+
             playVictory() {
                 this.init();
                 if (!this.ctx || this.muted) return;
@@ -755,10 +771,10 @@
                     const gain = this.ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, t + idx * 0.1);
-                    
+
                     gain.gain.setValueAtTime(0.12, t + idx * 0.1);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.1 + 0.3);
-                    
+
                     osc.connect(gain);
                     gain.connect(this.masterGain);
                     osc.start(t + idx * 0.1);
@@ -770,52 +786,52 @@
                 this.init();
                 if (this.musicActive) return;
                 this.musicActive = true;
-                
+
                 const step = 0.22;
                 let nextTick = this.ctx.currentTime;
-                
+
                 const tickLoop = () => {
                     const t = nextTick;
                     if (this.musicActive && !this.muted) {
                         const notes = [65.41, 65.41, 73.42, 73.42, 58.27, 58.27, 48.99, 55.00];
                         const note = notes[Math.floor(this.musicBeat / 2) % notes.length];
-                        
+
                         const osc = this.ctx.createOscillator();
                         const filter = this.ctx.createBiquadFilter();
                         const gain = this.ctx.createGain();
-                        
+
                         osc.type = 'triangle';
                         osc.frequency.setValueAtTime(note, t);
-                        
+
                         filter.type = 'lowpass';
                         filter.frequency.setValueAtTime(150, t);
-                        
+
                         gain.gain.setValueAtTime(0.08, t);
                         gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.8);
-                        
+
                         osc.connect(filter);
                         filter.connect(gain);
                         gain.connect(this.masterGain);
-                        
+
                         osc.start(t);
                         osc.stop(t + step * 2.0);
-                        
+
                         if (this.musicBeat % 4 === 0) {
                             const kick = this.ctx.createOscillator();
                             const kickGain = this.ctx.createGain();
                             kick.type = 'sine';
                             kick.frequency.setValueAtTime(90, t);
                             kick.frequency.exponentialRampToValueAtTime(35, t + 0.12);
-                            
+
                             kickGain.gain.setValueAtTime(0.15, t);
                             kickGain.gain.linearRampToValueAtTime(0.001, t + 0.12);
-                            
+
                             kick.connect(kickGain);
                             kickGain.connect(this.masterGain);
                             kick.start(t);
                             kick.stop(t + 0.13);
                         }
-                        
+
                         if (this.musicBeat % 4 === 2) {
                             const bufferSize = this.ctx.sampleRate * 0.04;
                             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -825,15 +841,15 @@
                             }
                             const noise = this.ctx.createBufferSource();
                             noise.buffer = buffer;
-                            
+
                             const highpass = this.ctx.createBiquadFilter();
                             highpass.type = 'highpass';
                             highpass.frequency.setValueAtTime(7000, t);
-                            
+
                             const noiseGain = this.ctx.createGain();
                             noiseGain.gain.setValueAtTime(0.015, t);
                             noiseGain.gain.linearRampToValueAtTime(0.001, t + 0.04);
-                            
+
                             noise.connect(highpass);
                             highpass.connect(noiseGain);
                             noiseGain.connect(this.masterGain);
@@ -850,7 +866,7 @@
                 };
                 tickLoop();
             }
-            
+
             stopMusic() {
                 this.musicActive = false;
                 if (this.musicInterval) {
@@ -861,6 +877,22 @@
         }
 
         const som = new SomPitfall();
+
+        // Geração das Sementes das 255 salas usando o LFSR de 8 bits do Pitfall original
+        const ROOM_SEEDS = [];
+        {
+            let seed = 0xC4; // Semente inicial clássica
+            for (let i = 0; i < 255; i++) {
+                ROOM_SEEDS.push(seed);
+                // LFSR: bit0 = bit3 ^ bit4 ^ bit5 ^ bit7
+                let bit3 = (seed >> 3) & 1;
+                let bit4 = (seed >> 4) & 1;
+                let bit5 = (seed >> 5) & 1;
+                let bit7 = (seed >> 7) & 1;
+                let feedback = bit3 ^ bit4 ^ bit5 ^ bit7;
+                seed = ((seed << 1) | feedback) & 0xFF;
+            }
+        }
 
         // ============================================================================
         // 2. SEEDED RNG (GERADOR PSEUDO-ALEATÓRIO DETERMINÍSTICO)
@@ -899,7 +931,7 @@
                 orange: 0xff5e00,
                 yellow: 0xffff00,
                 blue: 0x0022cc,
-                darkBlue: 0x0a0a20,
+                darkBlue: 0x151030,
                 trunk: 0x8b5a2b
             }
         };
@@ -914,7 +946,7 @@
             treasuresCollected: 0,
             maxTreasures: 32,
             collectedIndices: new Set(), // Quais telas já tiveram tesouro coletado
-            
+
             // Controle do Jogador
             player: {
                 x: -16,
@@ -957,7 +989,7 @@
 
             activeRoom: null, // dados da sala atual
             nextRoom: null, // dados da sala temporária na transição
-            
+
             playing: false,
             keys: {},
             touchControls: {
@@ -984,7 +1016,7 @@
             // Cria o personagem Harry (Estilo Voxel Cyberpunk)
             createPlayer() {
                 const group = new THREE.Group();
-                
+
                 // Material neon
                 const bodyMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.orange, roughness: 0.4, metalness: 0.2 });
                 const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0b2, roughness: 0.8 }); // Pele
@@ -1062,7 +1094,7 @@
             createCyberTree(rng) {
                 const group = new THREE.Group();
                 const trunkHeight = rng.range(6, 10);
-                
+
                 // Tronco
                 const trunkGeo = new THREE.BoxGeometry(0.8, trunkHeight, 0.8);
                 const trunkMat = new THREE.MeshStandardMaterial({
@@ -1077,7 +1109,7 @@
                 // Folhas (Neon Wireframe + Box Transparente)
                 const foliageHeight = rng.range(3, 5);
                 const foliageWidth = rng.range(3, 5.5);
-                
+
                 const folGeo = new THREE.BoxGeometry(foliageWidth, foliageHeight, foliageWidth);
                 const folMat = new THREE.MeshStandardMaterial({
                     color: CONFIG.colors.green,
@@ -1114,7 +1146,7 @@
             // Crocodilo
             createCrocodile(xPos) {
                 const group = new THREE.Group();
-                group.position.set(xPos, -0.6, 0);
+                group.position.set(xPos, -0.22, 0);
 
                 const greenMat = new THREE.MeshStandardMaterial({ color: 0x1b4d3e, roughness: 0.7 });
                 const bellyMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.yellow, roughness: 0.8 });
@@ -1148,7 +1180,7 @@
                 // Mandíbula Superior articulada (gira no ponto de encaixe)
                 const jawGroup = new THREE.Group();
                 jawGroup.position.set(0.8, 0.2, 0); // Ponto de rotação da dobradiça
-                
+
                 const upperMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.18, 0.7), greenMat);
                 upperMesh.position.set(0.6, 0.09, 0); // Desloca para que a rotação ocorra na base
                 jawGroup.add(upperMesh);
@@ -1220,14 +1252,14 @@
 
                 // Patas simples
                 const legG = new THREE.BoxGeometry(0.1, 0.3, 0.1);
-                for(let i = -1; i <= 1; i++) {
+                for (let i = -1; i <= 1; i++) {
                     const l = new THREE.Mesh(legG, bodyMat);
-                    l.position.set(i*0.25, 0.1, 0.35);
+                    l.position.set(i * 0.25, 0.1, 0.35);
                     l.rotation.z = 0.2;
                     group.add(l);
 
                     const r = new THREE.Mesh(legG, bodyMat);
-                    r.position.set(i*0.25, 0.1, -0.35);
+                    r.position.set(i * 0.25, 0.1, -0.35);
                     r.rotation.z = -0.2;
                     group.add(r);
                 }
@@ -1250,7 +1282,7 @@
                 // Corpo enrolado em camadas
                 const geoRing = new THREE.BoxGeometry(0.8, 0.15, 0.8);
                 const rings = [];
-                for(let i = 0; i < 4; i++) {
+                for (let i = 0; i < 4; i++) {
                     const ring = new THREE.Mesh(geoRing, (i % 2 === 0) ? matCyan : matPink);
                     ring.position.y = 0.08 + (i * 0.15);
                     ring.scale.set(1 - i * 0.12, 1, 1 - i * 0.12);
@@ -1264,7 +1296,7 @@
                 head.position.set(0.18, 0.65, 0.18);
                 group.add(head);
 
-                const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.04), new THREE.MeshBasicMaterial({color: 0xff0000}));
+                const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.04), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
                 tongue.position.set(0.32, 0.6, 0.18);
                 group.add(tongue);
 
@@ -1323,6 +1355,24 @@
                     const gemMesh = new THREE.Mesh(gemGeo, gemMat);
                     gemMesh.position.y = 0.38;
                     mesh.add(gemMesh);
+                } else if (type === 'bag') {
+                    // Saco de Dinheiro cibernético (Esfera amarela com topo)
+                    mesh = new THREE.Group();
+                    const bagGeo = new THREE.SphereGeometry(0.35, 8, 8);
+                    const bagMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.yellow,
+                        roughness: 0.2,
+                        metalness: 0.8,
+                        emissive: CONFIG.colors.yellow,
+                        emissiveIntensity: 0.3
+                    });
+                    const bag = new THREE.Mesh(bagGeo, bagMat);
+                    mesh.add(bag);
+
+                    const neckGeo = new THREE.CylinderGeometry(0.12, 0.18, 0.2, 8);
+                    const neck = new THREE.Mesh(neckGeo, bagMat);
+                    neck.position.y = 0.35;
+                    mesh.add(neck);
                 } else {
                     // Diamante Gigante (Octaedro)
                     const geo = new THREE.OctahedronGeometry(0.5, 0);
@@ -1340,6 +1390,28 @@
                 group.userData = { type, mesh };
 
                 return group;
+            },
+
+            // Fogo Cibernético (Cones neon rosa/vermelho)
+            createFire() {
+                const group = new THREE.Group();
+                const matFire = new THREE.MeshBasicMaterial({ color: CONFIG.colors.pink });
+
+                // Três cones para simular labaredas
+                for (let i = 0; i < 3; i++) {
+                    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 6), matFire);
+                    cone.position.set((i - 1) * 0.3, 0.4, 0);
+                    cone.rotation.z = (i - 1) * 0.15;
+                    group.add(cone);
+                }
+
+                // Ponto de luz quente
+                const fireLight = new THREE.PointLight(CONFIG.colors.pink, 1.5, 4);
+                fireLight.position.set(0, 0.4, 0.2);
+                group.add(fireLight);
+
+                group.userData = { isFire: true };
+                return group;
             }
         };
 
@@ -1347,66 +1419,129 @@
         // 5. GERAÇÃO PROCEDURAL DA SALA (1 das 255 salas)
         // ============================================================================
         function generateRoomData(index) {
-            const rng = new SeededRNG(index + 555); // Semente fixa por tela
+            const seed = ROOM_SEEDS[index % 255];
+            const rng = new SeededRNG(seed); // Semente fixa por tela
 
-            // Tipos de sala:
-            // 0: Vazia / Segura
-            // 1: Piche central grande
-            // 2: Lagoa de Crocodilos com liana
-            // 3: 3 pequenos buracos
-            // 4: Buraco que aparece/desaparece (Quicksand)
+            const sceneType = (seed >> 3) & 7;
+            const groundType = seed & 7;
+            const hasWall = (seed >> 7) & 1;
+
+            // Mapeamento dos tipos de cena originais do Pitfall
+            // 0: Buraco com escada
+            // 1: 3 buracos com escada no meio
+            // 2: Tar pit com cipó
+            // 3: Quicksand com cipó
+            // 4: Crocodile pit (tem cipó se bit 1 da semente for 1)
+            // 5: Shifting tar pit com tesouro
+            // 6: Shifting tar pit com cipó
+            // 7: Shifting quicksand sem cipó
+
             let type = 0;
-            if (index === 0) {
-                type = 0; // Primeira sala sempre segura para iniciar
-            } else {
-                const roll = rng.next();
-                if (roll < 0.22) type = 0;
-                else if (roll < 0.44) type = 1; // Tar Pit
-                else if (roll < 0.66) type = 2; // Crocodile swamp
-                else if (roll < 0.85) type = 3; // 3 holes
-                else type = 4; // Quicksand
+            let hasLadder = false;
+            let hasVine = false;
+
+            if (sceneType === 0) {
+                type = 0; // Vazia / Chão contínuo, mas com buraco no centro (escada)
+                hasLadder = true;
+            } else if (sceneType === 1) {
+                type = 3; // 3 pequenos buracos
+                hasLadder = true;
+            } else if (sceneType === 2) {
+                type = 1; // Tar pit com cipó
+                hasVine = true;
+            } else if (sceneType === 3) {
+                type = 4; // Quicksand com cipó
+                hasVine = true;
+            } else if (sceneType === 4) {
+                // Crocodile pit
+                const hasCrocVine = ((seed >> 1) & 1) === 1;
+                type = hasCrocVine ? 2 : 5; // tipo 2 (com cipó) ou tipo 5 (sem cipó)
+                hasVine = hasCrocVine;
+            } else if (sceneType === 5) {
+                type = 6; // Shifting tar pit
+                // Não tem cipó
+            } else if (sceneType === 6) {
+                type = 6; // Shifting tar pit
+                hasVine = true; // Tem cipó
+            } else if (sceneType === 7) {
+                type = 6; // Shifting quicksand
+                // Não tem cipó
             }
 
-            // Presença de Escada para o Subterrâneo (apenas em salas sem buraco gigante no meio)
-            const hasLadder = (type === 0 || type === 3) && rng.next() < 0.45;
+            // Parede no subterrâneo
+            let subWallX = null;
+            if (hasWall) {
+                const wallPosSelect = (seed >> 6) & 3;
+                if (wallPosSelect === 0) subWallX = -11;
+                else if (wallPosSelect === 1) subWallX = 0;
+                else subWallX = 11;
+            }
 
-            // Troncos rolando na superfície (só na superfície e se não for lagoa de jacaré)
-            const hasLogs = (type !== 2) && rng.next() < 0.55;
-            const logCount = hasLogs ? Math.floor(rng.range(1, 4)) : 0;
+            // Escorpião no subterrâneo
+            const hasScorpion = ((seed >> 2) & 1) === 1;
 
-            // Presença de cobra na superfície (só em salas sem logs, e com 40% de chance)
-            const hasSnake = (!hasLogs && type === 0) && rng.next() < 0.35;
-
-            // Determinar se há tesouro nesta tela
-            // Apenas 32 tesouros no total do jogo (espalhados deterministicamente)
-            const isTreasureScreen = (index * 7 + 13) % 8 === 0; // Fórmula determinística para espalhar
+            // Tesouro
             let treasureType = null;
-            if (isTreasureScreen) {
-                const trRoll = rng.next();
-                if (trRoll < 0.5) treasureType = 'gold';
-                else if (trRoll < 0.8) treasureType = 'silver';
-                else if (trRoll < 0.95) treasureType = 'ring';
-                else treasureType = 'diamond';
+            if (sceneType === 5) {
+                const tBits = seed & 3;
+                if (tBits === 0) treasureType = 'bag';
+                else if (tBits === 1) treasureType = 'silver';
+                else if (tBits === 2) treasureType = 'gold';
+                else treasureType = 'ring';
             }
 
-            // Subterrâneo
-            // Cuidado com escorpiões
-            const hasScorpion = rng.next() < 0.6;
-            
-            // Paredes no subterrâneo que bloqueiam o caminho (becos sem saída)
-            const wallRoll = rng.next();
-            let subWallX = null; // null: sem parede, ou valor de X (-10, 0, 10)
-            if (wallRoll < 0.35) {
-                subWallX = rng.choose([-11, 0, 11]);
+            // Obstáculos Terrestres (apenas nas salas seguras/buraco comum: sceneType === 0 ou 1)
+            let hasLogs = false;
+            let logCount = 0;
+            let rollType = 'trunk';
+            let hasSnake = false;
+            let hasFire = false;
+            let isStaticLog = false;
+
+            if (sceneType === 0 || sceneType === 1) {
+                hasLogs = (groundType >= 0 && groundType <= 5);
+                if (hasLogs) {
+                    if (groundType === 0) {
+                        logCount = 1;
+                    } else if (groundType === 1) {
+                        logCount = 2; // próximos
+                    } else if (groundType === 2) {
+                        logCount = 2; // espaçados
+                    } else if (groundType === 3) {
+                        logCount = 3;
+                    } else if (groundType === 4) {
+                        logCount = 1;
+                        isStaticLog = true; // Tronco estático
+                    } else if (groundType === 5) {
+                        logCount = 3;
+                        isStaticLog = true; // 3 troncos estáticos
+                    }
+
+                    // Escolhe se é tronco, barril ou pedra
+                    if (groundType % 3 === 0) rollType = 'trunk';
+                    else if (groundType % 3 === 1) rollType = 'barrel';
+                    else rollType = 'stone';
+                } else if (groundType === 6) {
+                    hasFire = true;
+                } else if (groundType === 7) {
+                    hasSnake = true;
+                }
             }
 
             return {
                 index,
+                seed,
                 type,
+                sceneType,
+                groundType,
                 hasLadder,
+                hasVine,
                 hasLogs,
                 logCount,
+                rollType,
+                isStaticLog,
                 hasSnake,
+                hasFire,
                 treasureType,
                 hasScorpion,
                 subWallX,
@@ -1416,8 +1551,11 @@
 
         // Constrói os objetos 3D reais na cena com base no RoomData
         function buildRoom3D(roomData, parentGroup) {
+            // Limpa o userData anterior para evitar vazamento de referências de objetos destruídos
+            parentGroup.userData = {};
+
             const rng = new SeededRNG(roomData.index + 999);
-            
+
             // 1. CHÃO DO MUNDO DA SUPERFÍCIE (Luzes neon verdes)
             const floorMat = new THREE.MeshStandardMaterial({
                 color: 0x051d08,
@@ -1427,25 +1565,96 @@
             const borderMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.green });
 
             // Construir o chão com base no tipo da sala
-            if (roomData.type === 0 || roomData.hasLadder) {
-                // Chão Contínuo
-                const ground = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 3, 6), floorMat);
-                ground.position.set(0, -1.5, 0);
-                ground.receiveShadow = true;
-                parentGroup.add(ground);
+            if (roomData.sceneType === 0) {
+                // Chão com vão central para escada (vão de x=-1.5 a x=1.5)
+                const groundLeft = new THREE.Mesh(new THREE.BoxGeometry(20.5, 3, 6), floorMat);
+                groundLeft.position.set(-11.75, -1.5, 0);
+                groundLeft.receiveShadow = true;
+                parentGroup.add(groundLeft);
 
-                // Bordas Neon
-                const edgeL = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
-                edgeL.position.set(0, 0.01, 3);
-                parentGroup.add(edgeL);
+                const groundRight = new THREE.Mesh(new THREE.BoxGeometry(20.5, 3, 6), floorMat);
+                groundRight.position.set(11.75, -1.5, 0);
+                groundRight.receiveShadow = true;
+                parentGroup.add(groundRight);
 
-                const edgeR = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
-                edgeR.position.set(0, 0.01, -3);
-                parentGroup.add(edgeR);
+                // Bordas Neon com Gaps
+                const edgeL1 = new THREE.Mesh(new THREE.BoxGeometry(20.5, 0.08, 0.08), borderMat);
+                edgeL1.position.set(-11.75, 0.01, 3);
+                parentGroup.add(edgeL1);
+                const edgeL2 = new THREE.Mesh(new THREE.BoxGeometry(20.5, 0.08, 0.08), borderMat);
+                edgeL2.position.set(11.75, 0.01, 3);
+                parentGroup.add(edgeL2);
+
+                const edgeR1 = new THREE.Mesh(new THREE.BoxGeometry(20.5, 0.08, 0.08), borderMat);
+                edgeR1.position.set(-11.75, 0.01, -3);
+                parentGroup.add(edgeR1);
+                const edgeR2 = new THREE.Mesh(new THREE.BoxGeometry(20.5, 0.08, 0.08), borderMat);
+                edgeR2.position.set(11.75, 0.01, -3);
+                parentGroup.add(edgeR2);
+
+                // Escada
+                const ladderGeo = new THREE.BoxGeometry(1.6, 12.5, 0.2);
+                const ladderMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.green,
+                    emissive: CONFIG.colors.green,
+                    emissiveIntensity: 0.3
+                });
+                const ladder = new THREE.Mesh(ladderGeo, ladderMat);
+                ladder.position.set(0, -4.75, -1.0);
+                parentGroup.add(ladder);
+
+                // Adicionar degraus da escada
+                for (let h = -9.5; h <= 0; h += 0.8) {
+                    const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8), ladderMat);
+                    rung.rotation.z = Math.PI / 2;
+                    rung.position.set(0, h, -0.9);
+                    parentGroup.add(rung);
+                }
+
+                // Marcar a posição da escada para o Harry
+                parentGroup.userData.ladderX = 0;
+            }
+            else if (roomData.type === 3) {
+                // Três pequenos buracos perigosos no chão
+                // Chão feito em 4 pedaços
+                const segmentW = 8.5;
+
+                // Segmento 1
+                const s1 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s1.position.set(-17.75, -1.5, 0);
+                s1.receiveShadow = true;
+                parentGroup.add(s1);
+                // Segmento 2
+                const s2 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s2.position.set(-5.75, -1.5, 0);
+                s2.receiveShadow = true;
+                parentGroup.add(s2);
+                // Segmento 3
+                const s3 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s3.position.set(5.75, -1.5, 0);
+                s3.receiveShadow = true;
+                parentGroup.add(s3);
+                // Segmento 4
+                const s4 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
+                s4.position.set(17.75, -1.5, 0);
+                s4.receiveShadow = true;
+                parentGroup.add(s4);
+
+                // Bordas
+                for (let xOffset of [-17.75, -5.75, 5.75, 17.75]) {
+                    const eL = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
+                    eL.position.set(xOffset, 0.01, 3);
+                    parentGroup.add(eL);
+                    const eR = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
+                    eR.position.set(xOffset, 0.01, -3);
+                    parentGroup.add(eR);
+                }
+
+                // Aberturas em X: -12.5, 0, 12.5
+                parentGroup.userData.threePits = [-12.5, 0, 12.5];
 
                 if (roomData.hasLadder) {
-                    // Recortar abertura da escada (esculpindo visualmente)
-                    // Vamos apenas desenhar a escada atravessando o solo
+                    // Escada no buraco central
                     const ladderGeo = new THREE.BoxGeometry(1.6, 12.5, 0.2);
                     const ladderMat = new THREE.MeshStandardMaterial({
                         color: CONFIG.colors.green,
@@ -1457,18 +1666,18 @@
                     parentGroup.add(ladder);
 
                     // Adicionar degraus da escada
-                    for(let h = -9.5; h <= 0; h += 0.8) {
+                    for (let h = -9.5; h <= 0; h += 0.8) {
                         const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8), ladderMat);
                         rung.rotation.z = Math.PI / 2;
                         rung.position.set(0, h, -0.9);
                         parentGroup.add(rung);
                     }
-                    
+
                     // Marcar a posição da escada para o Harry
                     parentGroup.userData.ladderX = 0;
                 }
-            } 
-            else if (roomData.type === 1 || roomData.type === 4) {
+            }
+            else if (roomData.type === 1 || roomData.type === 4 || roomData.type === 6 || roomData.type === 7) {
                 // Tar Pit / Quicksand (Buraco no meio de x=-6 a x=6)
                 const groundLeft = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
                 groundLeft.position.set(-14, -1.5, 0);
@@ -1496,11 +1705,13 @@
                 parentGroup.add(edgeR2);
 
                 // Fluido de Piche / Areia Movediça (Rosa Neon / Roxo)
+                const isQuicksand = (roomData.type === 4 || roomData.type === 6);
+                const hasVine = roomData.hasVine;
                 const pitGeo = new THREE.BoxGeometry(12.4, 2.5, 5.8);
                 const pitMat = new THREE.MeshStandardMaterial({
-                    color: CONFIG.colors.pink,
-                    emissive: CONFIG.colors.pink,
-                    emissiveIntensity: roomData.type === 4 ? 0.2 : 0.4,
+                    color: isQuicksand ? 0xaa00ff : CONFIG.colors.pink,
+                    emissive: isQuicksand ? 0xaa00ff : CONFIG.colors.pink,
+                    emissiveIntensity: isQuicksand ? 0.25 : 0.4,
                     roughness: 0.3,
                     metalness: 0.8,
                     transparent: true,
@@ -1511,25 +1722,27 @@
                 parentGroup.add(pit);
                 parentGroup.userData.pitMesh = pit; // para animar o quicksand
 
-                // Adiciona cipó/liana para travessia
-                const vinePivot = new THREE.Group();
-                vinePivot.position.set(0, 11, 0); // Ponto de ancoragem no céu
-                
-                const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
-                const vineMat = new THREE.MeshStandardMaterial({
-                    color: CONFIG.colors.cyan,
-                    emissive: CONFIG.colors.cyan,
-                    emissiveIntensity: 0.5
-                });
-                const vineMesh = new THREE.Mesh(vineGeo, vineMat);
-                vineMesh.position.y = -4.9; // Metade do tamanho
-                vinePivot.add(vineMesh);
-                
-                parentGroup.add(vinePivot);
-                parentGroup.userData.vine = vinePivot;
-            } 
-            else if (roomData.type === 2) {
-                // Crocodile Swamp (Água + Crocodilos + Cipó)
+                if (hasVine) {
+                    // Adiciona cipó/liana para travessia
+                    const vinePivot = new THREE.Group();
+                    vinePivot.position.set(0, 11, 0); // Ponto de ancoragem no céu
+
+                    const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
+                    const vineMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.cyan,
+                        emissive: CONFIG.colors.cyan,
+                        emissiveIntensity: 0.5
+                    });
+                    const vineMesh = new THREE.Mesh(vineGeo, vineMat);
+                    vineMesh.position.y = -4.9; // Metade do tamanho
+                    vinePivot.add(vineMesh);
+
+                    parentGroup.add(vinePivot);
+                    parentGroup.userData.vine = vinePivot;
+                }
+            }
+            else if (roomData.type === 2 || roomData.type === 5) {
+                // Crocodile Swamp (Água + Crocodilos)
                 const groundLeft = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 6), floorMat);
                 groundLeft.position.set(-14, -1.5, 0);
                 groundLeft.receiveShadow = true;
@@ -1571,70 +1784,77 @@
                 });
                 parentGroup.userData.crocs = crocs;
 
-                // Cipó para travessia
-                const vinePivot = new THREE.Group();
-                vinePivot.position.set(0, 11, 0);
-                
-                const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
-                const vineMat = new THREE.MeshStandardMaterial({
-                    color: CONFIG.colors.cyan,
-                    emissive: CONFIG.colors.cyan,
-                    emissiveIntensity: 0.5
-                });
-                const vineMesh = new THREE.Mesh(vineGeo, vineMat);
-                vineMesh.position.y = -4.9;
-                vinePivot.add(vineMesh);
-                
-                parentGroup.add(vinePivot);
-                parentGroup.userData.vine = vinePivot;
-            } 
-            else if (roomData.type === 3) {
-                // Três pequenos buracos perigosos no chão
-                // Chão feito em 4 pedaços
-                const segmentW = 8.5;
-                const gapW = 3.0;
-                
-                // Segmento 1
-                const s1 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
-                s1.position.set(-17.75, -1.5, 0);
-                parentGroup.add(s1);
-                // Segmento 2
-                const s2 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
-                s2.position.set(-5.75, -1.5, 0);
-                parentGroup.add(s2);
-                // Segmento 3
-                const s3 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
-                s3.position.set(5.75, -1.5, 0);
-                parentGroup.add(s3);
-                // Segmento 4
-                const s4 = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 3, 6), floorMat);
-                s4.position.set(17.75, -1.5, 0);
-                parentGroup.add(s4);
+                if (roomData.hasVine) {
+                    // Cipó para travessia
+                    const vinePivot = new THREE.Group();
+                    vinePivot.position.set(0, 11, 0);
 
-                // Bordas
-                for (let xOffset of [-17.75, -5.75, 5.75, 17.75]) {
-                    const eL = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
-                    eL.position.set(xOffset, 0.01, 3);
-                    parentGroup.add(eL);
-                    const eR = new THREE.Mesh(new THREE.BoxGeometry(segmentW, 0.08, 0.08), borderMat);
-                    eR.position.set(xOffset, 0.01, -3);
-                    parentGroup.add(eR);
+                    const vineGeo = new THREE.CylinderGeometry(0.06, 0.06, 9.8, 6);
+                    const vineMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.cyan,
+                        emissive: CONFIG.colors.cyan,
+                        emissiveIntensity: 0.5
+                    });
+                    const vineMesh = new THREE.Mesh(vineGeo, vineMat);
+                    vineMesh.position.y = -4.9;
+                    vinePivot.add(vineMesh);
+
+                    parentGroup.add(vinePivot);
+                    parentGroup.userData.vine = vinePivot;
                 }
+            }
+            else if (roomData.type === 0 || roomData.hasLadder) {
+                // Chão Contínuo
+                const ground = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 3, 6), floorMat);
+                ground.position.set(0, -1.5, 0);
+                ground.receiveShadow = true;
+                parentGroup.add(ground);
 
-                // Aberturas em X: -12.5, 0, 12.5
-                parentGroup.userData.threePits = [-12.5, 0, 12.5];
+                // Bordas Neon
+                const edgeL = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
+                edgeL.position.set(0, 0.01, 3);
+                parentGroup.add(edgeL);
+
+                const edgeR = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.08, 0.08), borderMat);
+                edgeR.position.set(0, 0.01, -3);
+                parentGroup.add(edgeR);
+
+                if (roomData.hasLadder) {
+                    // Recortar abertura da escada (esculpindo visualmente)
+                    // Vamos apenas desenhar a escada atravessando o solo
+                    const ladderGeo = new THREE.BoxGeometry(1.6, 12.5, 0.2);
+                    const ladderMat = new THREE.MeshStandardMaterial({
+                        color: CONFIG.colors.green,
+                        emissive: CONFIG.colors.green,
+                        emissiveIntensity: 0.3
+                    });
+                    const ladder = new THREE.Mesh(ladderGeo, ladderMat);
+                    ladder.position.set(0, -4.75, -1.0);
+                    parentGroup.add(ladder);
+
+                    // Adicionar degraus da escada
+                    for (let h = -9.5; h <= 0; h += 0.8) {
+                        const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8), ladderMat);
+                        rung.rotation.z = Math.PI / 2;
+                        rung.position.set(0, h, -0.9);
+                        parentGroup.add(rung);
+                    }
+
+                    // Marcar a posição da escada para o Harry
+                    parentGroup.userData.ladderX = 0;
+                }
             }
 
             // 2. ELEMENTOS CÊNICOS: Árvores da Selva (Apenas no fundo)
             const treeCount = Math.floor(rng.range(3, 7));
-            for(let i = 0; i < treeCount; i++) {
+            for (let i = 0; i < treeCount; i++) {
                 const tree = ModelBuilder.createCyberTree(rng);
                 // Posicionar fora da trilha do jogador
                 const zPos = rng.choose([-4.2, -3.4]);
                 const xPos = rng.range(-20, 20);
                 // Não colocar árvore em cima dos buracos
-                if ((roomData.type === 1 || roomData.type === 2 || roomData.type === 4) && Math.abs(xPos) < 7.5) {
-                    continue; 
+                if ((roomData.type === 1 || roomData.type === 2 || roomData.type === 4 || roomData.type === 5 || roomData.type === 6 || roomData.type === 7) && Math.abs(xPos) < 7.5) {
+                    continue;
                 }
                 if (roomData.type === 3 && (Math.abs(xPos - 12.5) < 2 || Math.abs(xPos) < 2 || Math.abs(xPos + 12.5) < 2)) {
                     continue;
@@ -1643,12 +1863,18 @@
                 parentGroup.add(tree);
             }
 
-            // 3. COBRA (Inimigo Estático)
+            // 3. COBRA OU FOGO (Inimigo Estático)
             if (roomData.hasSnake) {
                 const snake = ModelBuilder.createSnake();
                 snake.position.set(rng.range(1, 8), 0, 0); // Lado direito
                 parentGroup.add(snake);
                 parentGroup.userData.snake = snake;
+            }
+            if (roomData.hasFire) {
+                const fire = ModelBuilder.createFire();
+                fire.position.set(0, 0, 0); // Centro
+                parentGroup.add(fire);
+                parentGroup.userData.fire = fire;
             }
 
             // 4. CHÃO DO SUBTERRÂNEO (Túnel Metálico)
@@ -1664,10 +1890,7 @@
             subGround.receiveShadow = true;
             parentGroup.add(subGround);
 
-            // Teto do subterrâneo (placa preta)
-            const subCeil = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 1, 6), subFloorMat);
-            subCeil.position.set(0, CONFIG.undergroundY + 3.8, 0);
-            parentGroup.add(subCeil);
+
 
             // Borda do trilho subterrâneo
             const subEdge = new THREE.Mesh(new THREE.BoxGeometry(CONFIG.width, 0.06, 0.06), subBorderMat);
@@ -1705,7 +1928,7 @@
                 parentGroup.userData.scorpDir = rng.choose([-1, 1]);
                 parentGroup.userData.scorpLeft = -12;
                 parentGroup.userData.scorpRight = 12;
-                
+
                 // Se houver uma parede, limita o escorpião para não atravessar
                 if (roomData.subWallX !== null) {
                     if (roomData.subWallX < 0) {
@@ -1725,27 +1948,69 @@
             if (roomData.treasureType && !state.collectedIndices.has(roomData.index)) {
                 const treasure = ModelBuilder.createTreasure(roomData.treasureType);
                 // Posiciona um pouco flutuando
-                const trX = rng.range(6, 12);
+                // Se for shifting tar pit (tipo 6), colocamos o tesouro à direita para o Harry pegar correndo
+                const trX = (roomData.type === 6) ? 9.0 : rng.range(6, 12);
                 treasure.position.set(trX, 0.7, 0);
                 parentGroup.add(treasure);
                 parentGroup.userData.treasure = treasure;
             }
 
-            // Troncos de neon rolando
+            // Obstáculos de neon rolando ou estáticos
             if (roomData.logCount > 0) {
                 const logs = [];
-                for(let k = 0; k < roomData.logCount; k++) {
-                    const logGeo = new THREE.CylinderGeometry(0.28, 0.28, 2.2, 8);
-                    const logMat = new THREE.MeshStandardMaterial({
-                        color: CONFIG.colors.orange,
-                        emissive: CONFIG.colors.orange,
-                        emissiveIntensity: 0.4,
-                        roughness: 0.3
-                    });
-                    const log = new THREE.Mesh(logGeo, logMat);
-                    log.rotation.x = Math.PI / 2;
-                    // Espalhar o ponto de partida do spawn na direita
-                    log.position.set(22 + (k * 14) + rng.range(0, 6), 0.28, 0);
+                for (let k = 0; k < roomData.logCount; k++) {
+                    let obsGeo;
+                    let obsMat;
+                    if (roomData.rollType === 'barrel') {
+                        // Barril (Cilindro amarelo neon mais curto e gordo)
+                        obsGeo = new THREE.CylinderGeometry(0.35, 0.35, 1.6, 12);
+                        obsMat = new THREE.MeshStandardMaterial({
+                            color: CONFIG.colors.yellow,
+                            emissive: CONFIG.colors.yellow,
+                            emissiveIntensity: 0.5,
+                            roughness: 0.2
+                        });
+                    } else if (roomData.rollType === 'stone') {
+                        // Pedra (Dodecaedro rosa neon)
+                        obsGeo = new THREE.DodecahedronGeometry(0.35);
+                        obsMat = new THREE.MeshStandardMaterial({
+                            color: CONFIG.colors.pink,
+                            emissive: CONFIG.colors.pink,
+                            emissiveIntensity: 0.5,
+                            roughness: 0.8
+                        });
+                    } else {
+                        // Tronco clássico
+                        obsGeo = new THREE.CylinderGeometry(0.28, 0.28, 2.2, 8);
+                        obsMat = new THREE.MeshStandardMaterial({
+                            color: CONFIG.colors.orange,
+                            emissive: CONFIG.colors.orange,
+                            emissiveIntensity: 0.4,
+                            roughness: 0.3
+                        });
+                    }
+
+                    const log = new THREE.Mesh(obsGeo, obsMat);
+                    if (roomData.rollType !== 'stone') {
+                        log.rotation.x = Math.PI / 2;
+                    }
+                    
+                    // Posicionamento:
+                    let posX = 22 + (k * 14) + rng.range(0, 6);
+                    if (roomData.isStaticLog) {
+                        if (roomData.logCount === 1) {
+                            posX = 4.0;
+                        } else {
+                            posX = -6.0 + (k * 6.5);
+                        }
+                    }
+
+                    const posY = (roomData.rollType === 'stone') ? 0.35 : ((roomData.rollType === 'barrel') ? 0.35 : 0.28);
+                    log.position.set(posX, posY, 0);
+                    
+                    // Guarda o estado de estático no objeto do Three.js
+                    log.userData = { isStatic: roomData.isStaticLog };
+
                     parentGroup.add(log);
                     logs.push(log);
                 }
@@ -1773,15 +2038,15 @@
             const bindTouchBtn = (id, stateKey) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                
+
                 const setTouch = (val, e) => {
                     e.preventDefault();
                     state.touchControls[stateKey] = val;
                 };
 
-                el.addEventListener('touchstart', (e) => setTouch(true, e), {passive: false});
-                el.addEventListener('touchend', (e) => setTouch(false, e), {passive: false});
-                el.addEventListener('touchcancel', (e) => setTouch(false, e), {passive: false});
+                el.addEventListener('touchstart', (e) => setTouch(true, e), { passive: false });
+                el.addEventListener('touchend', (e) => setTouch(false, e), { passive: false });
+                el.addEventListener('touchcancel', (e) => setTouch(false, e), { passive: false });
             };
 
             bindTouchBtn('btn-left', 'left');
@@ -1794,7 +2059,7 @@
                 jumpBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     processJumpInput();
-                }, {passive: false});
+                }, { passive: false });
             }
 
             // Som Mute no HUD
@@ -1813,7 +2078,7 @@
 
         function processJumpInput() {
             if (!state.playing || state.transition.active || state.player.stumbleTime > 0) return;
-            
+
             const p = state.player;
             if (p.swinging) {
                 // Solta da liana com impulso
@@ -1836,8 +2101,9 @@
         // ============================================================================
         function initEngine() {
             const container = document.getElementById("canvas-container");
-            
+
             scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.darkBlue);
             scene.fog = new THREE.FogExp2(CONFIG.colors.darkBlue, 0.015);
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1892,7 +2158,7 @@
             scene.add(sun);
 
             // Grades de chão distantes para ambientação
-            const bgGrid = new THREE.GridHelper(300, 30, CONFIG.colors.cyan, 0x111122);
+            const bgGrid = new THREE.GridHelper(300, 30, 0x111122, 0x111122);
             bgGrid.position.set(0, -15, -60);
             bgGrid.rotation.x = Math.PI / 8;
             scene.add(bgGrid);
@@ -1906,7 +2172,7 @@
 
             // Redimensionamento
             window.addEventListener('resize', onWindowResize);
-            
+
             // Ocultar tela de loading
             document.getElementById('loading-screen').style.display = 'none';
         }
@@ -1950,12 +2216,12 @@
 
             // Gerar a sala 0
             state.activeRoom = generateRoomData(0);
-            
+
             // Limpa grupos
-            while(roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
-            while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
-            
-            roomGroupOld.position.set(0,0,0);
+            while (roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
+            while (roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+
+            roomGroupOld.position.set(0, 0, 0);
             buildRoom3D(state.activeRoom, roomGroupOld);
 
             updateHUD();
@@ -2075,18 +2341,18 @@
                 const vine = roomGroupOld.userData.vine;
                 if (vine) {
                     state.player.swingTime += dt;
-                    
+
                     const angle = vine.rotation.z;
                     const vineLen = 9.8;
-                    const tipX = vine.position.x - Math.sin(angle) * vineLen;
+                    const tipX = vine.position.x + Math.sin(angle) * vineLen;
                     const tipY = vine.position.y - Math.cos(angle) * vineLen;
-                    
+
                     // Coloca o Harry pendurado pelas mãos (Y da mão ~= 1.55 do modelo)
                     p.x = tipX;
                     p.y = tipY - 1.55;
                     p.vy = 0;
                     p.vx = 0;
-                    
+
                     // Som de vento periódico
                     if (Math.floor(state.player.swingTime * 4) % 12 === 0 && Math.abs(angle) < 0.1) {
                         som.playSwing();
@@ -2109,7 +2375,7 @@
             if (activeVine) {
                 const time = performance.now() * 0.0017;
                 activeVine.rotation.z = Math.sin(time) * 0.65; // balanço de amplitude
-                
+
                 // Checar se o jogador no ar colide com a liana para se agarrar (se não estiver em cooldown e não estiver tentando soltar)
                 const isReleasing = climbDownInput || state.keys[' '] || state.keys['Spacebar'] || state.touchControls.down || state.touchControls.jump;
                 if (!p.swinging && !p.grounded && !p.climbing && p.swingCooldown <= 0 && !isReleasing) {
@@ -2117,31 +2383,31 @@
                     const groupX = roomGroupOld.position.x;
                     const ax = groupX + activeVine.position.x;
                     const ay = activeVine.position.y;
-                    
-                    const tipX = ax - Math.sin(activeVine.rotation.z) * vineLen;
+
+                    const tipX = ax + Math.sin(activeVine.rotation.z) * vineLen;
                     const tipY = ay - Math.cos(activeVine.rotation.z) * vineLen;
-                    
+
                     const bx = tipX;
                     const by = tipY;
-                    
+
                     const px = p.x;
                     const py = p.y + 0.9; // Centro do corpo de Harry (y é a base dos pés)
-                    
+
                     // Vetores para distância ao segmento
                     const vx = bx - ax;
                     const vy = by - ay;
-                    
+
                     const wx = px - ax;
                     const wy = py - ay;
-                    
+
                     const vDotV = vx * vx + vy * vy;
                     let t = (wx * vx + wy * vy) / vDotV;
                     // Restringe a colisão aos 30% inferiores da liana (t entre 0.7 e 1.0) para evitar colidir no alto
                     t = Math.max(0.7, Math.min(1, t));
-                    
+
                     const cx = ax + t * vx;
                     const cy = ay + t * vy;
-                    
+
                     const dist = Math.hypot(px - cx, py - cy);
                     if (dist < 0.75) { // Colisão real e precisa com a parte de baixo da liana
                         p.swinging = true;
@@ -2189,7 +2455,7 @@
 
             // Mover jogador no X
             p.x += p.vx * dt;
-            
+
             // Bloqueio de Paredes no Subterrâneo
             if (state.level === 'underground' && state.activeRoom.subWallX !== null) {
                 const wallX = state.activeRoom.subWallX;
@@ -2206,14 +2472,14 @@
 
             // Colisão com o solo básico
             let isOverPit = false;
-            
+
             if (state.level === 'surface') {
                 const type = state.activeRoom.type;
-                if (type === 1 || type === 4) {
+                if (type === 1 || type === 4 || type === 6 || type === 7) {
                     // Piche / Areia Movediça de x=-6 a x=6
-                    // Se for tipo 4, ela aparece/desaparece de forma cíclica
+                    // Se for tipo 4 ou 6, ela aparece/desaparece de forma cíclica
                     let activePit = true;
-                    if (type === 4) {
+                    if (type === 4 || type === 6) {
                         const pitMesh = roomGroupOld.userData.pitMesh;
                         if (pitMesh) {
                             // Escala Y oscila de 1 a 0.05
@@ -2223,37 +2489,43 @@
                     if (activePit && p.x > -5.7 && p.x < 5.7) {
                         isOverPit = true;
                     }
-                } 
-                else if (type === 2) {
+                }
+                else if (type === 2 || type === 5) {
                     // Crocodile swamp. Pântano de x=-5.8 a x=5.8
                     if (p.x > -5.7 && p.x < 5.7) {
                         isOverPit = true;
-                        
+
                         // Mas pode estar em cima da cabeça de um jacaré!
                         const crocs = roomGroupOld.userData.crocs || [];
                         crocs.forEach(croc => {
                             const cData = croc.userData;
                             // Se Harry pousar na cabeça (do nariz x ao centro)
-                            // Jacaré está virado para a direita, a cabeça fica na ponta direita (x + 1.2)
+                            // Jacaré está virado para a direita, a cabeça fica na ponta direita (x + 0.8)
                             const headX = croc.position.x + 0.8;
-                            if (Math.abs(p.x - headX) < 0.75 && p.y >= -0.5 && p.vy <= 0.1) {
+                            if (Math.abs(p.x - headX) < 0.75 && p.y >= -0.85 && p.vy <= 0.1) {
                                 // Se a boca estiver aberta, cai e morre!
                                 if (cData.open) {
                                     isOverPit = true;
                                 } else {
                                     // Pousa no jacaré!
                                     isOverPit = false;
-                                    p.y = -0.15;
+                                    p.y = 0.15;
                                     p.vy = 0;
                                     p.grounded = true;
                                 }
                             }
                         });
                     }
-                } 
+                }
                 else if (type === 3) {
                     // Gaps de queda física em x: [-13.5, -10], [-1.5, 1.5], [10, 13.5]
                     if ((p.x > -13.5 && p.x < -10) || (p.x > -1.5 && p.x < 1.5) || (p.x > 10 && p.x < 13.5)) {
+                        isOverPit = true;
+                    }
+                }
+                // Queda no vão central da escada na cena tipo 0
+                if (state.activeRoom.sceneType === 0) {
+                    if (p.x > -1.5 && p.x < 1.5) {
                         isOverPit = true;
                     }
                 }
@@ -2262,7 +2534,7 @@
             if (isOverPit) {
                 // Sem chão! Se não estiver pulando/cipó, cai!
                 if (p.y <= 0) {
-                    if (state.activeRoom.type === 3 || (state.activeRoom.type === 0 && state.activeRoom.hasLadder)) {
+                    if (state.activeRoom.type === 3 || state.activeRoom.sceneType === 0) {
                         // Queda em buraco de escada comum: cai no subterrâneo
                         if (p.y < -3.5) {
                             state.level = 'underground';
@@ -2303,13 +2575,13 @@
             if (state.level === 'underground') {
                 step = 3;
             }
-            state.transition.newIndex = (state.screenIndex + (direction * step) + 256) % 256;
-            
+            state.transition.newIndex = (state.screenIndex + (direction * step) + 255) % 255;
+
             // Carrega a sala temporária no grupo New
             state.nextRoom = generateRoomData(state.transition.newIndex);
-            
-            while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
-            
+
+            while (roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+
             // Posiciona a nova sala ao lado
             roomGroupNew.position.set(direction * CONFIG.width, 0, 0);
             buildRoom3D(state.nextRoom, roomGroupNew);
@@ -2318,23 +2590,23 @@
         function processTransition(dt) {
             const t = state.transition;
             t.progress += dt / t.duration;
-            
+
             if (t.progress >= 1.0) {
                 // Finaliza transição
                 t.active = false;
                 state.screenIndex = t.newIndex;
                 state.activeRoom = state.nextRoom;
-                
+
                 // O grupo New vira o Old
                 // Move os objetos do grupo New para o Old e limpa o New
-                while(roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
-                
+                while (roomGroupOld.children.length > 0) roomGroupOld.remove(roomGroupOld.children[0]);
+
                 // Reconstrói a sala atual no grupo antigo centrado
                 roomGroupOld.position.set(0, 0, 0);
                 buildRoom3D(state.activeRoom, roomGroupOld);
-                
+
                 // Limpa o temporário
-                while(roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
+                while (roomGroupNew.children.length > 0) roomGroupNew.remove(roomGroupNew.children[0]);
 
                 // Ajusta Harry
                 state.player.x = -t.direction * (CONFIG.width / 2 - 1.2);
@@ -2342,19 +2614,19 @@
                 if (state.player.climbing) {
                     state.player.climbing = false;
                 }
-                
+
                 updateHUD();
             } else {
                 // Desloca ambos os grupos no eixo X
                 const offset = -t.direction * CONFIG.width * t.progress;
                 roomGroupOld.position.x = offset;
                 roomGroupNew.position.x = (t.direction * CONFIG.width) + offset;
-                
+
                 // Harry acompanha a transição
                 const harryTargetX = -t.direction * (CONFIG.width / 2 - 1.2);
                 const harryStartX = t.direction * (CONFIG.width / 2);
                 state.player.x = THREE.MathUtils.lerp(harryStartX, harryTargetX, t.progress);
-                
+
                 // Mantém altura travada durante transição
                 state.player.vy = 0;
             }
@@ -2376,7 +2648,7 @@
                     p.vy = 5.0; // Pulo de ricochete
                     p.vx = -p.facing * CONFIG.playerSpeed * 0.4; // empurrão para trás
                     p.grounded = false;
-                    
+
                     som.playHurt();
                     updateHUD();
                 }
@@ -2387,6 +2659,16 @@
             if (snake && state.level === 'surface') {
                 const dist = Math.hypot(p.x - snake.position.x, p.y - snake.position.y);
                 if (dist < 1.1) {
+                    handleDeath();
+                }
+            }
+
+            // 2.2. COLISÃO COM FOGO DE NEON (MORTE)
+            const fire = roomGroupOld.userData.fire;
+            if (fire && state.level === 'surface') {
+                const dist = Math.abs(p.x - fire.position.x);
+                // Colisão se o jogador estiver muito próximo no X e não tiver pulado alto o suficiente
+                if (dist < 0.95 && p.y < 0.8) {
                     handleDeath();
                 }
             }
@@ -2409,7 +2691,7 @@
                 if (dist < 1.2) {
                     // Coleta!
                     state.collectedIndices.add(state.screenIndex);
-                    
+
                     let points = 1000;
                     const type = treasure.userData.type;
                     if (type === 'silver') points = 2000;
@@ -2418,7 +2700,7 @@
 
                     state.score += points;
                     state.treasuresCollected++;
-                    
+
                     // Apaga o modelo
                     roomGroupOld.remove(treasure);
                     roomGroupOld.userData.treasure = null;
@@ -2456,12 +2738,24 @@
         }
 
         function animateActiveRoomElements(dt) {
-            // Animação dos Troncos (rolando para a esquerda)
+            // Animação dos Troncos/Barris/Pedras (rolando para a esquerda)
             const activeLogs = roomGroupOld.userData.logs || [];
+            const rollType = state.activeRoom.rollType;
             activeLogs.forEach(log => {
+                if (log.userData.isStatic) {
+                    // Logs estáticos não se movem nem rotacionam
+                    return;
+                }
                 log.position.x -= 7.5 * dt; // velocidade constante
-                log.rotation.y -= 8.0 * dt; // rotação do rolo
-                
+                if (rollType === 'stone') {
+                    // Pedra (Dodecaedro) rola irregularmente em múltiplos eixos
+                    log.rotation.x -= 8.0 * dt;
+                    log.rotation.y -= 5.0 * dt;
+                } else {
+                    // Tronco/Barril rola no eixo Y local (que virou X por causa da rotação inicial)
+                    log.rotation.y -= 8.0 * dt;
+                }
+
                 // Loop de spawn infinito para a direita se sumir
                 if (log.position.x < -24) {
                     log.position.x = 24 + Math.random() * 8;
@@ -2473,18 +2767,18 @@
             crocs.forEach(croc => {
                 const cData = croc.userData;
                 cData.timer += dt;
-                
-                // Ciclo de 3 segundos
-                const cycle = cData.timer % 3.0;
-                if (cycle < 1.3) {
+
+                // Ciclo de 4 segundos
+                const cycle = cData.timer % 4.0;
+                if (cycle < 2.5) {
                     // Fechado
                     cData.open = false;
                     cData.jawPivot.rotation.z = THREE.MathUtils.lerp(cData.jawPivot.rotation.z, 0, 8 * dt);
                 } else {
                     // Aberto
                     cData.open = true;
-                    // Rotação negativa no eixo Z abre a boca (mandíbula superior sobe)
-                    cData.jawPivot.rotation.z = THREE.MathUtils.lerp(cData.jawPivot.rotation.z, -0.65, 8 * dt);
+                    // Rotação positiva no eixo Z abre a boca (mandíbula superior sobe)
+                    cData.jawPivot.rotation.z = THREE.MathUtils.lerp(cData.jawPivot.rotation.z, 0.65, 8 * dt);
                 }
             });
 
@@ -2505,7 +2799,7 @@
                 const sSpeed = 3.5;
                 const dir = roomGroupOld.userData.scorpDir;
                 scorpion.position.x += dir * sSpeed * dt;
-                
+
                 // Rotaciona para a direção correta
                 scorpion.rotation.y = (dir > 0) ? Math.PI / 2 : -Math.PI / 2;
 
@@ -2520,15 +2814,15 @@
             }
 
             // Animação do Piche Oscilante (Areia Movediça)
-            if (state.activeRoom.type === 4) {
+            if (state.activeRoom.type === 4 || state.activeRoom.type === 6) {
                 const pit = roomGroupOld.userData.pitMesh;
                 if (pit) {
                     // A escala Y oscila de forma senoidal de quase zero a 1
                     const time = performance.now() * 0.0022;
                     const scaleY = 0.5 + Math.sin(time) * 0.52; // valor de 0 a 1.02
                     pit.scale.y = scaleY;
-                    
-                    // Muda de cor neon de acordo com a proximidade de sumir (Rosa para Roxo)
+
+                    // Muda de cor neon de acordo com a proximidade de sumir
                     pit.material.emissiveIntensity = 0.15 + (scaleY * 0.35);
                 }
             }
@@ -2564,50 +2858,52 @@
                 userData.legR.rotation.x = -angle;
                 userData.armL.rotation.x = -angle;
                 userData.armR.rotation.x = angle;
-                
+
                 userData.legL.rotation.z = 0;
                 userData.legR.rotation.z = 0;
                 userData.armL.rotation.z = 0;
                 userData.armR.rotation.z = 0;
-            } 
+            }
             else if (p.swinging) {
                 // Pendurado, pernas encolhidas, braços para cima
                 userData.armL.rotation.z = Math.PI - 0.3;
                 userData.armR.rotation.z = -Math.PI + 0.3;
                 userData.legL.rotation.z = -0.25;
                 userData.legR.rotation.z = 0.25;
-                
+
                 userData.legL.rotation.x = 0;
                 userData.legR.rotation.x = 0;
-            } 
+            }
             else if (!p.grounded) {
                 // No ar (pulo)
                 userData.legL.rotation.z = -0.3;
                 userData.legR.rotation.z = 0.3;
                 userData.armL.rotation.z = 0.5;
                 userData.armR.rotation.z = -0.5;
-                
+
                 userData.legL.rotation.x = 0;
                 userData.legR.rotation.x = 0;
-            } 
+            }
             else if (Math.abs(p.vx) > 0.1) {
                 // Correndo
                 const angle = Math.sin(time * 20) * 0.55;
-                userData.legL.rotation.z = angle;
-                userData.legR.rotation.z = -angle;
-                userData.armL.rotation.z = -angle * 0.8;
-                userData.armR.rotation.z = angle * 0.8;
-                
-                userData.legL.rotation.x = 0;
-                userData.legR.rotation.x = 0;
-            } 
+                userData.legL.rotation.x = angle;
+                userData.legR.rotation.x = -angle;
+                userData.armL.rotation.x = -angle * 0.8;
+                userData.armR.rotation.x = angle * 0.8;
+
+                userData.legL.rotation.z = 0;
+                userData.legR.rotation.z = 0;
+                userData.armL.rotation.z = 0;
+                userData.armR.rotation.z = 0;
+            }
             else {
                 // Parado (Idle)
                 userData.legL.rotation.z = 0;
                 userData.legR.rotation.z = 0;
                 userData.armL.rotation.z = 0;
                 userData.armR.rotation.z = 0;
-                
+
                 userData.legL.rotation.x = 0;
                 userData.legR.rotation.x = 0;
             }
@@ -2681,11 +2977,11 @@
         function endGame(victory, message) {
             state.playing = false;
             som.stopMusic();
-            
+
             // Placar Final
             document.getElementById("summary-score").innerText = String(state.score).padStart(5, '0');
             document.getElementById("summary-treasures").innerText = `${state.treasuresCollected} / ${state.maxTreasures}`;
-            
+
             const mins = Math.floor(state.timeRemaining / 60);
             const secs = Math.floor(state.timeRemaining % 60);
             document.getElementById("summary-time").innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -2727,7 +3023,7 @@
             dt = Math.min(0.1, dt);
 
             updateGame(dt);
-            
+
             renderer.render(scene, camera);
             requestAnimationFrame(mainLoop);
         }
@@ -2740,10 +3036,10 @@
             document.getElementById("btn-start").addEventListener('click', () => {
                 som.init();
                 som.startMusic();
-                
+
                 setupGameStart();
                 state.playing = true;
-                
+
                 document.getElementById("screen-menu").classList.add("hidden");
                 lastTime = performance.now();
             });
@@ -2751,10 +3047,10 @@
             // Botão Reiniciar no Game Over
             document.getElementById("btn-restart").addEventListener('click', () => {
                 som.startMusic();
-                
+
                 setupGameStart();
                 state.playing = true;
-                
+
                 document.getElementById("screen-gameover").classList.add("hidden");
                 lastTime = performance.now();
             });
@@ -2764,4 +3060,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyber Atari - Cyberpunk Gaming Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --neon-cyan: #00f0ff;
@@ -30,7 +33,8 @@
             padding: 0;
         }
 
-        body, html {
+        body,
+        html {
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -95,8 +99,13 @@
         }
 
         @keyframes glow-pulse {
-            from { filter: drop-shadow(0 0 2px rgba(0, 240, 255, 0.1)); }
-            to { filter: drop-shadow(0 0 15px rgba(255, 0, 127, 0.25)); }
+            from {
+                filter: drop-shadow(0 0 2px rgba(0, 240, 255, 0.1));
+            }
+
+            to {
+                filter: drop-shadow(0 0 15px rgba(255, 0, 127, 0.25));
+            }
         }
 
         /* Grade de Jogos */
@@ -132,9 +141,17 @@
         }
 
         /* Variações de cor do topo do card */
-        .game-card.pink { border-top-color: var(--neon-pink); }
-        .game-card.orange { border-top-color: var(--neon-orange); }
-        .game-card.green { border-top-color: var(--neon-green); }
+        .game-card.pink {
+            border-top-color: var(--neon-pink);
+        }
+
+        .game-card.orange {
+            border-top-color: var(--neon-orange);
+        }
+
+        .game-card.green {
+            border-top-color: var(--neon-green);
+        }
 
         .game-card::before {
             content: '';
@@ -154,10 +171,21 @@
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
         }
 
-        .game-card.cyan:hover { box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), 0 20px 45px rgba(0,0,0,0.6); }
-        .game-card.pink:hover { box-shadow: 0 0 25px rgba(255, 0, 127, 0.25), 0 20px 45px rgba(0,0,0,0.6); }
-        .game-card.orange:hover { box-shadow: 0 0 25px rgba(255, 94, 0, 0.25), 0 20px 45px rgba(0,0,0,0.6); }
-        .game-card.green:hover { box-shadow: 0 0 25px rgba(57, 255, 20, 0.25), 0 20px 45px rgba(0,0,0,0.6); }
+        .game-card.cyan:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), 0 20px 45px rgba(0, 0, 0, 0.6);
+        }
+
+        .game-card.pink:hover {
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.25), 0 20px 45px rgba(0, 0, 0, 0.6);
+        }
+
+        .game-card.orange:hover {
+            box-shadow: 0 0 25px rgba(255, 94, 0, 0.25), 0 20px 45px rgba(0, 0, 0, 0.6);
+        }
+
+        .game-card.green:hover {
+            box-shadow: 0 0 25px rgba(57, 255, 20, 0.25), 0 20px 45px rgba(0, 0, 0, 0.6);
+        }
 
         /* Ícone / Ilustração do Jogo no Card */
         .game-icon {
@@ -174,20 +202,50 @@
             transition: all 0.3s ease;
         }
 
-        .game-card.cyan .game-icon { color: var(--neon-cyan); border-color: rgba(0, 240, 255, 0.2); }
-        .game-card.pink .game-icon { color: var(--neon-pink); border-color: rgba(255, 0, 127, 0.2); }
-        .game-card.orange .game-icon { color: var(--neon-orange); border-color: rgba(255, 94, 0, 0.2); }
-        .game-card.green .game-icon { color: var(--neon-green); border-color: rgba(57, 255, 20, 0.2); }
+        .game-card.cyan .game-icon {
+            color: var(--neon-cyan);
+            border-color: rgba(0, 240, 255, 0.2);
+        }
+
+        .game-card.pink .game-icon {
+            color: var(--neon-pink);
+            border-color: rgba(255, 0, 127, 0.2);
+        }
+
+        .game-card.orange .game-icon {
+            color: var(--neon-orange);
+            border-color: rgba(255, 94, 0, 0.2);
+        }
+
+        .game-card.green .game-icon {
+            color: var(--neon-green);
+            border-color: rgba(57, 255, 20, 0.2);
+        }
 
         .game-card:hover .game-icon {
             transform: scale(1.1) rotate(5deg);
             background: rgba(255, 255, 255, 0.08);
         }
 
-        .game-card.cyan:hover .game-icon { box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); background: rgba(0, 240, 255, 0.06); }
-        .game-card.pink:hover .game-icon { box-shadow: 0 0 15px rgba(255, 0, 127, 0.3); background: rgba(255, 0, 127, 0.06); }
-        .game-card.orange:hover .game-icon { box-shadow: 0 0 15px rgba(255, 94, 0, 0.3); background: rgba(255, 94, 0, 0.06); }
-        .game-card.green:hover .game-icon { box-shadow: 0 0 15px rgba(57, 255, 20, 0.3); background: rgba(57, 255, 20, 0.06); }
+        .game-card.cyan:hover .game-icon {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            background: rgba(0, 240, 255, 0.06);
+        }
+
+        .game-card.pink:hover .game-icon {
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+            background: rgba(255, 0, 127, 0.06);
+        }
+
+        .game-card.orange:hover .game-icon {
+            box-shadow: 0 0 15px rgba(255, 94, 0, 0.3);
+            background: rgba(255, 94, 0, 0.06);
+        }
+
+        .game-card.green:hover .game-icon {
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+            background: rgba(57, 255, 20, 0.06);
+        }
 
         /* Títulos dos Cards */
         .game-name {
@@ -199,10 +257,25 @@
             text-transform: uppercase;
         }
 
-        .game-card.cyan .game-name { color: #ffffff; text-shadow: 0 0 8px rgba(0, 240, 255, 0.4); }
-        .game-card.pink .game-name { color: #ffffff; text-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
-        .game-card.orange .game-name { color: #ffffff; text-shadow: 0 0 8px rgba(255, 94, 0, 0.4); }
-        .game-card.green .game-name { color: #ffffff; text-shadow: 0 0 8px rgba(57, 255, 20, 0.4); }
+        .game-card.cyan .game-name {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+        }
+
+        .game-card.pink .game-name {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .game-card.orange .game-name {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 94, 0, 0.4);
+        }
+
+        .game-card.green .game-name {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.4);
+        }
 
         .game-desc {
             font-size: 13.5px;
@@ -226,10 +299,33 @@
             transition: all 0.3s ease;
         }
 
-        .game-card.cyan:hover .play-btn { background: var(--neon-cyan); color: #000000; border-color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4); }
-        .game-card.pink:hover .play-btn { background: var(--neon-pink); color: #ffffff; border-color: var(--neon-pink); box-shadow: 0 0 12px rgba(255, 0, 127, 0.4); }
-        .game-card.orange:hover .play-btn { background: var(--neon-orange); color: #ffffff; border-color: var(--neon-orange); box-shadow: 0 0 12px rgba(255, 94, 0, 0.4); }
-        .game-card.green:hover .play-btn { background: var(--neon-green); color: #000000; border-color: var(--neon-green); box-shadow: 0 0 12px rgba(57, 255, 20, 0.4); }
+        .game-card.cyan:hover .play-btn {
+            background: var(--neon-cyan);
+            color: #000000;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        }
+
+        .game-card.pink:hover .play-btn {
+            background: var(--neon-pink);
+            color: #ffffff;
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.4);
+        }
+
+        .game-card.orange:hover .play-btn {
+            background: var(--neon-orange);
+            color: #ffffff;
+            border-color: var(--neon-orange);
+            box-shadow: 0 0 12px rgba(255, 94, 0, 0.4);
+        }
+
+        .game-card.green:hover .play-btn {
+            background: var(--neon-green);
+            color: #000000;
+            border-color: var(--neon-green);
+            box-shadow: 0 0 12px rgba(57, 255, 20, 0.4);
+        }
 
         /* Rodapé do Hub */
         footer {
@@ -309,7 +405,7 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 35px rgba(0, 240, 255, 0.05);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.05);
             border-top: 3px solid var(--neon-cyan);
         }
 
@@ -363,13 +459,29 @@
 
         /* Responsividade */
         @media (max-width: 768px) {
-            .brand-title { font-size: 38px; letter-spacing: 6px; }
-            .games-grid { grid-template-columns: 1fr; gap: 20px; }
-            #portal-container { padding: 25px 15px; }
-            footer { flex-direction: column; gap: 15px; text-align: center; }
+            .brand-title {
+                font-size: 38px;
+                letter-spacing: 6px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            #portal-container {
+                padding: 25px 15px;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <!-- Fundo Tridimensional Interativo -->
@@ -381,7 +493,8 @@
             <h2 class="welcome-title">CYBER ATARI</h2>
             <div class="brand-subtitle" style="margin-bottom: 20px;">SISTEMA INICIAL</div>
             <p class="welcome-desc">
-                Conectando ao núcleo de entretenimento cibernético retro-futurista. Clique abaixo para iniciar a interface de simulação 3D com áudio integrado.
+                Conectando ao núcleo de entretenimento cibernético retro-futurista. Clique abaixo para iniciar a
+                interface de simulação 3D com áudio integrado.
             </p>
             <button id="btn-init-system" class="btn-primary">CONECTAR NÚCLEO</button>
         </div>
@@ -389,7 +502,7 @@
 
     <!-- Container do Hub -->
     <div id="portal-container">
-        
+
         <header>
             <h1 class="brand-title">Cyber Atari</h1>
             <div class="brand-subtitle">Simuladores 3D Cyberpunk</div>
@@ -397,17 +510,19 @@
 
         <!-- Grid de Seleção de Jogos -->
         <main class="games-grid">
-            
+
             <!-- Card: River Raid -->
             <a href="riverraid.html" class="game-card cyan" id="card-riverraid">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="12 2 2 22 12 17 22 22 12 2"></polygon>
                     </svg>
                 </div>
                 <h2 class="game-name">River Raid 3D</h2>
                 <p class="game-desc">
-                    Pilote seu caça de patrulha pelas profundezas neon do Canyon Cyber. Evite as margens rochosas, destrua as defesas inimigas e reabasteça seu tanque de combustível.
+                    Pilote seu caça de patrulha pelas profundezas neon do Canyon Cyber. Evite as margens rochosas,
+                    destrua as defesas inimigas e reabasteça seu tanque de combustível.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -415,7 +530,8 @@
             <!-- Card: Enduro -->
             <a href="enduro.html" class="game-card pink" id="card-enduro">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="1" y="3" width="22" height="18" rx="2" ry="2"></rect>
                         <line x1="12" y1="21" x2="12" y2="15"></line>
                         <line x1="8" y1="15" x2="16" y2="15"></line>
@@ -424,7 +540,8 @@
                 </div>
                 <h2 class="game-name">Cyber Enduro</h2>
                 <p class="game-desc">
-                    Corra pela Rodovia Neon em uma corrida de resistência. Ultrapasse veículos inimigos sob clima dinâmico e ciclos de dia, noite e estradas escorregadias de gelo.
+                    Corra pela Rodovia Neon em uma corrida de resistência. Ultrapasse veículos inimigos sob clima
+                    dinâmico e ciclos de dia, noite e estradas escorregadias de gelo.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -432,7 +549,8 @@
             <!-- Card: Missel Comando -->
             <a href="missel.html" class="game-card orange" id="card-missel">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="2" x2="12" y2="6"></line>
                         <line x1="12" y1="18" x2="12" y2="22"></line>
                         <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -445,7 +563,8 @@
                 </div>
                 <h2 class="game-name">Missel Comando</h2>
                 <p class="game-desc">
-                    Posicione suas defesas térmicas contra uma chuva implacável de mísseis cibernéticos balísticos inimigos. Proteja suas bases e salve as últimas cidades remanescentes.
+                    Posicione suas defesas térmicas contra uma chuva implacável de mísseis cibernéticos balísticos
+                    inimigos. Proteja suas bases e salve as últimas cidades remanescentes.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -453,7 +572,8 @@
             <!-- Card: Cyber Invaders -->
             <a href="spaceinvaders.html" class="game-card green" id="card-spaceinvaders">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="2" rx="1"></rect>
                         <path d="M5 11V8h2V5h2v3h6V5h2v3h2v3"></path>
                         <path d="M5 13v4h2v-2h2v2h6v-2h2v2h2v-4"></path>
@@ -462,7 +582,8 @@
                 </div>
                 <h2 class="game-name">Cyber Invaders 3D</h2>
                 <p class="game-desc">
-                    Defenda a rede cibernética planetária contra a marcha de invasores alienígenas tridimensionais. Use barreiras de defesa destrutíveis e destrua a Nave-Mãe.
+                    Defenda a rede cibernética planetária contra a marcha de invasores alienígenas tridimensionais. Use
+                    barreiras de defesa destrutíveis e destrua a Nave-Mãe.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -470,7 +591,8 @@
             <!-- Card: Cyber Seaquest -->
             <a href="seaquest.html" class="game-card cyan" id="card-seaquest">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M2 17c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"></path>
                         <rect x="4" y="10" width="14" height="4" rx="2"></rect>
                         <path d="M11 10V7h2M13 7h1"></path>
@@ -480,7 +602,8 @@
                 </div>
                 <h2 class="game-name">Cyber Seaquest 3D</h2>
                 <p class="game-desc">
-                    Mergulhe nas profundezas cibernéticas para resgatar mergulhadores. Gerencie o suprimento de oxigênio, desvie de tubarões robóticos e evite patrulhas na superfície.
+                    Mergulhe nas profundezas cibernéticas para resgatar mergulhadores. Gerencie o suprimento de
+                    oxigênio, desvie de tubarões robóticos e evite patrulhas na superfície.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -488,7 +611,8 @@
             <!-- Card: Cyber Freeway -->
             <a href="freeway.html" class="game-card pink" id="card-freeway">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="2" y1="6" x2="22" y2="6" stroke-dasharray="3,3"></line>
                         <line x1="2" y1="12" x2="22" y2="12" stroke-dasharray="3,3"></line>
                         <line x1="2" y1="18" x2="22" y2="18" stroke-dasharray="3,3"></line>
@@ -501,7 +625,8 @@
                 </div>
                 <h2 class="game-name">Cyber Freeway 3D</h2>
                 <p class="game-desc">
-                    Atravesse a rodovia cibernética de alta velocidade com sua galinha de neon. Desvie do tráfego caótico de carros e caminhões voxelados sob as luzes da cidade cyberpunk.
+                    Atravesse a rodovia cibernética de alta velocidade com sua galinha de neon. Desvie do tráfego
+                    caótico de carros e caminhões voxelados sob as luzes da cidade cyberpunk.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -509,7 +634,8 @@
             <!-- Card: Cyber Tennis -->
             <a href="tennis.html" class="game-card green" id="card-tennis">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="9" r="4"></circle>
                         <path d="M12 12l5 5"></path>
                         <circle cx="15" cy="15" r="4"></circle>
@@ -520,7 +646,8 @@
                 </div>
                 <h2 class="game-name">Cyber Tennis 3D</h2>
                 <p class="game-desc">
-                    Dispute partidas eletrizantes em uma arena de laser 3D flutuante. Controle sua raquete-drone, rebata com efeitos laterais e vença o oponente com o placar clássico.
+                    Dispute partidas eletrizantes em uma arena de laser 3D flutuante. Controle sua raquete-drone, rebata
+                    com efeitos laterais e vença o oponente com o placar clássico.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -528,13 +655,31 @@
             <!-- Card: Cyber Pitfall -->
             <a href="pitfall.html" class="game-card orange" id="card-pitfall">
                 <div class="game-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 3h12M6 8h12M6 13h12M6 18h12M6 21v-18M18 21v-18" stroke-width="2"></path>
                     </svg>
                 </div>
                 <h2 class="game-name">Cyber Pitfall 3D</h2>
                 <p class="game-desc">
-                    Explore uma selva cibernética perigosa. Corra e salte sobre troncos de neon, balance em lianas eletrônicas e evite jacarés e poços de areia movediça.
+                    Explore uma selva cibernética perigosa. Corra e salte sobre troncos de neon, balance em lianas
+                    eletrônicas e evite jacarés e poços de areia movediça.
+                </p>
+                <div class="play-btn">Jogar</div>
+            </a>
+
+            <!-- Card: Neon Frogger -->
+            <a href="frog.html" class="game-card green" id="card-frog">
+                <div class="game-icon">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <h2 class="game-name">Neon Frogger 3D</h2>
+                <p class="game-desc">
+                    Guie o Frogger Cibernético em uma matriz tridimensional. Atravesse vias expressas neon com carros autônomos
+                    e navegue por rios de plasma tóxico em plataformas magnéticas flutuantes.
                 </p>
                 <div class="play-btn">Jogar</div>
             </a>
@@ -591,7 +736,7 @@
             toggleMute() {
                 this.muted = !this.muted;
                 if (!this.ctx) return this.muted;
-                
+
                 if (this.muted) {
                     this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
                 } else {
@@ -648,7 +793,7 @@
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
                 const notas = [220.00, 277.18, 329.63, 440.00, 554.37, 659.25, 880.00]; // Arpejo de Lá Maior futurista
-                
+
                 notas.forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
@@ -680,11 +825,11 @@
                         if (this.beat % 2 === 0) {
                             const bassline = [110.00, 110.00, 98.00, 98.00, 87.31, 87.31, 73.42, 82.41];
                             const nota = bassline[Math.floor(this.beat / 2) % bassline.length];
-                            
+
                             const osc = this.ctx.createOscillator();
                             const filter = this.ctx.createBiquadFilter();
                             const gain = this.ctx.createGain();
-                            
+
                             osc.type = 'triangle';
                             osc.frequency.setValueAtTime(nota, t);
 
@@ -697,7 +842,7 @@
                             osc.connect(filter);
                             filter.connect(gain);
                             gain.connect(this.masterGain);
-                            
+
                             osc.start(t);
                             osc.stop(t + step * 2.0);
                         }
@@ -900,7 +1045,7 @@
                 som.init();
                 som.playConectar();
                 som.startMusic();
-                
+
                 const welcomeScreen = document.getElementById("screen-welcome");
                 welcomeScreen.classList.add("hidden");
             });
@@ -937,4 +1082,5 @@
         });
     </script>
 </body>
+
 </html>

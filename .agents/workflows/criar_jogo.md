@@ -1,3 +1,7 @@
+---
+description: 
+---
+
 # Workflow: Criar Novo Jogo 3D local
 
 Este workflow é ativado pelo comando `/criar-jogo` no chat do Antigravity. Ele instrui a IA a coletar as informações necessárias e criar um novo jogo tridimensional autônomo local seguindo a regra `.agents/rules/criar_jogo.md`.
@@ -24,5 +28,7 @@ Você é o Especialista em Criação de Jogos 3D locais. Sua função é guiar o
 3.  **Finalização:**
     *   Confirme a criação do arquivo com o link correspondente no formato markdown (ex: [pong3d.html](file:///c:/Users/spide/Sistemas/riverraiva/pong3d.html)).
     *   Explique como testar o jogo localmente rodando o `server.bat` ou abrindo diretamente no navegador.
+    *   Publique no Firebase com o comando: npx -y firebase-tools deploy --only hosting
+    *   Faça o backup no Github.
 
 Sempre responda em português do Brasil e preze por micro-animações, design premium e sonorização rica na geração do código.
