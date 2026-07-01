@@ -1307,9 +1307,9 @@
             // Ajusta dimensões da caixa do rastro baseado no vetor direcional
             // Eixo X ou Z
             if (Math.abs(dir.x) > 0.5) {
-                wallMesh.scale.set(dist / 0.06, 1.0, 1.0); // Estica em X
+                wallMesh.scale.set(Math.max(0.01, dist / 0.06), 1.0, 1.0); // Estica em X
             } else {
-                wallMesh.scale.set(1.0, 1.0, dist / 0.06); // Estica em Z
+                wallMesh.scale.set(1.0, 1.0, Math.max(0.01, dist / 0.06)); // Estica em Z
             }
         }
 
@@ -1437,9 +1437,12 @@
                 }
 
                 // Checa com a barreira ativa do Player
-                const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
-                if (futureBox.intersectsBox(playerActiveBox)) {
-                    willCollide = true;
+                const distPlayer = playerWallStart.distanceTo(playerPos);
+                if (distPlayer > 0.5) {
+                    const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
+                    if (futureBox.intersectsBox(playerActiveBox)) {
+                        willCollide = true;
+                    }
                 }
             }
 
@@ -1536,28 +1539,36 @@
             });
 
             // 3. Colisão com os Rastros Ativos Atuais
-            // Para evitar colisões falsas com a própria "traseira" da moto no mesmo rastro,
-            // só checamos o rastro ativo se o comprimento dele for maior que 1.5 unidades.
-            const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
-            const cpuActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
+            // Para evitar colisões falsas no spawn e com a traseira da moto,
+            // checamos o rastro do rival se ele já andou mais de 0.5, e consigo mesmo mais de 1.5.
+            const playerDist = playerWallStart.distanceTo(playerPos);
+            const cpuDist = cpuWallStart.distanceTo(cpuPos);
 
             // Colisão Player vs Trilha Ativa CPU
-            if (playerBox.intersectsBox(cpuActiveBox)) {
-                playerDied = true;
+            if (cpuDist > 0.5) {
+                const cpuActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
+                if (playerBox.intersectsBox(cpuActiveBox)) {
+                    playerDied = true;
+                }
             }
 
             // Colisão CPU vs Trilha Ativa Player
-            if (cpuBox.intersectsBox(playerActiveBox)) {
-                cpuDied = true;
+            if (playerDist > 0.5) {
+                const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
+                if (cpuBox.intersectsBox(playerActiveBox)) {
+                    cpuDied = true;
+                }
             }
 
             // Colisão consigo mesma (Se o rastro for grande)
-            if (playerWallStart.distanceTo(playerPos) > 1.5) {
+            if (playerDist > 1.5) {
+                const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
                 if (playerBox.intersectsBox(playerActiveBox)) {
                     playerDied = true;
                 }
             }
-            if (cpuWallStart.distanceTo(cpuPos) > 1.5) {
+            if (cpuDist > 1.5) {
+                const cpuActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
                 if (cpuBox.intersectsBox(cpuActiveBox)) {
                     cpuDied = true;
                 }
