@@ -551,6 +551,10 @@
                 <div id="hud-distance" class="hud-value cyan">0000m</div>
             </div>
             <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                <div class="hud-label">Fase</div>
+                <div id="hud-phase" class="hud-value green">01</div>
+            </div>
+            <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
                 <div class="hud-label">Pontos</div>
                 <div id="hud-score" class="hud-value red">00000</div>
             </div>
@@ -1002,6 +1006,12 @@
         let goblinBombs = []; // Bombas caindo do Duende Verde
         let sparks = []; // Partículas de teia e faíscas
 
+        // Controle de Fases e Altura do Prédio
+        let scenarioObjects = [];
+        let currentPhase = 1;
+        let buildingHeight = 42.0;
+        let totalDistance = 40.0;
+
         // Estado Físico do Jogador (Spiderman)
         // O prédio fica em Z = 0. A fachada de escalada está em Z = 0.85
         let playerPos = new THREE.Vector3(0.0, 1.5, 0.85);
@@ -1054,6 +1064,7 @@
         // Elementos DOM
         const hudLives = document.getElementById('hud-lives');
         const hudDistance = document.getElementById('hud-distance');
+        const hudPhase = document.getElementById('hud-phase');
         const hudScore = document.getElementById('hud-score');
         const webFluidBar = document.getElementById('web-fluid-bar');
         const btnSound = document.getElementById('btn-sound');
@@ -1331,10 +1342,15 @@
         // 4. CONSTRUÇÃO DO CENÁRIO E PRÉDIO ÚNICO DO DUENDE VERDE
         // ============================================================================
         function initScenario() {
-            // Prédio Único Escalável
-            // Largura = 8.5, Altura = 42.0
+            // Limpa cenário antigo se existir para evitar vazamento
+            scenarioObjects.forEach(obj => scene.remove(obj));
+            scenarioObjects = [];
+
+            // A altura do prédio aumenta em 15 unidades a cada nova fase
+            buildingHeight = 42.0 + (currentPhase - 1) * 15.0;
+            totalDistance = buildingHeight - 2.0;
+
             const bWidth = 8.5;
-            const bHeight = 42.0;
             const bDepth = 1.4;
 
             const bMat = new THREE.MeshStandardMaterial({
@@ -1343,14 +1359,15 @@
                 metalness: 0.3
             });
 
-            buildingMesh = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), bMat);
-            buildingMesh.position.set(0, bHeight / 2, 0);
+            buildingMesh = new THREE.Mesh(new THREE.BoxGeometry(bWidth, buildingHeight, bDepth), bMat);
+            buildingMesh.position.set(0, buildingHeight / 2, 0);
             buildingMesh.receiveShadow = true;
             scene.add(buildingMesh);
+            scenarioObjects.push(buildingMesh);
 
             // Moldura externa brilhante do prédio (Bordas laterais Neon Vermelho)
             const borderMat = new THREE.MeshBasicMaterial({ color: 0xff003c });
-            const borderL = new THREE.Mesh(new THREE.BoxGeometry(0.12, bHeight, 0.12), borderMat);
+            const borderL = new THREE.Mesh(new THREE.BoxGeometry(0.12, buildingHeight, 0.12), borderMat);
             borderL.position.set(-bWidth / 2 - 0.06, 0, bDepth / 2 + 0.06);
             buildingMesh.add(borderL);
 
@@ -1359,12 +1376,13 @@
             buildingMesh.add(borderR);
 
             // Linhas horizontais neon azul dividindo os andares para destacar a estrutura
-            for (let y = 1.9; y <= 37.0; y += 2.2) {
+            for (let y = 1.9; y <= buildingHeight - 5.0; y += 2.2) {
                 const floorLineGeo = new THREE.BoxGeometry(bWidth, 0.04, 0.04);
                 const floorLineMat = new THREE.MeshBasicMaterial({ color: 0x0066ff });
                 const floorLine = new THREE.Mesh(floorLineGeo, floorLineMat);
                 floorLine.position.set(0, y, 0.85);
                 scene.add(floorLine);
+                scenarioObjects.push(floorLine);
             }
 
             // Linha de Andaime/Gantry no topo (Super Bomba)
@@ -1374,7 +1392,7 @@
                 roughness: 0.2
             });
             const gantry = new THREE.Mesh(new THREE.BoxGeometry(bWidth + 0.8, 1.2, 2.0), gantryMat);
-            gantry.position.set(0, bHeight / 2 + 0.6, 0);
+            gantry.position.set(0, buildingHeight / 2 - 0.6, 0); // Ajustado para ficar logo abaixo do topo
             buildingMesh.add(gantry);
 
             // Borda do gantry verde brilhante
@@ -1390,8 +1408,9 @@
                 emissiveIntensity: 0.9
             });
             const superBomb = new THREE.Mesh(superBombGeo, superBombMat);
-            superBomb.position.set(0, bHeight / 2 + 1.6, 0.5);
+            superBomb.position.set(0, buildingHeight - 0.4, 0.5);
             scene.add(superBomb);
+            scenarioObjects.push(superBomb);
 
             // 5. Janelas em Grid com Moldura Neon Ciano
             const winMatClosed = new THREE.MeshStandardMaterial({
@@ -1400,7 +1419,7 @@
                 roughness: 0.1
             });
 
-            for (let y = 3.0; y <= 35.0; y += 2.2) {
+            for (let y = 3.0; y <= buildingHeight - 7.0; y += 2.2) {
                 for (let x = -3.0; x <= 3.0; x += 1.5) {
                     // Moldura Neon Ciano
                     const frameGeo = new THREE.BoxGeometry(0.85, 1.05, 0.02);
@@ -1408,12 +1427,14 @@
                     const frameMesh = new THREE.Mesh(frameGeo, frameMat);
                     frameMesh.position.set(x, y, 0.85);
                     scene.add(frameMesh);
+                    scenarioObjects.push(frameMesh);
 
                     // Vidro de janela reflexivo escuro
                     const glassGeo = new THREE.PlaneGeometry(0.77, 0.97);
                     const glassMesh = new THREE.Mesh(glassGeo, winMatClosed);
                     glassMesh.position.set(x, y, 0.852);
                     scene.add(glassMesh);
+                    scenarioObjects.push(glassMesh);
                 }
             }
         }
@@ -1723,7 +1744,7 @@
 
             btnStart.addEventListener('click', (e) => { e.currentTarget.blur(); startGame(); });
             btnRestartLost.addEventListener('click', (e) => { e.currentTarget.blur(); restartGame(); });
-            btnRestartWin.addEventListener('click', (e) => { e.currentTarget.blur(); restartGame(); });
+            btnRestartWin.addEventListener('click', (e) => { e.currentTarget.blur(); startNextPhase(); });
 
             btnSound.addEventListener('click', (e) => {
                 e.currentTarget.blur();
@@ -1868,6 +1889,7 @@
             screenGameover.classList.add('hidden');
             screenVictory.classList.add('hidden');
 
+            currentPhase = 1;
             score = 0;
             lives = MAX_LIVES;
             distanceTraveled = 0.0;
@@ -1877,6 +1899,10 @@
             damageFlash = 0.0;
             isGoblinDead = false;
             webClungToGoblin = false;
+
+            // Recria o cenário do prédio para a Fase 1
+            initScenario();
+
             if (greenGoblinGroup) {
                 scene.remove(greenGoblinGroup);
                 scene.add(greenGoblinGroup);
@@ -1906,6 +1932,58 @@
             gameState = GAME_STATES.PLAYING;
         }
 
+        function startNextPhase() {
+            currentPhase++;
+            
+            // Bônus de vida ao passar de fase (limite de 3)
+            lives = Math.min(MAX_LIVES, lives + 1);
+
+            screenVictory.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+            
+            distanceTraveled = 0.0;
+            webFluid = 100.0;
+            isDead = false;
+            isFalling = false;
+            damageFlash = 0.0;
+            isGoblinDead = false;
+            webClungToGoblin = false;
+
+            // Recria o cenário do prédio com a nova altura
+            initScenario();
+
+            if (greenGoblinGroup) {
+                scene.remove(greenGoblinGroup);
+                scene.add(greenGoblinGroup);
+                greenGoblinGroup.scale.set(1.0, 1.0, 1.0);
+            }
+
+            capangaSpawnTimer = 0.0;
+            bombSpawnTimer = 0.0;
+
+            // Remove inimigos antigos
+            capangas.forEach(c => scene.remove(c.mesh));
+            capangas = [];
+            
+            bombs.forEach(b => scene.remove(b.mesh));
+            bombs = [];
+            
+            goblinBombs.forEach(g => scene.remove(g.mesh));
+            goblinBombs = [];
+
+            playerPos.set(0.0, 1.2, 0.85);
+            playerVel.set(0.0, 0.0, 0.0);
+            playerGroup.position.copy(playerPos);
+            playerGroup.visible = true;
+
+            releaseWeb();
+            updateHUD();
+            gameState = GAME_STATES.PLAYING;
+
+            som.init();
+            som.startMusic();
+        }
+
         function restartGame() {
             startGame();
         }
@@ -1916,7 +1994,10 @@
             releaseWeb();
 
             document.getElementById('summary-score-win').innerText = score;
-            document.getElementById('summary-dist-win').innerText = '40m';
+            document.getElementById('summary-dist-win').innerText = Math.floor(buildingHeight) + 'm';
+            
+            // Atualiza texto do botão de avanço
+            btnRestartWin.innerText = "Avançar para Fase " + (currentPhase + 1);
             screenVictory.classList.remove('hidden');
         }
 
@@ -1935,6 +2016,9 @@
             hudScore.innerText = String(score).padStart(5, '0');
             hudDistance.innerText = Math.floor(distanceTraveled) + 'm';
             webFluidBar.style.width = webFluid + '%';
+            if (hudPhase) {
+                hudPhase.innerText = String(currentPhase).padStart(2, '0');
+            }
 
             hudLives.innerHTML = '';
             for (let i = 0; i < MAX_LIVES; i++) {
@@ -2290,13 +2374,13 @@
                 }
 
                 // 5. Controla o Duende Verde no Topo
-                // Fica em Y = 36.0 voando de um lado para o outro (X = -3.8 a 3.8)
-                const goblinTime = Date.now() * 0.0018;
+                // Voa de um lado para o outro. Sua velocidade e altura aumentam conforme a fase.
+                const goblinTime = Date.now() * (0.0018 + (currentPhase - 1) * 0.0003);
                 const goblinX = Math.sin(goblinTime) * 3.6;
-                greenGoblinGroup.position.set(goblinX, 36.0, 1.0);
+                greenGoblinGroup.position.set(goblinX, buildingHeight - 6.0, 1.0);
 
                 // Inclina o planador na direção do movimento lateral
-                const speedX = Math.cos(goblinTime) * 3.6 * 0.0018;
+                const speedX = Math.cos(goblinTime) * 3.6 * (0.0018 + (currentPhase - 1) * 0.0003);
                 greenGoblinGroup.rotation.z = -speedX * 350.0;
                 greenGoblinGroup.rotation.x = Math.sin(goblinTime * 3.0) * 0.12; // Oscilação vertical suave
 
@@ -2305,10 +2389,9 @@
                 if (greenGoblinGroup.flameL) greenGoblinGroup.flameL.scale.set(1.0, 1.0, flameScale);
                 if (greenGoblinGroup.flameR) greenGoblinGroup.flameR.scale.set(1.0, 1.0, flameScale);
 
-                // Goblin joga bombas se o player estiver escalando
-                if (playerPos.y > 6.0 && playerPos.y < 35.0 && !isDead) {
-                    // Spawna bomba dependendo do tempo
-                    if (Math.random() < 0.015 && goblinBombs.length < 3) {
+                // Goblin joga bombas se o player estiver escalando (taxa e limite sobem com a fase)
+                if (playerPos.y > 6.0 && playerPos.y < buildingHeight - 7.0 && !isDead) {
+                    if (Math.random() < (0.015 + (currentPhase - 1) * 0.004) && goblinBombs.length < (3 + currentPhase)) {
                         const bombGeo = new THREE.SphereGeometry(0.16, 8, 8);
                         const bombMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
                         const bomb = new THREE.Mesh(bombGeo, bombMat);
@@ -2317,7 +2400,7 @@
 
                         goblinBombs.push({
                             mesh: bomb,
-                            vy: -5.0 // Cai verticalmente
+                            vy: -5.0 - (currentPhase - 1) * 0.8 // Bombas caem mais rápido em fases altas
                         });
                     }
                 }
