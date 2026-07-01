@@ -1049,6 +1049,7 @@
         // ============================================================================
         
         // Cria o Homem-Aranha estilo pixel/bloco retrô do Atari 2600
+        // Cria o Homem-Aranha estilo pixel/bloco retrô do Atari 2600
         function createSpidermanAtari() {
             const group = new THREE.Group();
 
@@ -1064,6 +1065,7 @@
                 metalness: 0.1
             });
 
+            const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
             const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
             // Tronco (Blocos pixelados vermelhos e azuis)
@@ -1075,21 +1077,67 @@
             belt.position.y = 0.05;
             group.add(belt);
 
+            // Logotipo da Aranha Preta no Peito
+            const spiderLogo = new THREE.Group();
+            const logoCore = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.02), blackMat);
+            logoCore.position.set(0, 0.22, 0.101);
+            spiderLogo.add(logoCore);
+
+            for (let i = 0; i < 4; i++) {
+                const legLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.016, 0.02), blackMat);
+                legLeft.position.set(-0.05, 0.24 - i * 0.03, 0.101);
+                legLeft.rotation.z = Math.PI / 5;
+                spiderLogo.add(legLeft);
+
+                const legRight = legLeft.clone();
+                legRight.position.x = 0.05;
+                legRight.rotation.z = -Math.PI / 5;
+                spiderLogo.add(legRight);
+            }
+            group.add(spiderLogo);
+
+            // Aranha Vermelha nas Costas
+            const spiderBack = new THREE.Group();
+            const backCore = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.02), redMat);
+            backCore.position.set(0, 0.22, -0.101);
+            spiderBack.add(backCore);
+            
+            for (let i = 0; i < 4; i++) {
+                const legLeft = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.016, 0.02), redMat);
+                legLeft.position.set(-0.06, 0.24 - i * 0.03, -0.101);
+                legLeft.rotation.z = -Math.PI / 5;
+                spiderBack.add(legLeft);
+
+                const legRight = legLeft.clone();
+                legRight.position.x = 0.06;
+                legRight.rotation.z = Math.PI / 5;
+                spiderBack.add(legRight);
+            }
+            group.add(spiderBack);
+
             // Cabeça Vermelha
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.28, 0.18), redMat);
             head.position.y = 0.5;
             group.add(head);
 
-            // Olhos Brancos do Spiderman (Triângulos/Planos pixelados)
+            // Olhos Brancos com contornos pretos
+            const eyeBackL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.01), blackMat);
+            eyeBackL.position.set(-0.06, 0.5, 0.091);
+            group.add(eyeBackL);
+
+            const eyeBackR = eyeBackL.clone();
+            eyeBackR.position.x = 0.06;
+            group.add(eyeBackR);
+
             const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
-            eyeL.position.set(-0.06, 0.5, 0.091);
+            eyeL.position.set(-0.06, 0.5, 0.093);
             group.add(eyeL);
 
             const eyeR = eyeL.clone();
             eyeR.position.x = 0.06;
             group.add(eyeR);
 
-            // Braços abertos para escalada (Vermelho)
+            // Braços abertos para escalada (Vermelho) com Lançadores de Teias
             const armL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.1, 0.1), redMat);
             armL.position.set(-0.3, 0.28, 0.02);
             armL.rotation.z = Math.PI / 8;
@@ -1099,6 +1147,17 @@
             armR.position.set(0.3, 0.28, 0.02);
             armR.rotation.z = -Math.PI / 8;
             group.add(armR);
+
+            // Lançador ciano nos pulsos
+            const shooterGeo = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+            const shooterMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const shooterL = new THREE.Mesh(shooterGeo, shooterMat);
+            shooterL.position.set(-0.16, 0.0, 0.051);
+            armL.add(shooterL);
+
+            const shooterR = shooterL.clone();
+            shooterR.position.x = 0.16;
+            armR.add(shooterR);
 
             // Pernas abertas para escalada (Azul)
             const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, 0.1), blueMat);
@@ -1119,6 +1178,12 @@
             const footR = footL.clone();
             footR.position.x = 0.23;
             group.add(footR);
+
+            // Guarda referências para animar em update()
+            group.armL = armL;
+            group.armR = armR;
+            group.legL = legL;
+            group.legR = legR;
 
             group.castShadow = true;
             return group;
@@ -1159,17 +1224,63 @@
             trim.position.y = -0.06;
             group.add(trim);
 
+            // Propulsores a jato traseiros do planador
+            const engineL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.3, 8), steelMat);
+            engineL.rotation.x = Math.PI / 2;
+            engineL.position.set(-0.45, -0.12, -0.2);
+            group.add(engineL);
+
+            const engineR = engineL.clone();
+            engineR.position.x = 0.45;
+            group.add(engineR);
+
+            // Chamas neon rosa do escapamento
+            const flameGeo = new THREE.ConeGeometry(0.09, 0.4, 8);
+            flameGeo.translate(0, -0.2, 0); // Pivô na base do cone
+            flameGeo.rotateX(-Math.PI / 2);
+            
+            const flameL = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xff00ff }));
+            flameL.position.set(-0.45, -0.12, -0.36);
+            group.add(flameL);
+            group.flameL = flameL;
+
+            const flameR = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xff00ff }));
+            flameR.position.set(0.45, -0.12, -0.36);
+            group.add(flameR);
+            group.flameR = flameR;
+
             // O Duende Verde (Bloco Verde com gorro roxo)
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.22), greenMat);
             body.position.y = 0.25;
             group.add(body);
+
+            // Bolsa de Bombas Abóbora transversal roxa
+            const bagStrap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.04, 0.25), purpleMat);
+            bagStrap.rotation.z = Math.PI / 4;
+            bagStrap.position.set(0, 0.26, 0.01);
+            group.add(bagStrap);
+
+            const bag = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.1), purpleMat);
+            bag.position.set(0.16, 0.12, 0.13);
+            group.add(bag);
 
             // Cabeça
             const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), greenMat);
             head.position.set(0, 0.52, 0.02);
             group.add(head);
 
-            // Olhos amarelos
+            // Orelhas pontudas verdes nas laterais da cabeça
+            const earL = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.14, 4), greenMat);
+            earL.rotation.z = -Math.PI / 3;
+            earL.position.set(-0.15, 0.54, 0.02);
+            group.add(earL);
+
+            const earR = earL.clone();
+            earR.rotation.z = Math.PI / 3;
+            earR.position.x = 0.15;
+            group.add(earR);
+
+            // Olhos amarelos brilhantes
             const eyeGeo = new THREE.SphereGeometry(0.04, 4, 4);
             const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
             eyeL.position.set(-0.06, 0.54, 0.12);
@@ -2007,8 +2118,19 @@
 
                     if (moving) {
                         som.startClimbingSound();
+                        // Animação de escalada alternada nas pernas e braços!
+                        const t = Date.now() * 0.012;
+                        playerGroup.armL.rotation.z = Math.PI / 8 + Math.sin(t) * 0.35;
+                        playerGroup.armR.rotation.z = -Math.PI / 8 + Math.cos(t) * 0.35;
+                        playerGroup.legL.rotation.z = -Math.PI / 6 + Math.cos(t) * 0.25;
+                        playerGroup.legR.rotation.z = Math.PI / 6 + Math.sin(t) * 0.25;
                     } else {
                         som.stopClimbingSound();
+                        // Reseta posição neutra
+                        playerGroup.armL.rotation.z = Math.PI / 8;
+                        playerGroup.armR.rotation.z = -Math.PI / 8;
+                        playerGroup.legL.rotation.z = -Math.PI / 6;
+                        playerGroup.legR.rotation.z = Math.PI / 6;
                     }
                 }
 
@@ -2018,9 +2140,20 @@
                 if (hasWeb && isClimbingWeb) {
                     // Balança de leve
                     playerGroup.rotation.z = Math.sin(Date.now() * 0.015) * 0.25;
+                    // Animação de puxar teia (braços alternando)
+                    const t = Date.now() * 0.015;
+                    playerGroup.armL.rotation.z = Math.PI / 4 + Math.sin(t) * 0.5;
+                    playerGroup.armR.rotation.z = -Math.PI / 4 + Math.cos(t) * 0.5;
+                    playerGroup.legL.rotation.z = -Math.PI / 4;
+                    playerGroup.legR.rotation.z = Math.PI / 4;
                 } else if (isFalling) {
-                    // Gira em queda
+                    // Gira em queda e esperneia
                     playerGroup.rotation.z += deltaTime * 8.0;
+                    const t = Date.now() * 0.02;
+                    playerGroup.armL.rotation.z = Math.sin(t) * 0.8;
+                    playerGroup.armR.rotation.z = Math.cos(t) * 0.8;
+                    playerGroup.legL.rotation.z = Math.sin(t + 1) * 0.6;
+                    playerGroup.legR.rotation.z = Math.cos(t + 1) * 0.6;
                 } else {
                     // Rotação normal grudado na parede
                     playerGroup.rotation.z = 0;
@@ -2084,6 +2217,16 @@
                 const goblinTime = Date.now() * 0.0018;
                 const goblinX = Math.sin(goblinTime) * 3.6;
                 greenGoblinGroup.position.set(goblinX, 36.0, 1.0);
+
+                // Inclina o planador na direção do movimento lateral
+                const speedX = Math.cos(goblinTime) * 3.6 * 0.0018;
+                greenGoblinGroup.rotation.z = -speedX * 350.0;
+                greenGoblinGroup.rotation.x = Math.sin(goblinTime * 3.0) * 0.12; // Oscilação vertical suave
+
+                // Oscilação das chamas de jato do planador
+                const flameScale = 0.8 + Math.random() * 0.5;
+                if (greenGoblinGroup.flameL) greenGoblinGroup.flameL.scale.set(1.0, 1.0, flameScale);
+                if (greenGoblinGroup.flameR) greenGoblinGroup.flameR.scale.set(1.0, 1.0, flameScale);
 
                 // Goblin joga bombas se o player estiver escalando
                 if (playerPos.y > 6.0 && playerPos.y < 35.0 && !isDead) {
