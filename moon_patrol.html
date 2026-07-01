@@ -1018,6 +1018,7 @@
         // ============================================================================
         let scene, camera, renderer, lastTime = 0;
         let starfield;
+        let bgGrid;
 
         // Entidades
         let playerVehicle;
@@ -1523,7 +1524,7 @@
 
             playerLasers.push({
                 mesh: laserV,
-                vx: currentScrollSpeed, // Acompanha a velocidade do chão para subir reto do ponto de vista do jipe
+                vx: 0.0, // Subida vertical reta absoluta no espaço lunar
                 vy: 18.0,
                 isHorizontal: false
             });
@@ -1723,7 +1724,7 @@
             const container = document.getElementById('canvas-container');
 
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x020206, 0.026);
+            scene.fog = new THREE.FogExp2(0x0a061e, 0.022);
 
             // Câmera 3D side-scroller em perspectiva lateral
             camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 1000);
@@ -1731,9 +1732,18 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x0a061e); // Cor do fundo clareada
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
+
+            // Grade 3D vertical infinita no fundo com paralaxe
+            bgGrid = new THREE.GridHelper(120, 30, 0xff007f, 0x1d0f3c);
+            bgGrid.rotation.x = Math.PI / 2;
+            bgGrid.position.set(0, 5, -8.0);
+            bgGrid.material.transparent = true;
+            bgGrid.material.opacity = 0.28;
+            scene.add(bgGrid);
 
             // Luzes
             const ambientLight = new THREE.AmbientLight(0x130d2a, 0.95);
@@ -1846,6 +1856,14 @@
             }
 
             camera.lookAt(playerVehicle.position.x + 2.5, playerVehicle.position.y + 0.8, playerVehicle.position.z);
+
+            // Movimenta a grade 3D de fundo infinita (Paralaxe)
+            if (bgGrid && gameState === GAME_STATES.PLAYING) {
+                bgGrid.position.x -= (currentScrollSpeed * 0.35) * deltaTime;
+                if (bgGrid.position.x < -4.0) {
+                    bgGrid.position.x += 4.0;
+                }
+            }
 
             if (gameState === GAME_STATES.PLAYING) {
                 
