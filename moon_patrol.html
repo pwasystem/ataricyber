@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Moon Patrol 3D - Lunar Recon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #020206;
+            --glass-bg: rgba(6, 4, 16, 0.76);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --cyan-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+            --orange-glow: 0 0 10px rgba(255, 94, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* CRT Scanlines e Efeito de Vinheta */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.9);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-value.green {
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        .hud-value.orange {
+            color: var(--neon-orange);
+            text-shadow: var(--orange-glow);
+        }
+
+        .hud-lives-container {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .life-icon {
+            width: 14px;
+            height: 14px;
+            background-color: var(--neon-cyan);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: var(--cyan-glow);
+            transition: all 0.3s;
+        }
+
+        .life-icon.lost {
+            background-color: #3b3b4a;
+            box-shadow: none;
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .mobile-pad {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 68px;
+            height: 68px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            touch-action: manipulation;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            transform: scale(0.95);
+        }
+
+        .action-pad {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .btn-shoot {
+            background: rgba(255, 0, 127, 0.25);
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .btn-shoot:active {
+            background: rgba(255, 0, 127, 0.45);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+        }
+
+        .camera-controls-mobile {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .cam-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 13px;
+        }
+
+        /* Overlays (Telas) */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(10, 5, 22, 0.88) 0%, rgba(3, 1, 8, 0.99) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(15, 6, 28, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px 40px;
+            width: 90%;
+            max-width: 560px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.03);
+            border-top: 3px solid var(--neon-cyan);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 6px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 50%, var(--neon-orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-orange);
+            letter-spacing: 4px;
+            margin-bottom: 22px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--orange-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 5px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-orange));
+            color: #0b0314;
+            border: none;
+            padding: 14px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.45);
+            filter: brightness(1.15);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .score-summary {
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 18px 0 22px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s ease-in-out infinite;
+            box-shadow: var(--cyan-glow);
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            .hud-panel {
+                padding: 8px 12px;
+                gap: 12px;
+            }
+            .hud-value {
+                font-size: 16px;
+            }
+            .hud-btn {
+                padding: 6px 8px;
+                font-size: 9px;
+            }
+            .menu-card {
+                padding: 24px;
+            }
+            .game-title {
+                font-size: 24px;
+                letter-spacing: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO SIMULAÇÃO MOON PATROL 3D...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD Superior -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">Integridade</div>
+                <div id="hud-lives" class="hud-lives-container">
+                    <span class="life-icon"></span>
+                    <span class="life-icon"></span>
+                    <span class="life-icon"></span>
+                </div>
+            </div>
+            <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                <div class="hud-label">Setor</div>
+                <div id="hud-sector" class="hud-value orange">A</div>
+            </div>
+            <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                <div class="hud-label">Distância</div>
+                <div id="hud-distance" class="hud-value cyan">0000m</div>
+            </div>
+            <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                <div class="hud-label">Pontos</div>
+                <div id="hud-score" class="hud-value green">00000</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Virtuais Mobile -->
+    <div id="mobile-controls">
+        <div class="mobile-pad">
+            <button id="btn-left-mobile" class="mobile-btn">◀ Freio</button>
+            <button id="btn-right-mobile" class="mobile-btn">Acelera ▶</button>
+            <button id="btn-up-mobile" class="mobile-btn">▲ Salto</button>
+        </div>
+        <div class="action-pad">
+            <button id="btn-shoot-mobile" class="mobile-btn btn-shoot">🔥 Atirar</button>
+        </div>
+        <div class="camera-controls-mobile">
+            <button id="btn-cam-rot-l" class="mobile-btn cam-btn">⟲</button>
+            <button id="btn-cam-rot-r" class="mobile-btn cam-btn">⟳</button>
+            <button id="btn-cam-zoom-in" class="mobile-btn cam-btn">＋</button>
+            <button id="btn-cam-zoom-out" class="mobile-btn cam-btn">－</button>
+        </div>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER MOON PATROL</h1>
+            <div class="game-subtitle">Patrulha e Reconhecimento Lunar 3D</div>
+
+            <div class="instructions">
+                <h3>Instruções de Operação:</h3>
+                <ul>
+                    <li>Pilote seu **Jipe Lunar** e percorra setores da lua de **A a Z** sem ser destruído.</li>
+                    <li>Salte sobre **crateras** no solo e evite colidir com **minas** vermelhas pulsantes e lasers alienígenas.</li>
+                    <li>Destrua **cristais laranja** à frente e **UFOs** no céu disparando lasers de plasma.</li>
+                    <li><strong>Disparos:</strong> A arma atira simultaneamente para **frente** e para **cima**.</li>
+                    <li><strong>Controles:</strong> **Setas Direcionais** para pilotar (Acelerar, Frear, Pular) e **Barra de Espaço** para atirar.</li>
+                    <li><strong>Câmera Orbital:</strong> Teclas **A** / **D** (rotacionar) e **W** / **S** (zoom).</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">Iniciar Patrulha</button>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card" style="border-top-color: var(--neon-pink);">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">PATRULHA ANULADA</h1>
+            <div class="game-subtitle">Estrutura do Veículo Lunar Desintegrada</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Pontuação Obtida:</span>
+                    <span id="summary-score-lost" class="value green">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Distância Percorrida:</span>
+                    <span id="summary-dist-lost" class="value cyan">0m</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">FIM DA OPERAÇÃO</span>
+                    <span class="value" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">DERROTA</span>
+                </div>
+            </div>
+
+            <button id="btn-restart-lost" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-pink), var(--neon-orange));">Reiniciar Patrulha</button>
+        </div>
+    </div>
+
+    <!-- Vitória (Setor Z concluído) -->
+    <div id="screen-victory" class="overlay-screen hidden">
+        <div class="menu-card" style="border-top-color: var(--neon-green);">
+            <h1 class="game-title" style="color: var(--neon-green); text-shadow: var(--green-glow);">ROTA DE SEGURANÇA ESTABELECIDA</h1>
+            <div class="game-subtitle">Setor Z Limpo com Sucesso</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Pontuação Total:</span>
+                    <span id="summary-score-win" class="value green">00000</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Distância de Patrulha:</span>
+                    <span id="summary-dist-win" class="value cyan">1000m</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">STATUS DA MISSÃO</span>
+                    <span class="value" style="color: var(--neon-green); text-shadow: var(--green-glow);">VITÓRIA</span>
+                </div>
+            </div>
+
+            <button id="btn-restart-win" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));">Patrulhar Novamente</button>
+        </div>
+    </div>
+
+    <!-- Biblioteca Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. SINTETIZADOR DE ÁUDIO PROCEDURAL (Web Audio API)
+        // ============================================================================
+        class SomMoonPatrol {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Propulsão do motor contínuo
+                this.engineOsc = null;
+                this.engineFilter = null;
+
+                // Sequenciador Synthwave
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.stopEngine();
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                    if (gameState === GAME_STATES.PLAYING) {
+                        this.startEngine();
+                    }
+                }
+                return this.muted;
+            }
+
+            startEngine() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                this.stopEngine();
+
+                const t = this.ctx.currentTime;
+                this.engineOsc = this.ctx.createOscillator();
+                this.engineOsc.type = 'sawtooth';
+                this.engineOsc.frequency.setValueAtTime(45, t);
+
+                this.engineFilter = this.ctx.createBiquadFilter();
+                this.engineFilter.type = 'lowpass';
+                this.engineFilter.frequency.setValueAtTime(100, t);
+
+                const engineGain = this.ctx.createGain();
+                engineGain.gain.setValueAtTime(0.08, t);
+
+                this.engineOsc.connect(this.engineFilter);
+                this.engineFilter.connect(engineGain);
+                engineGain.connect(this.sfxGain);
+
+                this.engineOsc.start(t);
+            }
+
+            setEngineSpeed(speedRatio) {
+                if (!this.ctx || this.muted || !this.engineOsc) return;
+                const t = this.ctx.currentTime;
+                // Ajusta frequência e filtro baseado na velocidade
+                this.engineOsc.frequency.linearRampToValueAtTime(45 + speedRatio * 45, t + 0.1);
+                this.engineFilter.frequency.linearRampToValueAtTime(100 + speedRatio * 150, t + 0.1);
+            }
+
+            stopEngine() {
+                if (this.engineOsc) {
+                    try { this.engineOsc.stop(); } catch(e){}
+                    this.engineOsc = null;
+                }
+            }
+
+            // Som de Disparo de Plasma Duplo (Forte, Rápido)
+            playShoot() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.exponentialRampToValueAtTime(1600, t + 0.12);
+
+                gain.gain.setValueAtTime(0.18, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.13);
+            }
+
+            // Som de Salto da Suspensão
+            playJump() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, t);
+                osc.frequency.exponentialRampToValueAtTime(750, t + 0.25);
+
+                gain.gain.setValueAtTime(0.16, t);
+                gain.gain.linearRampToValueAtTime(0.001, t + 0.25);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.26);
+            }
+
+            // Som de colisão leve / impacto nas rodas
+            playWheelLand() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, t);
+                osc.frequency.linearRampToValueAtTime(60, t + 0.08);
+
+                gain.gain.setValueAtTime(0.15, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.09);
+            }
+
+            // Explosão (Ruído Branco filtrado)
+            playExplosion() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const bufferSize = this.ctx.sampleRate * 0.45;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(450, t);
+                filter.frequency.linearRampToValueAtTime(50, t + 0.45);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+                noise.start(t);
+                noise.stop(t + 0.46);
+            }
+
+            // Destruição de rochas/obstáculos menores (estilhaço agudo)
+            playDestruction() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, t);
+                osc.frequency.linearRampToValueAtTime(200, t + 0.15);
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, t);
+
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.16);
+            }
+
+            // Sequenciador Synthwave Lunar (Rápido e Pulsante)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const step = 0.14; // BPM ~107
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (this.musicActive && !this.muted) {
+                        // Linha de baixo cyber retro (Notas em Fá Sustenido e Ré)
+                        const notes = [
+                            46.25, 46.25, 46.25, 46.25,
+                            36.71, 36.71, 36.71, 36.71,
+                            41.20, 41.20, 41.20, 41.20,
+                            51.91, 51.91, 46.25, 41.20
+                        ];
+                        const freqNota = notes[this.musicBeat % notes.length];
+
+                        const osc = this.ctx.createOscillator();
+                        const filter = this.ctx.createBiquadFilter();
+                        const gain = this.ctx.createGain();
+
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freqNota, t);
+
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(180, t);
+
+                        gain.gain.setValueAtTime(0.12, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.5);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.start(t);
+                        osc.stop(t + step * 1.6);
+
+                        // Kick (Bumbo) nos tempos pares fortes
+                        if (this.musicBeat % 4 === 0) {
+                            const kick = this.ctx.createOscillator();
+                            const kickGain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(110, t);
+                            kick.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+
+                            kickGain.gain.setValueAtTime(0.24, t);
+                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.1);
+
+                            kick.connect(kickGain);
+                            kickGain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.11);
+                        }
+
+                        // Hihat nos contratempos
+                        if (this.musicBeat % 4 === 2) {
+                            const hhOsc = this.ctx.createOscillator();
+                            const hhGain = this.ctx.createGain();
+                            hhOsc.type = 'triangle';
+                            hhOsc.frequency.setValueAtTime(8000, t);
+
+                            const hhFilter = this.ctx.createBiquadFilter();
+                            hhFilter.type = 'highpass';
+                            hhFilter.frequency.setValueAtTime(5000, t);
+
+                            hhGain.gain.setValueAtTime(0.015, t);
+                            hhGain.gain.linearRampToValueAtTime(0.001, t + 0.05);
+
+                            hhOsc.connect(hhFilter);
+                            hhFilter.connect(hhGain);
+                            hhGain.connect(this.masterGain);
+                            hhOsc.start(t);
+                            hhOsc.stop(t + 0.06);
+                        }
+                    }
+
+                    this.musicBeat++;
+                    nextTick += step;
+
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+
+                tickLoop();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+
+            playVictory() {
+                this.stopMusic();
+                this.stopEngine();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const arpeggio = [277.18, 349.23, 415.30, 554.37, 698.46, 830.61, 1108.73];
+                
+                arpeggio.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(t + idx * 0.08);
+                    osc.stop(t + idx * 0.08 + 0.42);
+                });
+            }
+
+            playDefeatMusic() {
+                this.stopMusic();
+                this.stopEngine();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 174.61, 146.83, 110.00];
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(250, t + idx * 0.18);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.18);
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.18 + 0.5);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.18);
+                    osc.stop(t + idx * 0.18 + 0.55);
+                });
+            }
+        }
+
+        const som = new SomMoonPatrol();
+
+        // ============================================================================
+        // 2. MOTOR DO JOGO E PARAMENTROS (Three.js)
+        // ============================================================================
+        let scene, camera, renderer, lastTime = 0;
+        let starfield;
+
+        // Entidades
+        let playerVehicle;
+        let vehicleWheels = []; // Referências das 6 rodas
+        
+        let groundSegments = []; // Lajes que compõem o chão modular
+        let obstacles = [];      // Rochas (cristais), minas terrestres
+        let ufos = [];           // Discos voadores no céu
+        
+        let playerLasers = [];   // Projéteis disparados pelo jogador
+        let enemyBombs = [];     // Bombas disparadas pelos UFOs
+        let sparks = [];         // Partículas de poeira/faíscas
+
+        // Limites e Física
+        const GROUND_Y = 0.0;
+        const VEHICLE_START_X = -5.0; // Posição horizontal fixa do jipe
+        
+        let vehicleY = GROUND_Y;
+        let vehicleVy = 0.0;
+        const GRAVITY = -13.5;
+        let isJumping = false;
+
+        // Rolagem de Terreno
+        let targetScrollSpeed = 4.8; // Velocidade desejada (ajustada pelas setas esq/dir)
+        let currentScrollSpeed = 4.8;
+        const MIN_SPEED = 2.2;
+        const MAX_SPEED = 8.5;
+
+        // Estados Globais
+        const GAME_STATES = { MENU: 0, PLAYING: 1, GAMEOVER: 2, VICTORY: 3 };
+        let gameState = GAME_STATES.MENU;
+
+        let distanceTraveled = 0.0;
+        const TOTAL_DISTANCE = 1000.0; // Distância para terminar a fase (Setor Z)
+        let score = 0;
+        let lives = 3;
+        const MAX_LIVES = 3;
+        let isDead = false;
+
+        // Spawners de Dificuldade
+        let obstacleSpawnTimer = 0.0;
+        let ufoSpawnTimer = 0.0;
+
+        // Câmera Orbital Side-scroller
+        let cameraAngleY = Math.PI / 2; // Vista lateral padrão
+        let cameraZoom = 1.0;
+        let shakeAmount = 0.0;
+
+        // Inputs
+        const keys = { ArrowUp: false, ArrowLeft: false, ArrowRight: false, Space: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
+        let isTouchDevice = false;
+
+        // Elementos DOM
+        const hudLives = document.getElementById('hud-lives');
+        const hudSector = document.getElementById('hud-sector');
+        const hudDistance = document.getElementById('hud-distance');
+        const hudScore = document.getElementById('hud-score');
+        const btnSound = document.getElementById('btn-sound');
+        
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const screenVictory = document.getElementById('screen-victory');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnRestartLost = document.getElementById('btn-restart-lost');
+        const btnRestartWin = document.getElementById('btn-restart-win');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        // ============================================================================
+        // 3. MODELAGEM PROCEDURAL (Estilo Voxel Cyberpunk)
+        // ============================================================================
+        
+        // Cria o Lunar Buggy com 6 rodas e suspensão
+        function createLunarBuggy() {
+            const vehicleGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0x181a2b,
+                roughness: 0.4,
+                metalness: 0.85
+            });
+
+            const glassMat = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                emissive: 0x00f0ff,
+                emissiveIntensity: 0.8,
+                roughness: 0.1
+            });
+
+            const wheelGlowMat = new THREE.MeshStandardMaterial({
+                color: 0xff5e00,
+                emissive: 0xff5e00,
+                emissiveIntensity: 0.8,
+                roughness: 0.3
+            });
+
+            // Chassis do veículo (Caixa principal)
+            const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.38, 0.95), bodyMat);
+            chassis.position.y = 0.4;
+            chassis.castShadow = true;
+            vehicleGroup.add(chassis);
+
+            // Cabine de Comando (Visor Ciano)
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.8), glassMat);
+            cabin.position.set(0.3, 0.72, 0);
+            cabin.castShadow = true;
+            vehicleGroup.add(cabin);
+
+            // Canhão Frontal (Tiro horizontal)
+            const canonFront = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), bodyMat);
+            canonFront.rotation.z = Math.PI / 2;
+            canonFront.position.set(1.0, 0.45, 0);
+            vehicleGroup.add(canonFront);
+
+            // Canhão Superior (Tiro vertical)
+            const canonTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8), bodyMat);
+            canonTop.position.set(0.2, 0.9, 0);
+            vehicleGroup.add(canonTop);
+
+            // Para-lamas
+            const fenderGeo = new THREE.BoxGeometry(1.8, 0.05, 1.05);
+            const fender = new THREE.Mesh(fenderGeo, bodyMat);
+            fender.position.y = 0.52;
+            vehicleGroup.add(fender);
+
+            // Adiciona 6 Rodas independentes
+            // Configura posições em X e Z:
+            // 3 de cada lado (Z = 0.55 e Z = -0.55)
+            // Posições X: -0.6 (traseiras), 0.0 (meio), 0.6 (dianteiras)
+            const wheelGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.18, 12);
+            wheelGeo.rotateX(Math.PI / 2); // Deita o cilindro
+
+            const xPositions = [-0.58, 0.0, 0.58];
+            const zPositions = [-0.55, 0.55];
+
+            vehicleWheels = [];
+
+            xPositions.forEach(posX => {
+                zPositions.forEach(posZ => {
+                    const wheelHub = new THREE.Group();
+                    wheelHub.position.set(posX, 0.22, posZ);
+
+                    // Pneu escuro
+                    const tire = new THREE.Mesh(wheelGeo, bodyMat);
+                    tire.castShadow = true;
+                    wheelHub.add(tire);
+
+                    // Núcleo da roda brilhante laranja
+                    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 8), wheelGlowMat);
+                    core.rotateX(Math.PI / 2);
+                    wheelHub.add(core);
+
+                    vehicleGroup.add(wheelHub);
+
+                    // Guarda referência para animar rotação e amortecimento
+                    vehicleWheels.push({
+                        group: wheelHub,
+                        baseX: posX,
+                        baseY: 0.22,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                });
+            });
+
+            // Lanterna Traseira vermelha
+            const tailLight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.4), new THREE.MeshBasicMaterial({ color: 0xff0055 }));
+            tailLight.position.set(-0.82, 0.4, 0);
+            vehicleGroup.add(tailLight);
+
+            // Adiciona uma luz local que ilumina o caminho da frente
+            const light = new THREE.PointLight(0x00f0ff, 1.2, 4);
+            light.position.set(1.1, 0.4, 0);
+            vehicleGroup.add(light);
+
+            return vehicleGroup;
+        }
+
+        // UFO Inimigo Holográfico (Disco Voador)
+        function createUfoMesh() {
+            const ufoGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0x1b0a26,
+                roughness: 0.3,
+                metalness: 0.8
+            });
+
+            const domeMat = new THREE.MeshStandardMaterial({
+                color: 0xff007f,
+                emissive: 0xff007f,
+                emissiveIntensity: 0.9,
+                roughness: 0.1
+            });
+
+            const lightsMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
+
+            // Disco Principal
+            const disk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.9, 0.2, 12), bodyMat);
+            ufoGroup.add(disk);
+
+            // Cúpula superior
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
+            dome.position.y = 0.1;
+            ufoGroup.add(dome);
+
+            // Pequenos faróis neon verdes ao redor do disco
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const lightNode = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), lightsMat);
+                lightNode.position.set(Math.cos(angle) * 0.82, -0.04, Math.sin(angle) * 0.82);
+                ufoGroup.add(lightNode);
+            }
+
+            ufoGroup.castShadow = true;
+            return ufoGroup;
+        }
+
+        // ============================================================================
+        // 4. CONSTRUÇÃO DO CENÁRIO INICIAL
+        // ============================================================================
+        function initTerrain() {
+            // Remove lajes anteriores da cena
+            groundSegments.forEach(seg => scene.remove(seg.mesh));
+            groundSegments = [];
+
+            // Limpa obstáculos e UFOs
+            obstacles.forEach(o => scene.remove(o.mesh));
+            obstacles = [];
+            ufos.forEach(u => scene.remove(u.mesh));
+            ufos = [];
+            playerLasers.forEach(l => scene.remove(l.mesh));
+            playerLasers = [];
+            enemyBombs.forEach(b => scene.remove(b.mesh));
+            enemyBombs = [];
+
+            // Cria lajes de chão modulares iniciais
+            // Cobrimos um comprimento de X = -15 a X = 25
+            // Lajes individuais com largura de 2.0 unidades
+            const segmentWidth = 2.0;
+            const numSegments = 22;
+
+            for (let i = 0; i < numSegments; i++) {
+                const posX = -16.0 + i * segmentWidth;
+                createGroundSegment(posX, false); // Nenhuma cratera no início imediato
+            }
+        }
+
+        // Cria uma laje modular de chão
+        function createGroundSegment(posX, isCratera = false) {
+            if (isCratera) {
+                // Para uma cratera, apenas deixamos a lacuna (sem malha física).
+                // Mas salvamos um registro na lista de segmentos com isCratera = true
+                // para sabermos onde o jipe pode cair.
+                groundSegments.push({
+                    mesh: null,
+                    x: posX,
+                    width: 2.0,
+                    isCratera: true
+                });
+                return;
+            }
+
+            // Laje normal de rocha lunar com borda neon ciano
+            const geo = new THREE.BoxGeometry(2.0, 0.8, 4.0);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0x0a0c16,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+
+            const mesh = new THREE.Mesh(geo, mat);
+            // O topo da laje fica em Y = 0.0 (o bloco estende-se de Y = -0.8 a Y = 0.0)
+            mesh.position.set(posX, -0.4, 0);
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            // Borda neon decorativa ciano na lateral do bloco
+            const trimGeo = new THREE.BoxGeometry(2.0, 0.05, 0.05);
+            const trimMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const trimF = new THREE.Mesh(trimGeo, trimMat);
+            trimF.position.set(0, 0.401, 2.01);
+            mesh.add(trimF);
+
+            const trimB = trimF.clone();
+            trimB.position.z = -2.01;
+            mesh.add(trimB);
+
+            // Adiciona algumas rugosidades de crateras pequenas (cubos embutidos)
+            const craterSmall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.3), new THREE.MeshStandardMaterial({ color: 0x04050a }));
+            craterSmall.position.set((Math.random() - 0.5) * 1.2, 0.4, (Math.random() - 0.5) * 2.5);
+            mesh.add(craterSmall);
+
+            groundSegments.push({
+                mesh: mesh,
+                x: posX,
+                width: 2.0,
+                isCratera: false
+            });
+        }
+
+        // ============================================================================
+        // 5. SPAWNERS E GERENCIAMENTO DE OBSTÁCULOS E INIMIGOS
+        // ============================================================================
+        
+        function spawnObstacle() {
+            // Decidimos aleatoriamente entre Rocha de Cristal Laranja ou Mina Terrestre Vermelha
+            const isMina = Math.random() < 0.45;
+            const spawnX = 22.0; // Spawn à direita fora da tela de visão comum
+
+            if (isMina) {
+                // Mina Laser Vermelha (Objeto cônico que pisca)
+                const geo = new THREE.ConeGeometry(0.18, 0.3, 6);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: 0xff0055,
+                    emissive: 0x550011,
+                    roughness: 0.3
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(spawnX, 0.15, (Math.random() - 0.5) * 1.5);
+                mesh.castShadow = true;
+                scene.add(mesh);
+
+                obstacles.push({
+                    mesh: mesh,
+                    type: 'mina',
+                    width: 0.36,
+                    pulseTime: 0.0,
+                    material: mat
+                });
+            } else {
+                // Rocha de Cristal Laranja (Objeto geométrico destrutível)
+                const geo = new THREE.DodecahedronGeometry(0.35);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: 0xff5e00,
+                    emissive: 0xff5e00,
+                    emissiveIntensity: 0.5,
+                    roughness: 0.1,
+                    metalness: 0.8
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(spawnX, 0.3, (Math.random() - 0.5) * 1.0);
+                mesh.castShadow = true;
+                scene.add(mesh);
+
+                obstacles.push({
+                    mesh: mesh,
+                    type: 'rocha',
+                    width: 0.7
+                });
+            }
+        }
+
+        function spawnUFO() {
+            const ufoMesh = createUfoMesh();
+            // Spawn no topo à direita
+            const spawnX = 20.0;
+            const spawnY = 4.2 + Math.random() * 1.2;
+            ufoMesh.position.set(spawnX, spawnY, (Math.random() - 0.5) * 1.2);
+            scene.add(ufoMesh);
+
+            ufos.push({
+                mesh: ufoMesh,
+                y: spawnY,
+                shootTimer: 1.0 + Math.random() * 1.5,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        // ============================================================================
+        // 6. SISTEMAS DE PARTÍCULAS
+        // ============================================================================
+        function spawnSparkExplosion(position, colorHex, count = 16) {
+            const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const mat = new THREE.MeshBasicMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity: 1.0
+            });
+
+            for (let i = 0; i < count; i++) {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.copy(position);
+
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 5.0,
+                    (Math.random() * 3.5) + 0.8,
+                    (Math.random() - 0.5) * 5.0
+                );
+
+                scene.add(mesh);
+                sparks.push({
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: (Math.random() * 2.2) + 1.2
+                });
+            }
+        }
+
+        // ============================================================================
+        // 7. ENTRADAS DE TECLADO E CONTROLES
+        // ============================================================================
+        function setupInput() {
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = true;
+                }
+
+                if (gameState !== GAME_STATES.PLAYING || isDead) return;
+
+                // Eventos instantâneos de pulo e tiro
+                if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    triggerJump();
+                }
+
+                if (e.code === 'Space') {
+                    triggerShoot();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = false;
+                }
+            });
+
+            // Controles Mobile
+            const btnLeftMobile = document.getElementById('btn-left-mobile');
+            const btnRightMobile = document.getElementById('btn-right-mobile');
+            const btnUpMobile = document.getElementById('btn-up-mobile');
+            const btnShootMobile = document.getElementById('btn-shoot-mobile');
+
+            btnLeftMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
+            btnLeftMobile.addEventListener('touchend', () => { keys.ArrowLeft = false; });
+            
+            btnRightMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
+            btnRightMobile.addEventListener('touchend', () => { keys.ArrowRight = false; });
+
+            btnUpMobile.addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
+            btnShootMobile.addEventListener('touchstart', (e) => { e.preventDefault(); triggerShoot(); });
+
+            // Câmera Mobile
+            document.getElementById('btn-cam-rot-l').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyA = true; });
+            document.getElementById('btn-cam-rot-l').addEventListener('touchend', () => { keys.KeyA = false; });
+            document.getElementById('btn-cam-rot-r').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyD = true; });
+            document.getElementById('btn-cam-rot-r').addEventListener('touchend', () => { keys.KeyD = false; });
+            document.getElementById('btn-cam-zoom-in').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyW = true; });
+            document.getElementById('btn-cam-zoom-in').addEventListener('touchend', () => { keys.KeyW = false; });
+            document.getElementById('btn-cam-zoom-out').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyS = true; });
+            document.getElementById('btn-cam-zoom-out').addEventListener('touchend', () => { keys.KeyS = false; });
+
+            btnStart.addEventListener('click', startGame);
+            btnRestartLost.addEventListener('click', restartGame);
+            btnRestartWin.addEventListener('click', restartGame);
+
+            btnSound.addEventListener('click', () => {
+                const isMuted = som.toggleMute();
+                if (isMuted) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Mudo';
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                }
+            });
+
+            window.addEventListener('touchstart', function onFirstTouch() {
+                isTouchDevice = true;
+                document.getElementById('mobile-controls').style.display = 'flex';
+                window.removeEventListener('touchstart', onFirstTouch);
+            });
+        }
+
+        function triggerJump() {
+            if (isJumping || isDead || gameState !== GAME_STATES.PLAYING) return;
+            isJumping = true;
+            vehicleVy = 6.8;
+            som.playJump();
+        }
+
+        function triggerShoot() {
+            if (isDead || gameState !== GAME_STATES.PLAYING) return;
+
+            // Dispara dois lasers de plasma simultâneos
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+
+            // 1. Projétil Horizontal (Frente)
+            const laserH = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 0.06), laserMat);
+            laserH.position.set(VEHICLE_START_X + 1.25, vehicleY + 0.45, playerVehicle.position.z);
+            scene.add(laserH);
+
+            playerLasers.push({
+                mesh: laserH,
+                vx: 18.0,
+                vy: 0.0,
+                isHorizontal: true
+            });
+
+            // 2. Projétil Vertical (Céu)
+            const laserV = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.25, 0.06), laserMat);
+            laserV.position.set(VEHICLE_START_X + 0.2, vehicleY + 1.1, playerVehicle.position.z);
+            scene.add(laserV);
+
+            playerLasers.push({
+                mesh: laserV,
+                vx: currentScrollSpeed, // Acompanha a velocidade do chão para subir reto do ponto de vista do jipe
+                vy: 18.0,
+                isHorizontal: false
+            });
+
+            som.playShoot();
+        }
+
+        // ============================================================================
+        // 8. LÓGICA DE DIFICULDADE E MARCOS DOS SETORES (A a Z)
+        // ============================================================================
+        
+        function getSectorLetter() {
+            // Mapeia progresso de 0 a 1000 metros para as letras de A a Z
+            const ratio = distanceTraveled / TOTAL_DISTANCE;
+            const letterCode = Math.min(90, 65 + Math.floor(ratio * 26)); // Letras 'A' (65) a 'Z' (90)
+            return String.fromCharCode(letterCode);
+        }
+
+        function triggerDamage() {
+            if (isDead) return;
+            isDead = true;
+            lives--;
+            updateHUD();
+
+            shakeCamera(0.5);
+            som.playExplosion();
+            spawnSparkExplosion(playerVehicle.position, 0x00f0ff, 25);
+            spawnSparkExplosion(playerVehicle.position, 0xff5e00, 15);
+
+            playerVehicle.visible = false;
+            som.stopEngine();
+
+            setTimeout(() => {
+                if (lives <= 0) {
+                    gameOver();
+                } else {
+                    // Respawn do jipe no ar para cair em segurança
+                    playerVehicle.visible = true;
+                    vehicleY = 3.5;
+                    vehicleVy = 0.0;
+                    isJumping = true;
+                    playerVehicle.position.y = vehicleY;
+                    isDead = false;
+                    som.startEngine();
+                }
+            }, 1200);
+        }
+
+        function checkCollisions() {
+            if (isDead || gameState !== GAME_STATES.PLAYING) return;
+
+            const vehicleX = VEHICLE_START_X;
+            const vehicleRadius = 0.65;
+
+            // 1. Detecção de Queda em Crateras (espaço vazio sob o buggy)
+            // Encontra a laje de chão que está exatamente sob o jipe (X = -5.0)
+            let hasFloorUnderneath = false;
+            
+            for (let i = 0; i < groundSegments.length; i++) {
+                const seg = groundSegments[i];
+                // Se a laje cobre a coordenada X do jipe
+                if (vehicleX >= seg.x - 1.0 && vehicleX <= seg.x + 1.0) {
+                    if (!seg.isCratera) {
+                        hasFloorUnderneath = true;
+                    }
+                    break;
+                }
+            }
+
+            // Se não tem bloco de chão e o jipe não está no ar (pulo), ele cai na cratera e explode
+            if (!hasFloorUnderneath && vehicleY <= 0.05) {
+                // Faz o jipe cair rápido no buraco antes de explodir
+                vehicleVy = -8.0;
+                setTimeout(() => {
+                    triggerDamage();
+                }, 180);
+                return;
+            }
+
+            // 2. Colisão do Veículo com Obstáculos do Solo (Rochas, Minas)
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                const distObs = Math.abs(obs.mesh.position.x - vehicleX);
+                
+                // Se o obstáculo está no mesmo X e Z do buggy
+                if (distObs < (vehicleRadius + obs.width/2 - 0.1)) {
+                    if (Math.abs(obs.mesh.position.z - playerVehicle.position.z) < 0.7) {
+                        // Se o jipe está baixo (não saltou o suficiente)
+                        const obsHeight = obs.type === 'mina' ? 0.35 : 0.6;
+                        if (vehicleY < obsHeight) {
+                            triggerDamage();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 3. Colisão com Bombas Alienígenas caindo do céu
+            for (let i = enemyBombs.length - 1; i >= 0; i--) {
+                const bomb = enemyBombs[i];
+                const distBomb = Math.abs(bomb.mesh.position.x - vehicleX);
+
+                if (distBomb < 0.65) {
+                    if (Math.abs(bomb.mesh.position.z - playerVehicle.position.z) < 0.7) {
+                        // Verifica se a bomba tocou a altura Y do jipe
+                        if (bomb.mesh.position.y <= vehicleY + 0.8 && bomb.mesh.position.y >= vehicleY) {
+                            scene.remove(bomb.mesh);
+                            enemyBombs.splice(i, 1);
+                            triggerDamage();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ============================================================================
+        // 9. CONTROLE DE ESTADOS DO FLUXO DO JOGO
+        // ============================================================================
+        
+        function startGame() {
+            som.init();
+            som.startMusic();
+            
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+            screenVictory.classList.add('hidden');
+
+            score = 0;
+            lives = MAX_LIVES;
+            distanceTraveled = 0.0;
+            isDead = false;
+            
+            currentScrollSpeed = 4.8;
+            targetScrollSpeed = 4.8;
+
+            obstacleSpawnTimer = 0.0;
+            ufoSpawnTimer = 1.0;
+
+            updateHUD();
+            initTerrain();
+
+            playerVehicle.visible = true;
+            vehicleY = GROUND_Y;
+            vehicleVy = 0.0;
+            isJumping = false;
+            playerVehicle.position.set(VEHICLE_START_X, GROUND_Y, 0);
+
+            som.startEngine();
+            gameState = GAME_STATES.PLAYING;
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function levelComplete() {
+            gameState = GAME_STATES.VICTORY;
+            som.playVictory();
+
+            document.getElementById('summary-score-win').innerText = score;
+            document.getElementById('summary-dist-win').innerText = Math.floor(distanceTraveled) + 'm';
+            screenVictory.classList.remove('hidden');
+        }
+
+        function gameOver() {
+            gameState = GAME_STATES.GAMEOVER;
+            som.playDefeatMusic();
+
+            document.getElementById('summary-score-lost').innerText = score;
+            document.getElementById('summary-dist-lost').innerText = Math.floor(distanceTraveled) + 'm';
+            screenGameover.classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            hudScore.innerText = String(score).padStart(5, '0');
+            hudDistance.innerText = Math.floor(distanceTraveled) + 'm';
+            hudSector.innerText = getSectorLetter();
+
+            // Atualiza corações de vida
+            hudLives.innerHTML = '';
+            for (let i = 0; i < MAX_LIVES; i++) {
+                const icon = document.createElement('span');
+                icon.className = 'life-icon' + (i >= lives ? ' lost' : '');
+                hudLives.appendChild(icon);
+            }
+        }
+
+        function shakeCamera(amount) {
+            shakeAmount = amount;
+        }
+
+        // ============================================================================
+        // 10. INICIALIZAÇÃO DA CENA 3D E ILUMINAÇÃO
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020206, 0.026);
+
+            // Câmera 3D side-scroller em perspectiva lateral
+            camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0x130d2a, 0.95);
+            scene.add(ambientLight);
+
+            // Luz Direcional rosa
+            const dirLight1 = new THREE.DirectionalLight(0xff007f, 1.2);
+            dirLight1.position.set(-10, 15, 8);
+            dirLight1.castShadow = true;
+            dirLight1.shadow.mapSize.width = 1024;
+            dirLight1.shadow.mapSize.height = 1024;
+            scene.add(dirLight1);
+
+            // Apoio ciano
+            const dirLight2 = new THREE.DirectionalLight(0x00f0ff, 0.8);
+            dirLight2.position.set(10, 8, -6);
+            scene.add(dirLight2);
+
+            // Terreno Estrelas
+            createStarfield();
+
+            // Jipe Lunar
+            playerVehicle = createLunarBuggy();
+            scene.add(playerVehicle);
+
+            initTerrain();
+
+            setTimeout(() => {
+                loadingScreen.style.opacity = 0;
+                setTimeout(() => loadingScreen.style.display = 'none', 500);
+            }, 800);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createStarfield() {
+            const starsCount = 450;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(starsCount * 3);
+            const colors = new Float32Array(starsCount * 3);
+
+            for (let i = 0; i < starsCount; i++) {
+                const r = 85 + Math.random() * 45;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 4;
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                const rand = Math.random();
+                if (rand < 0.4) {
+                    colors[i * 3] = 0.0; colors[i * 3 + 1] = 0.94; colors[i * 3 + 2] = 1.0;
+                } else if (rand < 0.8) {
+                    colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.0; colors[i * 3 + 2] = 0.5;
+                } else {
+                    colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.58; colors[i * 3 + 2] = 0.0;
+                }
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const mat = new THREE.PointsMaterial({
+                size: 0.8,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            starfield = new THREE.Points(geo, mat);
+            scene.add(starfield);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 11. LOOP DE ATUALIZAÇÃO (TICK/UPDATE)
+        // ============================================================================
+        
+        function update(deltaTime) {
+            // 1. Controles de Câmera pelas teclas A/D (Rotação) e W/S (Zoom)
+            if (keys.KeyA) cameraAngleY += 1.8 * deltaTime;
+            if (keys.KeyD) cameraAngleY -= 1.8 * deltaTime;
+            
+            if (keys.KeyW) cameraZoom = Math.max(0.6, cameraZoom - 1.2 * deltaTime);
+            if (keys.KeyS) cameraZoom = Math.min(1.4, cameraZoom + 1.2 * deltaTime);
+
+            // Foco da câmera no jipe lunar
+            const radius = 18 * cameraZoom;
+            const targetCamX = playerVehicle.position.x + radius * Math.cos(cameraAngleY);
+            const targetCamZ = playerVehicle.position.z + radius * Math.sin(cameraAngleY);
+            const targetCamY = 5.2 * cameraZoom;
+
+            camera.position.x += (targetCamX - camera.position.x) * 0.05;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.05;
+            camera.position.y += (targetCamY - camera.position.y) * 0.05;
+
+            // Camera Shake
+            if (shakeAmount > 0) {
+                camera.position.x += (Math.random() - 0.5) * shakeAmount;
+                camera.position.y += (Math.random() - 0.5) * shakeAmount;
+                camera.position.z += (Math.random() - 0.5) * shakeAmount;
+                shakeAmount *= 0.85;
+                if (shakeAmount < 0.01) shakeAmount = 0;
+            }
+
+            camera.lookAt(playerVehicle.position.x + 2.5, playerVehicle.position.y + 0.8, playerVehicle.position.z);
+
+            if (gameState === GAME_STATES.PLAYING) {
+                
+                // 2. Controla Velocidade de Rolagem (Acelerar/Frear)
+                if (keys.ArrowRight) {
+                    targetScrollSpeed = Math.min(MAX_SPEED, targetScrollSpeed + 4.5 * deltaTime);
+                } else if (keys.ArrowLeft) {
+                    targetScrollSpeed = Math.max(MIN_SPEED, targetScrollSpeed - 4.5 * deltaTime);
+                } else {
+                    // Retorna suavemente para a velocidade de cruzeiro de 4.8
+                    const cruiseSpeed = 4.8;
+                    targetScrollSpeed += (cruiseSpeed - targetScrollSpeed) * 1.5 * deltaTime;
+                }
+
+                currentScrollSpeed += (targetScrollSpeed - currentScrollSpeed) * 3.5 * deltaTime;
+                som.setEngineSpeed((currentScrollSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED));
+
+                if (!isDead) {
+                    distanceTraveled += currentScrollSpeed * deltaTime;
+                    score += Math.floor(currentScrollSpeed * deltaTime * 1.5);
+                    updateHUD();
+
+                    if (distanceTraveled >= TOTAL_DISTANCE) {
+                        levelComplete();
+                    }
+                }
+
+                // 3. Física de Salto e Suspensão
+                if (isJumping) {
+                    vehicleVy += GRAVITY * deltaTime;
+                    vehicleY += vehicleVy * deltaTime;
+
+                    if (vehicleY <= GROUND_Y) {
+                        vehicleY = GROUND_Y;
+                        vehicleVy = 0.0;
+                        isJumping = false;
+                        som.playWheelLand();
+                        shakeCamera(0.12);
+                    }
+                }
+
+                playerVehicle.position.y = vehicleY;
+
+                // Animação das 6 rodas (Trepidam de forma senoidal se estiver no chão, e rolam)
+                const animTime = Date.now() * 0.005;
+                vehicleWheels.forEach(wheel => {
+                    // Rotação da roda baseada na velocidade horizontal
+                    wheel.group.rotation.z -= currentScrollSpeed * 1.8 * deltaTime;
+
+                    if (!isJumping && !isDead) {
+                        // Trepidação da suspensão
+                        const offset = Math.sin(animTime + wheel.phase) * 0.04;
+                        wheel.group.position.y = wheel.baseY + offset;
+                    } else {
+                        // Rodas estendidas em pulo ou estáticas
+                        wheel.group.position.y = wheel.baseY;
+                    }
+                });
+
+                // 4. Movimentação e spawn de blocos do chão
+                for (let i = groundSegments.length - 1; i >= 0; i--) {
+                    const seg = groundSegments[i];
+                    seg.x -= currentScrollSpeed * deltaTime;
+
+                    if (seg.mesh) {
+                        seg.mesh.position.x = seg.x;
+                    }
+
+                    // Se a laje saiu da tela à esquerda, removemos
+                    if (seg.x < -18.0) {
+                        if (seg.mesh) scene.remove(seg.mesh);
+                        groundSegments.splice(i, 1);
+
+                        // Spawna uma nova laje à direita (X = 25.0 aproximadamente)
+                        const lastSegX = groundSegments[groundSegments.length - 1].x;
+                        const nextX = lastSegX + 2.0;
+
+                        // Determina se a laje será um buraco/cratera
+                        // Chance baseada na distância percorrida
+                        const craterChance = 0.12 + Math.min(0.18, distanceTraveled / 1200);
+                        const isCrater = Math.random() < craterChance;
+
+                        // Impede duas crateras seguidas para o pulo ser possível
+                        const wasLastCrater = groundSegments[groundSegments.length - 1].isCratera;
+                        createGroundSegment(nextX, isCrater && !wasLastCrater);
+                    }
+                }
+
+                // 5. Spawner de Obstáculos do Solo (Rochas, Minas)
+                obstacleSpawnTimer -= deltaTime;
+                if (obstacleSpawnTimer <= 0) {
+                    spawnObstacle();
+                    // Tempo de recarga aleatório
+                    obstacleSpawnTimer = 1.8 + Math.random() * 2.5;
+                }
+
+                // Move e colide obstáculos
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const obs = obstacles[i];
+                    obs.mesh.position.x -= currentScrollSpeed * deltaTime;
+
+                    // Se for mina, ela pulsa o emissivo laser vermelho
+                    if (obs.type === 'mina') {
+                        obs.pulseTime += deltaTime * 8;
+                        const pulse = Math.abs(Math.sin(obs.pulseTime));
+                        obs.material.emissiveIntensity = pulse * 1.5;
+                    }
+
+                    // Remove se passar da tela
+                    if (obs.mesh.position.x < -15.0) {
+                        scene.remove(obs.mesh);
+                        obstacles.splice(i, 1);
+                    }
+                }
+
+                // 6. Spawner de UFOs (Discos Voadores no Céu)
+                ufoSpawnTimer -= deltaTime;
+                if (ufoSpawnTimer <= 0) {
+                    spawnUFO();
+                    ufoSpawnTimer = 3.5 + Math.random() * 3.5;
+                }
+
+                // Move, oscila e faz os UFOs dispararem
+                for (let i = ufos.length - 1; i >= 0; i--) {
+                    const ufo = ufos[i];
+                    ufo.mesh.position.x -= (currentScrollSpeed * 0.75) * deltaTime; // Move levemente mais devagar que o chão
+
+                    // Oscilação vertical senoidal suave
+                    const ufoTime = Date.now() * 0.002;
+                    ufo.mesh.position.y = ufo.y + Math.sin(ufoTime + ufo.phase) * 0.25;
+
+                    // Lógica de Tiro do UFO
+                    ufo.shootTimer -= deltaTime;
+                    if (ufo.shootTimer <= 0 && !isDead) {
+                        // Dispara bomba para baixo
+                        const bombGeo = new THREE.SphereGeometry(0.12, 8, 8);
+                        const bombMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+                        const bomb = new THREE.Mesh(bombGeo, bombMat);
+                        bomb.position.copy(ufo.mesh.position);
+                        scene.add(bomb);
+
+                        enemyBombs.push({
+                            mesh: bomb,
+                            vy: -5.5,
+                            vx: -currentScrollSpeed * 0.75 // Mantém a velocidade horizontal do UFO
+                        });
+
+                        ufo.shootTimer = 1.5 + Math.random() * 2.0;
+                    }
+
+                    // Remove se passar da tela
+                    if (ufo.mesh.position.x < -15.0) {
+                        scene.remove(ufo.mesh);
+                        ufos.splice(i, 1);
+                    }
+                }
+
+                // 7. Atualiza Projéteis do Jogador
+                for (let i = playerLasers.length - 1; i >= 0; i--) {
+                    const laser = playerLasers[i];
+                    laser.mesh.position.x += laser.vx * deltaTime;
+                    laser.mesh.position.y += laser.vy * deltaTime;
+
+                    let destroyed = false;
+
+                    // Colisão do tiro horizontal contra rochas/obstáculos
+                    if (laser.isHorizontal) {
+                        for (let j = obstacles.length - 1; j >= 0; j--) {
+                            const obs = obstacles[j];
+                            const dist = laser.mesh.position.distanceTo(obs.mesh.position);
+                            if (dist < 0.6) {
+                                // Destrói obstáculo e laser
+                                spawnSparkExplosion(obs.mesh.position, obs.type === 'mina' ? 0xff0055 : 0xff5e00, 15);
+                                scene.remove(obs.mesh);
+                                obstacles.splice(j, 1);
+                                
+                                score += 150;
+                                updateHUD();
+
+                                som.playDestruction();
+                                destroyed = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        // Colisão do tiro vertical contra UFOs
+                        for (let j = ufos.length - 1; j >= 0; j--) {
+                            const ufo = ufos[j];
+                            const dist = laser.mesh.position.distanceTo(ufo.mesh.position);
+                            if (dist < 0.9) {
+                                spawnSparkExplosion(ufo.mesh.position, 0xff007f, 20);
+                                scene.remove(ufo.mesh);
+                                ufos.splice(j, 1);
+
+                                score += 300;
+                                updateHUD();
+
+                                som.playDestruction();
+                                destroyed = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Limites da tela
+                    if (laser.mesh.position.x > 18.0 || laser.mesh.position.y > 10.0 || destroyed) {
+                        scene.remove(laser.mesh);
+                        playerLasers.splice(i, 1);
+                    }
+                }
+
+                // 8. Atualiza Bombas Alienígenas caindo
+                for (let i = enemyBombs.length - 1; i >= 0; i--) {
+                    const bomb = enemyBombs[i];
+                    bomb.mesh.position.x += bomb.vx * deltaTime;
+                    bomb.mesh.position.y += bomb.vy * deltaTime;
+
+                    // Colisão com o solo (explode criando fagulhas)
+                    if (bomb.mesh.position.y <= 0.05) {
+                        spawnSparkExplosion(bomb.mesh.position, 0xff00ff, 6);
+                        scene.remove(bomb.mesh);
+                        enemyBombs.splice(i, 1);
+                    }
+                }
+
+                // Checa Colisões Físicas do Jipe
+                checkCollisions();
+            }
+
+            // 9. Atualiza Partículas de Faíscas
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const p = sparks[i];
+                p.mesh.position.addScaledVector(p.velocity, deltaTime);
+                p.velocity.y -= 9.8 * deltaTime;
+
+                p.life -= p.decay * deltaTime;
+                p.mesh.material.opacity = p.life;
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    sparks.splice(i, 1);
+                }
+            }
+        }
+
+        // ============================================================================
+        // 12. INICIALIZAÇÃO INICIAL
+        // ============================================================================
+        function init() {
+            init3D();
+            setupInput();
+            
+            const loop = (timestamp) => {
+                if (lastTime === 0) lastTime = timestamp;
+                const deltaTime = Math.min(0.08, (timestamp - lastTime) / 1000);
+                lastTime = timestamp;
+
+                update(deltaTime);
+                renderer.render(scene, camera);
+
+                requestAnimationFrame(loop);
+            };
+            requestAnimationFrame(loop);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
