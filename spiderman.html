@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Spiderman 3D - Web Swing Recon</title>
+    <title>Cyber Spiderman 2600 3D</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -16,12 +16,13 @@
             --neon-pink: #ff007f;
             --neon-green: #39ff14;
             --neon-orange: #ff5e00;
-            --dark-bg: #030208;
-            --glass-bg: rgba(6, 4, 18, 0.78);
+            --dark-bg: #04020a;
+            --glass-bg: rgba(8, 4, 20, 0.82);
             --glass-border: rgba(255, 255, 255, 0.08);
             --red-glow: 0 0 10px rgba(255, 0, 60, 0.6);
             --blue-glow: 0 0 10px rgba(0, 102, 255, 0.6);
             --cyan-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
         }
 
         * {
@@ -58,7 +59,7 @@
             height: 100%;
             background: linear-gradient(
                 rgba(18, 16, 16, 0) 50%, 
-                rgba(0, 0, 0, 0.25) 50%
+                rgba(0, 0, 0, 0.3) 50%
             );
             background-size: 100% 4px;
             z-index: 5;
@@ -71,7 +72,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            box-shadow: inset 0 0 130px rgba(0, 0, 0, 0.95);
+            box-shadow: inset 0 0 130px rgba(0, 0, 0, 0.98);
             z-index: 6;
             pointer-events: none;
         }
@@ -97,15 +98,15 @@
             padding: 10px 20px;
             display: flex;
             align-items: center;
-            gap: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            gap: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
             pointer-events: auto;
             transition: all 0.3s ease;
         }
 
         .hud-panel:hover {
-            border-color: rgba(0, 240, 255, 0.25);
-            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+            border-color: rgba(255, 0, 60, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(255, 0, 60, 0.08);
         }
 
         .hud-group {
@@ -125,7 +126,7 @@
 
         .hud-value {
             font-family: 'Orbitron', sans-serif;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 900;
             color: #ffffff;
         }
@@ -143,6 +144,26 @@
         .hud-value.cyan {
             color: var(--neon-cyan);
             text-shadow: var(--cyan-glow);
+        }
+
+        /* Barra de Fluido de Teia */
+        .web-fluid-container {
+            width: 110px;
+            height: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .web-fluid-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+            box-shadow: var(--cyan-glow);
+            transition: width 0.1s ease;
         }
 
         .hud-lives-container {
@@ -209,17 +230,17 @@
         }
 
         .mobile-pad {
-            display: flex;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 8px;
             pointer-events: auto;
         }
 
         .mobile-btn {
-            width: 68px;
-            height: 68px;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 16px;
+            border-radius: 12px;
             color: #ffffff;
             display: flex;
             align-items: center;
@@ -227,7 +248,7 @@
             font-size: 20px;
             font-weight: bold;
             touch-action: manipulation;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
             transition: all 0.1s;
         }
 
@@ -235,12 +256,12 @@
             background: rgba(0, 102, 255, 0.2);
             border-color: var(--neon-blue);
             box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
-            transform: scale(0.95);
         }
 
         .action-pad {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 12px;
             pointer-events: auto;
         }
 
@@ -249,10 +270,12 @@
             border-color: var(--neon-red);
             color: var(--neon-red);
             text-shadow: var(--red-glow);
-            width: 80px;
-            height: 80px;
+            width: 76px;
+            height: 76px;
             border-radius: 50%;
-            font-size: 14px;
+            font-size: 13px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
         }
 
         .btn-web:active {
@@ -264,15 +287,15 @@
         .camera-controls-mobile {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             pointer-events: auto;
         }
 
         .cam-btn {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         /* Overlays (Telas) */
@@ -283,7 +306,7 @@
             width: 100%;
             height: 100%;
             z-index: 100;
-            background: radial-gradient(circle, rgba(14, 5, 25, 0.9) 0%, rgba(3, 1, 9, 0.99) 100%);
+            background: radial-gradient(circle, rgba(16, 5, 28, 0.92) 0%, rgba(3, 1, 10, 0.99) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -500,7 +523,7 @@
     <!-- Tela de Carregamento -->
     <div id="loading-screen">
         <div class="loader"></div>
-        <div class="loading-text">CARREGANDO MATRIX CYBER SPIDERMAN 3D...</div>
+        <div class="loading-text">CARREGANDO MATRIX SPIDERMAN ATARI 3D...</div>
     </div>
 
     <!-- Canvas do Three.js -->
@@ -518,11 +541,17 @@
                 </div>
             </div>
             <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
-                <div class="hud-label">Distância</div>
+                <div class="hud-label">Fluido de Teia</div>
+                <div class="web-fluid-container">
+                    <div id="web-fluid-bar" class="web-fluid-fill"></div>
+                </div>
+            </div>
+            <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
+                <div class="hud-label">Altura</div>
                 <div id="hud-distance" class="hud-value cyan">0000m</div>
             </div>
             <div class="hud-group" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
-                <div class="hud-label">Pontuação</div>
+                <div class="hud-label">Pontos</div>
                 <div id="hud-score" class="hud-value red">00000</div>
             </div>
         </div>
@@ -542,10 +571,15 @@
     <!-- Controles Virtuais Mobile -->
     <div id="mobile-controls">
         <div class="mobile-pad">
-            <button id="btn-left-mobile" class="mobile-btn">◀ Impulso</button>
-            <button id="btn-right-mobile" class="mobile-btn">Impulso ▶</button>
-            <button id="btn-up-mobile" class="mobile-btn">▲ Subir</button>
-            <button id="btn-down-mobile" class="mobile-btn">▼ Descer</button>
+            <button id="btn-nw-mobile" class="mobile-btn">↖</button>
+            <button id="btn-u-mobile" class="mobile-btn">▲</button>
+            <button id="btn-ne-mobile" class="mobile-btn">↗</button>
+            <button id="btn-l-mobile" class="mobile-btn">◀</button>
+            <div style="background:none; border:none;"></div>
+            <button id="btn-r-mobile" class="mobile-btn">▶</button>
+            <div style="background:none; border:none;"></div>
+            <button id="btn-d-mobile" class="mobile-btn">▼</button>
+            <div style="background:none; border:none;"></div>
         </div>
         <div class="action-pad">
             <button id="btn-shoot-mobile" class="mobile-btn btn-web">🕸️ TEIA</button>
@@ -561,55 +595,55 @@
     <!-- Menu Inicial -->
     <div id="screen-menu" class="overlay-screen">
         <div class="menu-card">
-            <h1 class="game-title">CYBER SPIDERMAN</h1>
-            <div class="game-subtitle">Web Swing Recon 3D</div>
+            <h1 class="game-title">CYBER SPIDERMAN 2600</h1>
+            <div class="game-subtitle">Clássico Escalador Vertical Retro 3D</div>
 
             <div class="instructions">
-                <h3>Operação do Spider-Drone:</h3>
+                <h3>Instruções de Operação (Atari Edition):</h3>
                 <ul>
-                    <li><strong>Lançar Teia:</strong> Pressione e segure **Espaço** para disparar a teia de luz em um prédio próximo.</li>
-                    <li><strong>Soltar Teia:</strong> Solte **Espaço** para soltar a teia e voar no ar!</li>
-                    <li><strong>Balanço / Impulso:</strong> Setas **Esquerda/Direita** aplicam força lateral para balançar e pegar velocidade.</li>
-                    <li><strong>Comprimento do Cabo:</strong> Setas **Para Cima/Baixo** encurtam ou esticam a teia.</li>
+                    <li><strong>Escalar o Prédio:</strong> Use as **Setas do Teclado** (Esquerda/Direita) para andar para os lados e (Para Cima/Baixo) para subir e descer na parede.</li>
+                    <li><strong>Disparar Teia:</strong> Pressione **Barra de Espaço** para atirar a teia para cima. Segure as setas no momento do disparo para mandar a teia diagonalmente (↖ / ▲ / ↗).</li>
+                    <li><strong>Subir pela Teia:</strong> Mantenha a **Barra de Espaço pressionada** para ser puxado rapidamente até o ponto fixado!</li>
+                    <li><strong>Cuidado:</strong> Evite os **capangas** vermelhos que aparecem nas janelas. Se eles tocarem na sua teia, ela se **rompe** e você despenca!</li>
+                    <li><strong>Planador do Duende Verde:</strong> Ele joga bombas de energia de cima. Recarregue seu **Fluido de Teia** desarmando as bombas espalhadas nas janelas.</li>
                     <li><strong>Câmera Orbital:</strong> Teclas **A** / **D** (rotacionar) e **W** / **S** (zoom).</li>
-                    <li>Evite cair no **plasma ácido** rosa no fundo do cenário ou ser alvejado pelos **drones lasers**. Colete as **aranhas brilhantes** para pontuar.</li>
                 </ul>
             </div>
 
-            <button id="btn-start" class="btn-primary">Ativar Protocolo Spider</button>
+            <button id="btn-start" class="btn-primary">Ativar Protocolo Atari</button>
         </div>
     </div>
 
     <!-- Game Over -->
     <div id="screen-gameover" class="overlay-screen hidden">
         <div class="menu-card" style="border-top-color: var(--neon-red);">
-            <h1 class="game-title" style="color: var(--neon-red); text-shadow: var(--red-glow);">RECONHECIMENTO ANULADO</h1>
-            <div class="game-subtitle">Spider-Drone Desintegrado</div>
+            <h1 class="game-title" style="color: var(--neon-red); text-shadow: var(--red-glow);">PROTOCOLO FALHOU</h1>
+            <div class="game-subtitle">Spider-Drone Desintegrado pela Queda</div>
 
             <div class="score-summary">
                 <div class="score-row">
-                    <span class="label">Pontuação do Setor:</span>
+                    <span class="label">Pontuação no Prédio:</span>
                     <span id="summary-score-lost" class="value red">00000</span>
                 </div>
                 <div class="score-row">
-                    <span class="label">Distância Percorrida:</span>
+                    <span class="label">Altura de Escalada:</span>
                     <span id="summary-dist-lost" class="value cyan">0m</span>
                 </div>
                 <div class="score-row total">
-                    <span class="label">STATUS DO DRONE</span>
-                    <span class="value" style="color: var(--neon-red); text-shadow: var(--red-glow);">DESTRUÍDO</span>
+                    <span class="label">STATUS DO RECONHECIMENTO</span>
+                    <span class="value" style="color: var(--neon-red); text-shadow: var(--red-glow);">FALHA</span>
                 </div>
             </div>
 
-            <button id="btn-restart-lost" class="btn-primary">Reativar Drone</button>
+            <button id="btn-restart-lost" class="btn-primary">Reiniciar Escalada</button>
         </div>
     </div>
 
     <!-- Vitória -->
     <div id="screen-victory" class="overlay-screen hidden">
         <div class="menu-card" style="border-top-color: var(--neon-green);">
-            <h1 class="game-title" style="color: var(--neon-green); text-shadow: var(--green-glow);">SIMULAÇÃO CONCLUÍDA</h1>
-            <div class="game-subtitle">Metrópole Mapeada com Sucesso</div>
+            <h1 class="game-title" style="color: var(--neon-green); text-shadow: var(--green-glow);">DUENDE VERDE CAPTURADO</h1>
+            <div class="game-subtitle">Super Bomba Desarmada no Topo do Andaime</div>
 
             <div class="score-summary">
                 <div class="score-row">
@@ -617,16 +651,16 @@
                     <span id="summary-score-win" class="value red">00000</span>
                 </div>
                 <div class="score-row">
-                    <span class="label">Distância de Reconhecimento:</span>
-                    <span id="summary-dist-win" class="value cyan">1000m</span>
+                    <span class="label">Altura Atingida:</span>
+                    <span id="summary-dist-win" class="value cyan">40m</span>
                 </div>
                 <div class="score-row total">
-                    <span class="label">NÍVEL DE OPERAÇÃO</span>
-                    <span class="value" style="color: var(--neon-green); text-shadow: var(--green-glow);">APROVADO</span>
+                    <span class="label">NÍVEL DE ESCALADA</span>
+                    <span class="value" style="color: var(--neon-green); text-shadow: var(--green-glow);">COMPLETO</span>
                 </div>
             </div>
 
-            <button id="btn-restart-win" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));">Reiniciar Reconhecimento</button>
+            <button id="btn-restart-win" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));">Escalar Novamente</button>
         </div>
     </div>
 
@@ -637,7 +671,7 @@
         // ============================================================================
         // 1. ÁUDIO PROCEDURAL SINTETIZADO (Web Audio API)
         // ============================================================================
-        class SomSpiderman {
+        class SomSpidermanAtari {
             constructor() {
                 this.ctx = null;
                 this.masterGain = null;
@@ -645,10 +679,8 @@
                 this.muted = false;
 
                 // Sons contínuos
-                this.windNoise = null;
-                this.windFilter = null;
-                this.windGain = null;
-
+                this.climbSoundInterval = null;
+                
                 // Sequenciador Synthwave
                 this.musicActive = false;
                 this.musicInterval = null;
@@ -680,169 +712,88 @@
                 
                 if (this.muted) {
                     this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
-                    this.stopWind();
                 } else {
                     this.masterGain.gain.setValueAtTime(0.24, this.ctx.currentTime);
-                    if (gameState === GAME_STATES.PLAYING) {
-                        this.startWind();
-                    }
                 }
                 return this.muted;
             }
 
-            // Som de ruído de vento que oscila de acordo com a velocidade do Spiderman
-            startWind() {
-                this.init();
-                if (!this.ctx || this.muted) return;
-                this.stopWind();
-
-                const t = this.ctx.currentTime;
-                
-                // Gerador de ruído rosa/branco simples
-                const bufferSize = this.ctx.sampleRate * 2.0;
-                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2.0 - 1.0;
-                }
-                
-                this.windNoise = this.ctx.createBufferSource();
-                this.windNoise.buffer = buffer;
-                this.windNoise.loop = true;
-
-                this.windFilter = this.ctx.createBiquadFilter();
-                this.windFilter.type = 'bandpass';
-                this.windFilter.frequency.setValueAtTime(450, t);
-                this.windFilter.Q.setValueAtTime(1.5, t);
-
-                this.windGain = this.ctx.createGain();
-                this.windGain.gain.setValueAtTime(0.04, t);
-
-                this.windNoise.connect(this.windFilter);
-                this.windFilter.connect(this.windGain);
-                this.windGain.connect(this.sfxGain);
-
-                this.windNoise.start(t);
-            }
-
-            setWindIntensity(speedRatio) {
-                if (!this.ctx || this.muted || !this.windFilter || !this.windGain) return;
-                const t = this.ctx.currentTime;
-                // Quanto mais rápido, mais agudo e forte é o barulho do vento
-                this.windFilter.frequency.linearRampToValueAtTime(350 + speedRatio * 850, t + 0.1);
-                this.windGain.gain.linearRampToValueAtTime(0.04 + speedRatio * 0.18, t + 0.1);
-            }
-
-            stopWind() {
-                if (this.windNoise) {
-                    try { this.windNoise.stop(); } catch(e){}
-                    this.windNoise = null;
-                }
-            }
-
-            // Disparo de Teia de Luz (Fibra óptica tensionada)
+            // Som de disparo de teia vertical (Bip agudo curto)
             playWebShoot() {
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
 
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                const filter = this.ctx.createBiquadFilter();
 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(250, t);
-                osc.frequency.exponentialRampToValueAtTime(1200, t + 0.18);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, t);
+                osc.frequency.setValueAtTime(1400, t + 0.05);
 
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(700, t);
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
 
-                gain.gain.setValueAtTime(0.24, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-
-                osc.connect(filter);
-                filter.connect(gain);
+                osc.connect(gain);
                 gain.connect(this.sfxGain);
                 osc.start(t);
-                osc.stop(t + 0.19);
+                osc.stop(t + 0.13);
             }
 
-            // Tensionamento físico da teia (som de estalo elétrico)
-            playWebTension() {
-                if (!this.ctx || this.muted) return;
-                const t = this.ctx.currentTime;
+            // Som repetitivo de subida/escalada (Estilo Atari)
+            startClimbingSound() {
+                if (this.climbSoundInterval || this.muted) return;
+                
+                const playStep = () => {
+                    if (!this.ctx || this.muted || gameState !== GAME_STATES.PLAYING) return;
+                    const t = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(350 + (playerPos.y * 15), t);
+                    
+                    gain.gain.setValueAtTime(0.06, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.sfxGain);
+                    osc.start(t);
+                    osc.stop(t + 0.07);
+                };
 
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(95, t);
-                osc.frequency.linearRampToValueAtTime(45, t + 0.15);
-
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(140, t);
-
-                gain.gain.setValueAtTime(0.18, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.sfxGain);
-                osc.start(t);
-                osc.stop(t + 0.16);
+                this.climbSoundInterval = setInterval(playStep, 95);
             }
 
-            // Coleta de Item (Aranha de Energia Neon)
+            stopClimbingSound() {
+                if (this.climbSoundInterval) {
+                    clearInterval(this.climbSoundInterval);
+                    this.climbSoundInterval = null;
+                }
+            }
+
+            // Coleta de itens (Desarmar bomba)
             playCollect() {
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
 
-                const osc1 = this.ctx.createOscillator();
-                const osc2 = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(523.25, t); // C5
-                osc1.frequency.setValueAtTime(783.99, t + 0.08); // G5
-
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(1046.50, t); // C6
-
-                gain.gain.setValueAtTime(0.15, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-
-                osc1.connect(gain);
-                osc2.connect(gain);
-                gain.connect(this.sfxGain);
-
-                osc1.start(t);
-                osc2.start(t);
-                osc1.stop(t + 0.24);
-                osc2.stop(t + 0.24);
-            }
-
-            // Laser do Drone Inimigo
-            playDroneLaser() {
-                if (!this.ctx || this.muted) return;
-                const t = this.ctx.currentTime;
-
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
 
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(800, t);
-                osc.frequency.exponentialRampToValueAtTime(150, t + 0.22);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.setValueAtTime(900, t + 0.06);
+                osc.frequency.setValueAtTime(1200, t + 0.12);
 
-                gain.gain.setValueAtTime(0.06, t);
+                gain.gain.setValueAtTime(0.14, t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
 
                 osc.connect(gain);
                 gain.connect(this.sfxGain);
                 osc.start(t);
-                osc.stop(t + 0.23);
+                osc.stop(t + 0.24);
             }
 
-            // Impacto / Dano
+            // Dano
             playDamage() {
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
@@ -851,127 +802,92 @@
                 const gain = this.ctx.createGain();
 
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(180, t);
-                osc.frequency.linearRampToValueAtTime(40, t + 0.25);
+                osc.frequency.setValueAtTime(220, t);
+                osc.frequency.linearRampToValueAtTime(60, t + 0.22);
 
-                gain.gain.setValueAtTime(0.3, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
 
                 osc.connect(gain);
                 gain.connect(this.sfxGain);
                 osc.start(t);
-                osc.stop(t + 0.26);
+                osc.stop(t + 0.23);
             }
 
-            // Explosão final (Morte do Drone)
-            playExplosion() {
+            // Queda livre
+            playFalling() {
                 if (!this.ctx || this.muted) return;
                 const t = this.ctx.currentTime;
 
-                const bufferSize = this.ctx.sampleRate * 0.6;
-                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-                const noise = this.ctx.createBufferSource();
-                noise.buffer = buffer;
-
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(320, t);
-                filter.frequency.exponentialRampToValueAtTime(40, t + 0.6);
-
+                const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                gain.gain.setValueAtTime(0.35, t);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(450, t);
+                osc.frequency.exponentialRampToValueAtTime(90, t + 0.6);
+
+                gain.gain.setValueAtTime(0.2, t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
 
-                noise.connect(filter);
-                filter.connect(gain);
+                osc.connect(gain);
                 gain.connect(this.sfxGain);
-                noise.start(t);
-                noise.stop(t + 0.62);
+                osc.start(t);
+                osc.stop(t + 0.62);
             }
 
-            // Sequenciador Synthwave Retro Aranha
+            // Sequenciador Synthwave Retro Aranha 8-bit (Estilo Atari)
             startMusic() {
                 this.init();
                 if (this.musicActive) return;
                 this.musicActive = true;
                 this.musicBeat = 0;
 
-                const step = 0.125; // BPM ~120
+                const step = 0.14; // BPM ~107
                 let nextTick = this.ctx.currentTime;
 
                 const tickLoop = () => {
                     const t = nextTick;
 
                     if (this.musicActive && !this.muted) {
-                        // Linha de baixo (Notas pulsantes em Sol menor)
+                        // Linha de baixo (Notas estilo Atari 8-bit square)
                         const notes = [
-                            49.00, 49.00, 49.00, 49.00, // G1
-                            41.20, 41.20, 41.20, 41.20, // E1
-                            43.65, 43.65, 43.65, 43.65, // F1
-                            46.25, 46.25, 49.00, 55.00  // F#1, G1, A1
+                            55.00, 55.00, 65.41, 65.41,
+                            58.27, 58.27, 73.42, 73.42,
+                            55.00, 55.00, 65.41, 65.41,
+                            73.42, 82.41, 87.31, 98.00
                         ];
                         const freq = notes[this.musicBeat % notes.length];
 
                         const osc = this.ctx.createOscillator();
-                        const filter = this.ctx.createBiquadFilter();
                         const gain = this.ctx.createGain();
 
-                        osc.type = 'sawtooth';
+                        osc.type = 'square';
                         osc.frequency.setValueAtTime(freq, t);
 
-                        filter.type = 'lowpass';
-                        filter.frequency.setValueAtTime(220, t);
+                        gain.gain.setValueAtTime(0.08, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.3);
 
-                        gain.gain.setValueAtTime(0.12, t);
-                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.6);
-
-                        osc.connect(filter);
-                        filter.connect(gain);
+                        osc.connect(gain);
                         gain.connect(this.masterGain);
 
                         osc.start(t);
-                        osc.stop(t + step * 1.7);
+                        osc.stop(t + step * 1.4);
 
-                        // Kick Drum nos tempos 0, 4, 8, 12...
-                        if (this.musicBeat % 4 === 0) {
-                            const kick = this.ctx.createOscillator();
-                            const kickGain = this.ctx.createGain();
-                            kick.type = 'sine';
-                            kick.frequency.setValueAtTime(120, t);
-                            kick.frequency.exponentialRampToValueAtTime(45, t + 0.08);
-
-                            kickGain.gain.setValueAtTime(0.25, t);
-                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.08);
-
-                            kick.connect(kickGain);
-                            kickGain.connect(this.masterGain);
-                            kick.start(t);
-                            kick.stop(t + 0.09);
-                        }
-
-                        // Hihat nos contratempos
+                        // Ruído percussivo simples simulando Snare
                         if (this.musicBeat % 4 === 2) {
-                            const hhOsc = this.ctx.createOscillator();
-                            const hhGain = this.ctx.createGain();
-                            hhOsc.type = 'triangle';
-                            hhOsc.frequency.setValueAtTime(9000, t);
+                            const snare = this.ctx.createOscillator();
+                            const snareGain = this.ctx.createGain();
+                            snare.type = 'triangle';
+                            snare.frequency.setValueAtTime(120, t);
+                            snare.frequency.linearRampToValueAtTime(4500, t + 0.05);
 
-                            const hhFilter = this.ctx.createBiquadFilter();
-                            hhFilter.type = 'highpass';
-                            hhFilter.frequency.setValueAtTime(6000, t);
+                            snareGain.gain.setValueAtTime(0.03, t);
+                            snareGain.gain.linearRampToValueAtTime(0.001, t + 0.05);
 
-                            hhGain.gain.setValueAtTime(0.015, t);
-                            hhGain.gain.linearRampToValueAtTime(0.001, t + 0.04);
-
-                            hhOsc.connect(hhFilter);
-                            hhFilter.connect(hhGain);
-                            hhGain.connect(this.masterGain);
-                            hhOsc.start(t);
-                            hhOsc.stop(t + 0.05);
+                            snare.connect(snareGain);
+                            snareGain.connect(this.masterGain);
+                            snare.start(t);
+                            snare.stop(t + 0.06);
                         }
                     }
 
@@ -997,34 +913,33 @@
 
             playVictory() {
                 this.stopMusic();
-                this.stopWind();
+                this.stopClimbingSound();
                 if (!this.ctx || this.muted) return;
 
                 const t = this.ctx.currentTime;
-                // Acorde arpejado maior triunfante
-                const arpeggio = [392.00, 493.88, 587.33, 783.99, 987.77, 1174.66, 1567.98];
+                const arpeggio = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
                 
                 arpeggio.forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, t + idx * 0.07);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.08);
 
-                    gain.gain.setValueAtTime(0.12, t + idx * 0.07);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.07 + 0.45);
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.4);
 
                     osc.connect(gain);
                     gain.connect(this.masterGain);
                     
-                    osc.start(t + idx * 0.07);
-                    osc.stop(t + idx * 0.07 + 0.47);
+                    osc.start(t + idx * 0.08);
+                    osc.stop(t + idx * 0.08 + 0.42);
                 });
             }
 
             playDefeat() {
                 this.stopMusic();
-                this.stopWind();
+                this.stopClimbingSound();
                 if (!this.ctx || this.muted) return;
 
                 const t = this.ctx.currentTime;
@@ -1035,25 +950,19 @@
                     const gain = this.ctx.createGain();
                     osc.type = 'sawtooth';
                     
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(250, t + idx * 0.2);
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.2 + 0.5);
 
-                    osc.frequency.setValueAtTime(freq, t + idx * 0.2);
-                    gain.gain.setValueAtTime(0.18, t + idx * 0.2);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.2 + 0.6);
-
-                    osc.connect(filter);
-                    filter.connect(gain);
+                    osc.connect(gain);
                     gain.connect(this.masterGain);
 
                     osc.start(t + idx * 0.2);
-                    osc.stop(t + idx * 0.2 + 0.65);
+                    osc.stop(t + idx * 0.2 + 0.55);
                 });
             }
         }
 
-        const som = new SomSpiderman();
+        const som = new SomSpidermanAtari();
 
         // ============================================================================
         // 2. PARÂMETROS E CONFIGURAÇÕES DO MOTOR (Three.js)
@@ -1062,44 +971,55 @@
         let starfield, bgGrid;
 
         // Entidades
-        let playerGroup; // Grupo do personagem Spiderman
-        let playerLegs = []; // Referências das pernas para animação
-        let buildings = []; // Prédios
-        let webLineMesh = null; // Teia visível
-        let collectibles = []; // Cristais/Aranhas de Energia
-        let enemyDrones = []; // Drones voadores
-        let laserProjectiles = []; // Lasers atirados pelos drones
-        let sparks = []; // Partículas de explosão/teia
+        let playerGroup; // O Spiderman pixelado
+        let greenGoblinGroup; // Duende Verde e planador
+        let buildingMesh = null; // O prédio único escalável
+        let webLineMesh = null; // A teia
+        
+        let capangas = []; // Capangas que saem das janelas
+        let bombs = []; // Bombas nas janelas
+        let goblinBombs = []; // Bombas caindo do Duende Verde
+        let sparks = []; // Partículas de teia e faíscas
 
-        // Física e Balanço de Teia
-        let playerPos = new THREE.Vector3(-15.0, 7.5, 0.0);
-        let playerVel = new THREE.Vector3(7.0, 0.0, 0.0); // Velocidade inicial
-        const GRAVITY = -11.8;
-        const AIR_RESISTANCE = 0.08;
+        // Estado Físico do Jogador (Spiderman)
+        // O prédio fica em Z = 0. A fachada de escalada está em Z = 0.85
+        let playerPos = new THREE.Vector3(0.0, 1.5, 0.85);
+        let playerVel = new THREE.Vector3(0.0, 0.0, 0.0);
+        
+        const SPEED_X = 5.0; // Velocidade lateral de escalada
+        const SPEED_Y = 4.2; // Velocidade vertical de escalada
+        const WEB_CLIMB_SPEED = 9.8; // Velocidade ao subir na teia
+        const FALL_GRAVITY = -16.0; // Gravidade na queda
 
+        // Estado da Teia
         let hasWeb = false;
+        let isClimbingWeb = false;
         let webAnchor = new THREE.Vector3();
-        let webRopeLength = 0.0;
-        let targetWebBuilding = null; // Prédio onde a teia foi ancorada
+        let webLength = 0.0;
+        let webDirection = new THREE.Vector3();
 
-        // Estados Globais do Jogo
+        let webFluid = 100.0;
+        const WEB_FLUID_CONSUMPTION = 18.0; // Consumo por segundo de uso da teia
+
+        // Estados Globais
         const GAME_STATES = { MENU: 0, PLAYING: 1, GAMEOVER: 2, VICTORY: 3 };
         let gameState = GAME_STATES.MENU;
 
-        let distanceTraveled = 0.0;
-        const TOTAL_DISTANCE = 1000.0; // Distância final de vitória
+        let distanceTraveled = 0.0; // Altura máxima escalada
+        const TOTAL_DISTANCE = 40.0; // O topo do prédio
         let score = 0;
         let lives = 3;
         const MAX_LIVES = 3;
+        
         let isDead = false;
+        let isFalling = false; // Se o jogador está despencando sem teia
         let damageFlash = 0.0;
 
-        // Spawners de Prédios e Drones
-        let nextBuildingX = -20.0;
-        let droneSpawnTimer = 0.0;
-        let collectibleSpawnTimer = 0.0;
+        // Animação e Spawns
+        let capangaSpawnTimer = 0.0;
+        let bombSpawnTimer = 0.0;
 
-        // Câmera Orbital WASD
+        // Câmera Orbital WASD (Foco vertical)
         let cameraAngleY = Math.PI / 2; // Vista lateral
         let cameraZoom = 1.0;
         let shakeAmount = 0.0;
@@ -1112,6 +1032,7 @@
         const hudLives = document.getElementById('hud-lives');
         const hudDistance = document.getElementById('hud-distance');
         const hudScore = document.getElementById('hud-score');
+        const webFluidBar = document.getElementById('web-fluid-bar');
         const btnSound = document.getElementById('btn-sound');
         
         const screenMenu = document.getElementById('screen-menu');
@@ -1124,256 +1045,329 @@
         const loadingScreen = document.getElementById('loading-screen');
 
         // ============================================================================
-        // 3. MODELAGEM PROCEDURAL 3D
+        // 3. MODELAGEM PROCEDURAL 3D NEON
         // ============================================================================
         
-        // Cria a aranha robótica/Spider-Drone articulado
-        function createSpiderDrone() {
-            const spiderGroup = new THREE.Group();
+        // Cria o Homem-Aranha estilo pixel/bloco retrô do Atari 2600
+        function createSpidermanAtari() {
+            const group = new THREE.Group();
 
             const redMat = new THREE.MeshStandardMaterial({
                 color: 0xff003c,
-                emissive: 0x44000a,
-                roughness: 0.3,
-                metalness: 0.8
+                roughness: 0.5,
+                metalness: 0.1
             });
 
             const blueMat = new THREE.MeshStandardMaterial({
-                color: 0x0066ff,
+                color: 0x0055ff,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            // Tronco (Blocos pixelados vermelhos e azuis)
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.4, 0.2), redMat);
+            chest.position.y = 0.2;
+            group.add(chest);
+
+            const belt = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.202), blueMat);
+            belt.position.y = 0.05;
+            group.add(belt);
+
+            // Cabeça Vermelha
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.28, 0.18), redMat);
+            head.position.y = 0.5;
+            group.add(head);
+
+            // Olhos Brancos do Spiderman (Triângulos/Planos pixelados)
+            const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
+            eyeL.position.set(-0.06, 0.5, 0.091);
+            group.add(eyeL);
+
+            const eyeR = eyeL.clone();
+            eyeR.position.x = 0.06;
+            group.add(eyeR);
+
+            // Braços abertos para escalada (Vermelho)
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.1, 0.1), redMat);
+            armL.position.set(-0.3, 0.28, 0.02);
+            armL.rotation.z = Math.PI / 8;
+            group.add(armL);
+
+            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.1, 0.1), redMat);
+            armR.position.set(0.3, 0.28, 0.02);
+            armR.rotation.z = -Math.PI / 8;
+            group.add(armR);
+
+            // Pernas abertas para escalada (Azul)
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, 0.1), blueMat);
+            legL.position.set(-0.16, -0.16, 0.02);
+            legL.rotation.z = -Math.PI / 6;
+            group.add(legL);
+
+            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, 0.1), blueMat);
+            legR.position.set(0.16, -0.16, 0.02);
+            legR.rotation.z = Math.PI / 6;
+            group.add(legR);
+
+            // Adiciona pés vermelhos
+            const footL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.14), redMat);
+            footL.position.set(-0.23, -0.32, 0.04);
+            group.add(footL);
+
+            const footR = footL.clone();
+            footR.position.x = 0.23;
+            group.add(footR);
+
+            group.castShadow = true;
+            return group;
+        }
+
+        // Planador do Duende Verde (Green Goblin)
+        function createGreenGoblin() {
+            const group = new THREE.Group();
+
+            const greenMat = new THREE.MeshStandardMaterial({
+                color: 0x39ff14,
+                roughness: 0.4,
+                metalness: 0.6
+            });
+
+            const purpleMat = new THREE.MeshStandardMaterial({
+                color: 0xaa00ff,
+                roughness: 0.4,
+                metalness: 0.2
+            });
+
+            const steelMat = new THREE.MeshStandardMaterial({
+                color: 0x22262d,
                 roughness: 0.3,
                 metalness: 0.8
             });
 
-            const whiteGlowMat = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                emissive: 0xffffff,
-                emissiveIntensity: 0.8,
-                roughness: 0.1
-            });
+            // O Planador (Asas cuneiformes ciano/aço)
+            const glider = new THREE.Mesh(new THREE.ConeGeometry(0.9, 0.3, 4), steelMat);
+            glider.rotation.x = Math.PI / 2;
+            glider.scale.set(1.4, 0.3, 0.3);
+            glider.castShadow = true;
+            group.add(glider);
 
-            // Corpo Central (Esfera Vermelha)
-            const body = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 12), redMat);
-            body.castShadow = true;
-            spiderGroup.add(body);
+            // Borda do planador neon ciano
+            const trimGeo = new THREE.BoxGeometry(2.4, 0.04, 0.04);
+            const trim = new THREE.Mesh(trimGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+            trim.position.y = -0.06;
+            group.add(trim);
 
-            // Cabeça (Esfera menor com máscara azul)
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), blueMat);
-            head.position.set(0.32, 0.1, 0);
-            body.add(head);
+            // O Duende Verde (Bloco Verde com gorro roxo)
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.22), greenMat);
+            body.position.y = 0.25;
+            group.add(body);
 
-            // Olhos Grandes Ciano Brilhantes
-            const eyeGeo = new THREE.SphereGeometry(0.07, 6, 6);
-            const eyeL = new THREE.Mesh(eyeGeo, whiteGlowMat);
-            eyeL.position.set(0.16, 0.06, 0.12);
-            head.add(eyeL);
+            // Cabeça
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), greenMat);
+            head.position.set(0, 0.52, 0.02);
+            group.add(head);
+
+            // Olhos amarelos
+            const eyeGeo = new THREE.SphereGeometry(0.04, 4, 4);
+            const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+            eyeL.position.set(-0.06, 0.54, 0.12);
+            group.add(eyeL);
 
             const eyeR = eyeL.clone();
-            eyeR.position.z = -0.12;
-            head.add(eyeR);
+            eyeR.position.x = 0.06;
+            group.add(eyeR);
 
-            // Pernas Articuladas (8 pernas cilíndricas)
-            playerLegs = [];
-            const legGeo = new THREE.CylinderGeometry(0.04, 0.02, 0.6, 6);
-            legGeo.translate(0, -0.3, 0); // Ajusta pivô para a junta superior
+            // Gorro Roxo do Duende
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 6), purpleMat);
+            hat.position.set(0, 0.7, -0.05);
+            hat.rotation.x = -Math.PI / 10;
+            group.add(hat);
 
-            const angles = [
-                Math.PI/6, Math.PI/3, -Math.PI/6, -Math.PI/3,
-                Math.PI/6, Math.PI/3, -Math.PI/6, -Math.PI/3
-            ];
+            // Colete Roxo
+            const vest = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.25, 0.24), purpleMat);
+            vest.position.set(0, 0.25, 0);
+            group.add(vest);
 
-            for (let i = 0; i < 8; i++) {
-                const isLeft = i < 4;
-                const legPivot = new THREE.Group();
-                // Distribui as pernas nas laterais do corpo
-                const zOffset = isLeft ? 0.32 : -0.32;
-                const xOffset = ((i % 4) - 1.5) * 0.18;
-                
-                legPivot.position.set(xOffset, -0.05, zOffset);
-
-                const legSegment = new THREE.Mesh(legGeo, blueMat);
-                // Aponta a perna para fora e para baixo
-                legSegment.rotation.z = isLeft ? -Math.PI / 4 : Math.PI / 4;
-                legPivot.add(legSegment);
-
-                spiderGroup.add(legPivot);
-                playerLegs.push({
-                    pivot: legPivot,
-                    baseZRot: legSegment.rotation.z,
-                    phase: i * (Math.PI / 4)
-                });
-            }
-
-            // Lâmpada de status traseira
-            const statusLight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.1), whiteGlowMat);
-            statusLight.position.set(-0.35, 0.1, 0);
-            spiderGroup.add(statusLight);
-
-            return spiderGroup;
-        }
-
-        // UFO/Drone Patrulhador Letal
-        function createDroneMesh() {
-            const droneGroup = new THREE.Group();
-
-            const blackMat = new THREE.MeshStandardMaterial({
-                color: 0x141424,
-                roughness: 0.4,
-                metalness: 0.9
-            });
-
-            const glowRedMat = new THREE.MeshStandardMaterial({
-                color: 0xff003c,
-                emissive: 0xff003c,
-                emissiveIntensity: 0.9,
-                roughness: 0.1
-            });
-
-            // Corpo Esférico do Drone
-            const core = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 10), blackMat);
-            core.castShadow = true;
-            droneGroup.add(core);
-
-            // Anel Circular Laranja/Vermelho
-            const ringGeo = new THREE.TorusGeometry(0.55, 0.06, 6, 16);
-            ringGeo.rotateX(Math.PI / 2);
-            const ring = new THREE.Mesh(ringGeo, glowRedMat);
-            droneGroup.add(ring);
-
-            // Lentes do Sensor Neon
-            const sensor = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), glowRedMat);
-            sensor.position.set(0.3, -0.1, 0);
-            droneGroup.add(sensor);
-
-            // Hélices virtuais (discos translúcidos)
-            const propGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.01, 8);
-            const propL = new THREE.Mesh(propGeo, new THREE.MeshBasicMaterial({
-                color: 0x00f0ff,
-                transparent: true,
-                opacity: 0.35
-            }));
-            propL.position.set(-0.55, 0.05, 0.55);
-            droneGroup.add(propL);
-
-            const propR = propL.clone();
-            propR.position.set(-0.55, 0.05, -0.55);
-            droneGroup.add(propR);
-
-            return droneGroup;
+            return group;
         }
 
         // ============================================================================
-        // 4. SISTEMA DE PRÉDIOS E ROLAGEM INFINITA DE CENÁRIO
+        // 4. CONSTRUÇÃO DO CENÁRIO E PRÉDIO ÚNICO DO DUENDE VERDE
         // ============================================================================
-        
-        function generateBuilding(xCoord) {
-            const width = 3.5 + Math.random() * 2.0;
-            const height = 9.0 + Math.random() * 7.5; // Alturas variáveis
-            const depth = 5.0;
+        function initScenario() {
+            // Prédio Único Escalável
+            // Largura = 8.5, Altura = 42.0
+            const bWidth = 8.5;
+            const bHeight = 42.0;
+            const bDepth = 1.4;
 
             const bMat = new THREE.MeshStandardMaterial({
-                color: 0x05040d,
-                roughness: 0.7,
-                metalness: 0.3
+                color: 0x06050e,
+                roughness: 0.8,
+                metalness: 0.1
             });
 
-            const geo = new THREE.BoxGeometry(width, height, depth);
-            const mesh = new THREE.Mesh(geo, bMat);
-            // O topo do prédio estará em Y = height, logo a caixa fica centrada em height/2
-            mesh.position.set(xCoord, height / 2, -2.5); // Deslocado em Z para ser a parede de fundo
-            mesh.receiveShadow = true;
-            mesh.castShadow = true;
-            scene.add(mesh);
+            buildingMesh = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), bMat);
+            buildingMesh.position.set(0, bHeight / 2, 0);
+            buildingMesh.receiveShadow = true;
+            scene.add(buildingMesh);
 
-            // Adiciona janelas neon brilhantes na fachada (linhas de cubos coloridos)
-            const winMat = new THREE.MeshStandardMaterial({
-                color: Math.random() < 0.5 ? 0x00f0ff : 0xff007f,
-                emissive: Math.random() < 0.5 ? 0x005577 : 0x77003c,
-                emissiveIntensity: 0.8,
-                roughness: 0.1
+            // Moldura externa brilhante do prédio (Bordas laterais Neon Vermelho)
+            const borderMat = new THREE.MeshBasicMaterial({ color: 0xff003c });
+            const borderL = new THREE.Mesh(new THREE.BoxGeometry(0.12, bHeight, 0.12), borderMat);
+            borderL.position.set(-bWidth / 2 - 0.06, 0, bDepth / 2 + 0.06);
+            buildingMesh.add(borderL);
+
+            const borderR = borderL.clone();
+            borderR.position.x = bWidth / 2 + 0.06;
+            buildingMesh.add(borderR);
+
+            // Linha de Andaime/Gantry no topo (Super Bomba)
+            const gantryMat = new THREE.MeshStandardMaterial({
+                color: 0x1d1d29,
+                metalness: 0.9,
+                roughness: 0.2
+            });
+            const gantry = new THREE.Mesh(new THREE.BoxGeometry(bWidth + 0.8, 1.2, 2.0), gantryMat);
+            gantry.position.set(0, bHeight / 2 + 0.6, 0);
+            buildingMesh.add(gantry);
+
+            // Borda do gantry verde brilhante
+            const gantryTrim = new THREE.Mesh(new THREE.BoxGeometry(bWidth + 0.84, 0.08, 2.04), new THREE.MeshBasicMaterial({ color: 0x39ff14 }));
+            gantryTrim.position.y = 0.58;
+            gantry.add(gantryTrim);
+
+            // Super Bomba no topo (Esfera brilhante laranja e branca com LEDs piscantes)
+            const superBombGeo = new THREE.SphereGeometry(0.7, 12, 12);
+            const superBombMat = new THREE.MeshStandardMaterial({
+                color: 0xff5e00,
+                emissive: 0xff5e00,
+                emissiveIntensity: 0.9
+            });
+            const superBomb = new THREE.Mesh(superBombGeo, superBombMat);
+            superBomb.position.set(0, bHeight / 2 + 1.6, 0.5);
+            scene.add(superBomb);
+
+            // 5. Janelas em Grid
+            // X: -3.0 a 3.0 (5 colunas: -3.0, -1.5, 0.0, 1.5, 3.0)
+            // Y: 2.0 a 36.0 (passos de 2.0)
+            // As janelas são recortes/placas pretas/azuis brilhantes
+            const winMatClosed = new THREE.MeshStandardMaterial({
+                color: 0x0c0b24,
+                roughness: 0.9,
+                metalness: 0.1
             });
 
-            const rows = Math.floor(height / 1.6);
-            const cols = Math.floor(width / 1.2);
-
-            for (let r = 1; r < rows - 1; r++) {
-                for (let c = 0; c < cols; c++) {
-                    // Apenas algumas janelas acesas para naturalidade
-                    if (Math.random() > 0.45) {
-                        const winGeo = new THREE.BoxGeometry(0.24, 0.45, 0.04);
-                        const win = new THREE.Mesh(winGeo, winMat);
-                        
-                        const winX = -width / 2 + 0.6 + c * 1.1;
-                        const winY = -height / 2 + 0.8 + r * 1.5;
-                        const winZ = depth / 2 + 0.01;
-
-                        win.position.set(winX, winY, winZ);
-                        mesh.add(win);
-                    }
+            for (let y = 3.0; y <= 35.0; y += 2.2) {
+                for (let x = -3.0; x <= 3.0; x += 1.5) {
+                    const winMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.1), winMatClosed);
+                    // Ligeiramente destacado da fachada do prédio
+                    winMesh.position.set(x, y, 0.851);
+                    scene.add(winMesh);
                 }
             }
-
-            // Borda superior brilhante (Neon)
-            const trimGeo = new THREE.BoxGeometry(width + 0.05, 0.08, depth + 0.05);
-            const trimMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-            const trim = new THREE.Mesh(trimGeo, trimMat);
-            trim.position.set(0, height / 2 + 0.04, 0);
-            mesh.add(trim);
-
-            buildings.push({
-                mesh: mesh,
-                x: xCoord,
-                width: width,
-                height: height
-            });
         }
 
         // ============================================================================
-        // 5. SPAWNERS E COLEÇÃO DE ITENS / INIMIGOS
+        // 5. SPAWNERS E COMPORTAMENTO DE INIMIGOS E BOMB-DESARME
         // ============================================================================
         
-        function spawnCollectible(xPos) {
-            // Símbolo aranha brilhante verde/laranja
-            const geo = new THREE.OctahedronGeometry(0.28);
-            const mat = new THREE.MeshStandardMaterial({
-                color: 0x39ff14,
-                emissive: 0x39ff14,
-                emissiveIntensity: 0.8,
+        function spawnCapanga() {
+            // Capanga aparece em uma janela aleatória da fachada do prédio próxima à altura do jogador
+            const gridX = [-3.0, -1.5, 0.0, 1.5, 3.0];
+            
+            // Altura do spawn é baseada no Y do player
+            const spawnYBase = Math.floor(playerPos.y / 2.2) * 2.2 + 3.0;
+            // Pega um Y entre spawnYBase - 4.4 e spawnYBase + 6.6
+            const possibleY = [];
+            for (let y = Math.max(3.0, spawnYBase - 4.4); y <= Math.min(33.0, spawnYBase + 6.6); y += 2.2) {
+                possibleY.push(y);
+            }
+
+            if (possibleY.length === 0) return;
+
+            const targetX = gridX[Math.floor(Math.random() * gridX.length)];
+            const targetY = possibleY[Math.floor(Math.random() * possibleY.length)];
+
+            // Evita spawn duplicado no mesmo local
+            for (let i = 0; i < capangas.length; i++) {
+                if (capangas[i].x === targetX && capangas[i].y === targetY) return;
+            }
+
+            // Capanga (Voxel Vermelho com cabeça amarela que sai da janela)
+            const capGroup = new THREE.Group();
+            
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshStandardMaterial({ color: 0xffcc00 }));
+            head.position.y = 0.22;
+            capGroup.add(head);
+
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.25, 0.25), new THREE.MeshStandardMaterial({ color: 0xff003c }));
+            body.position.y = 0.0;
+            capGroup.add(body);
+
+            // Tesoura/Faca neon para cortar teia
+            const tool = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.1), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+            tool.position.set(0, 0.12, 0.15);
+            capGroup.add(tool);
+
+            capGroup.position.set(targetX, targetY, 0.85);
+            scene.add(capGroup);
+
+            capangas.push({
+                mesh: capGroup,
+                x: targetX,
+                y: targetY,
+                life: 3.5, // Fica ativo por 3.5 segundos e depois entra de volta
+                isActive: true
+            });
+        }
+
+        function spawnBomb() {
+            // Bomba colocada pelo Duende Verde que pisca
+            const gridX = [-3.0, -1.5, 0.0, 1.5, 3.0];
+            const spawnYBase = Math.floor(playerPos.y / 2.2) * 2.2 + 3.0;
+            
+            const possibleY = [];
+            for (let y = Math.max(3.0, spawnYBase - 6.6); y <= Math.min(33.0, spawnYBase + 8.8); y += 2.2) {
+                possibleY.push(y);
+            }
+
+            if (possibleY.length === 0) return;
+
+            const targetX = gridX[Math.floor(Math.random() * gridX.length)];
+            const targetY = possibleY[Math.floor(Math.random() * possibleY.length)];
+
+            // Evita spawn no mesmo X/Y de bomba existente
+            for (let i = 0; i < bombs.length; i++) {
+                if (bombs[i].x === targetX && bombs[i].y === targetY) return;
+            }
+
+            const bombGeo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+            const bombMat = new THREE.MeshStandardMaterial({
+                color: 0xff5e00,
+                emissive: 0x441100,
                 roughness: 0.1
             });
-
-            const mesh = new THREE.Mesh(geo, mat);
-            // Spawn acima da altura do abismo (Y entre 3.0 e 7.5)
-            const yPos = 3.2 + Math.random() * 4.5;
-            mesh.position.set(xPos, yPos, 0);
+            const mesh = new THREE.Mesh(bombGeo, bombMat);
+            mesh.position.set(targetX, targetY + 0.1, 0.95);
             scene.add(mesh);
 
-            collectibles.push({
+            bombs.push({
                 mesh: mesh,
-                y: yPos,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
-
-        function spawnDrone(xPos) {
-            const droneMesh = createDroneMesh();
-            // Drone voa na parte alta
-            const yPos = 8.5 + Math.random() * 3.5;
-            droneMesh.position.set(xPos, yPos, 0);
-            scene.add(droneMesh);
-
-            enemyDrones.push({
-                mesh: droneMesh,
-                y: yPos,
-                shootTimer: 0.8 + Math.random() * 1.5,
-                phase: Math.random() * Math.PI * 2
+                x: targetX,
+                y: targetY,
+                pulseTime: 0.0,
+                material: bombMat
             });
         }
 
         // ============================================================================
-        // 6. SISTEMA DE PARTÍCULAS
+        // 6. SISTEMAS DE PARTÍCULAS
         // ============================================================================
-        function spawnSparkExplosion(position, colorHex, count = 16) {
-            const geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+        function spawnSparkExplosion(position, colorHex, count = 12) {
+            const geo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
             const mat = new THREE.MeshBasicMaterial({
                 color: colorHex,
                 transparent: true,
@@ -1385,9 +1379,9 @@
                 mesh.position.copy(position);
 
                 const velocity = new THREE.Vector3(
-                    (Math.random() - 0.5) * 6.5,
-                    (Math.random() * 4.0) - 1.0,
-                    (Math.random() - 0.5) * 6.5
+                    (Math.random() - 0.5) * 5.0,
+                    (Math.random() * 3.5) - 1.0,
+                    (Math.random() - 0.5) * 5.0
                 );
 
                 scene.add(mesh);
@@ -1395,152 +1389,81 @@
                     mesh: mesh,
                     velocity: velocity,
                     life: 1.0,
-                    decay: (Math.random() * 2.5) + 1.2
+                    decay: (Math.random() * 2.2) + 1.2
                 });
             }
         }
 
         // ============================================================================
-        // 7. MECÂNICA DE BALANÇO (FÍSICA REAL DO PÊNDULO)
+        // 7. MECÂNICA DE DISPARO E ESCALADA DE TEIA (ATARI 2600 EDITION)
         // ============================================================================
         
-        function updatePhysics(deltaTime) {
-            // Se tiver teia ancorada (Barra de Espaço pressionada)
-            if (hasWeb) {
-                // Força da Gravidade sobre a velocidade
-                playerVel.y += GRAVITY * deltaTime;
+        function triggerWeb() {
+            if (isDead || hasWeb || webFluid <= 5.0 || gameState !== GAME_STATES.PLAYING) return;
 
-                // Resistência do vento suave
-                playerVel.multiplyScalar(1 - AIR_RESISTANCE * deltaTime);
-
-                // Força lateral pelas setas Esquerda/Direita (Impulso angular)
-                if (keys.ArrowRight) {
-                    playerVel.x += 16.5 * deltaTime;
-                } else if (keys.ArrowLeft) {
-                    playerVel.x -= 16.5 * deltaTime;
-                }
-
-                // Ajuste de comprimento da teia (Setas Cima/Baixo)
-                if (keys.ArrowUp) {
-                    webRopeLength = Math.max(3.5, webRopeLength - 8.0 * deltaTime);
-                } else if (keys.ArrowDown) {
-                    webRopeLength = Math.min(22.0, webRopeLength + 8.0 * deltaTime);
-                }
-
-                // Posição candidata para o próximo frame
-                const nextPos = playerPos.clone().addScaledVector(playerVel, deltaTime);
-
-                // Vetor do próximo ponto em relação ao pivô da âncora
-                const toAnchor = nextPos.clone().sub(webAnchor);
-                const currentDist = toAnchor.length();
-
-                // Se a teia estiver esticada
-                if (currentDist >= webRopeLength) {
-                    // Direção radial da teia
-                    const radialDir = toAnchor.clone().normalize();
-
-                    // Restringe a posição do Spiderman à esfera de raio da corda
-                    playerPos.copy(webAnchor).addScaledVector(radialDir, webRopeLength);
-
-                    // Corrige a velocidade: remove o componente radial que se afasta da âncora
-                    const radialSpeed = playerVel.dot(radialDir);
-                    if (radialSpeed > 0) {
-                        // Cancela velocidade que estica a teia
-                        playerVel.subScaledVector(radialDir, radialSpeed);
-                    }
-
-                    // Adiciona tensão da corda (som de estalo curto)
-                    if (Math.random() < 0.08) {
-                        som.playWebTension();
-                    }
-                } else {
-                    // Voo livre interno ao raio da teia
-                    playerPos.copy(nextPos);
-                }
-            } else {
-                // Voo Parabólico Livre (Sem teia)
-                playerVel.y += GRAVITY * deltaTime;
-
-                // Resistência do vento suave
-                playerVel.multiplyScalar(1 - AIR_RESISTANCE * deltaTime);
-
-                // Controle direcional de vento em voo livre
-                if (keys.ArrowRight) {
-                    playerVel.x += 8.0 * deltaTime;
-                } else if (keys.ArrowLeft) {
-                    playerVel.x -= 8.0 * deltaTime;
-                }
-
-                playerPos.addScaledVector(playerVel, deltaTime);
+            // Determina a direção do disparo baseado nas setas do teclado no frame de disparo:
+            // Seta Esquerda + Espaço: Diagonal Esquerda
+            // Seta Direita + Espaço: Diagonal Direita
+            // Apenas Espaço: Vertical Reto para Cima
+            let theta = Math.PI / 2; // 90 graus (reto para cima)
+            if (keys.ArrowLeft) {
+                theta = (3 * Math.PI) / 4; // 135 graus
+            } else if (keys.ArrowRight) {
+                theta = Math.PI / 4; // 45 graus
             }
 
-            // Atualiza o jipe no grupo visual
-            playerGroup.position.copy(playerPos);
+            webDirection.set(Math.cos(theta), Math.sin(theta), 0.0).normalize();
 
-            // Rotação suave baseada no vetor de velocidade para parecer que a aranha está mergulhando
-            const angle = Math.atan2(playerVel.y, playerVel.x);
-            playerGroup.rotation.z = angle * 0.75;
-        }
-
-        // Tenta lançar teia no prédio mais próximo à frente
-        function triggerWeb() {
-            if (isDead || hasWeb || gameState !== GAME_STATES.PLAYING) return;
-
-            // Procuramos o prédio mais à frente do jogador
-            let bestBuilding = null;
-            let bestDist = 999.0;
+            // A teia avança verticalmente até grudar no teto ou limite do prédio (ex: Y = 38.5)
+            // Para simular a fixação, traçamos um raio na direção desejada
+            // e determinamos a ancoragem no topo do prédio ou em um ponto da parede acima
+            // No Atari, a teia gruda no prédio. Ela simplesmente estende-se até um limite (máximo 14.0 unidades)
+            const maxLength = 13.0;
             
-            // Queremos prédios cujo topo esteja acima do Y do jogador e próximos horizontalmente
-            buildings.forEach(b => {
-                const bTopX = b.x;
-                const bTopY = b.height;
-                
-                // O prédio deve estar em frente (X maior ou igual ao player) ou ligeiramente atrás
-                if (bTopX > playerPos.x - 1.5) {
-                    const anchorCandidate = new THREE.Vector3(bTopX, bTopY, 0.0);
-                    const dist = playerPos.distanceTo(anchorCandidate);
+            // Ponto de âncora final da teia
+            webAnchor.copy(playerPos).addScaledVector(webDirection, maxLength);
 
-                    // A teia deve ter alcance limitado (ex: menor que 20 unidades)
-                    if (dist < 22.0 && dist < bestDist) {
-                        bestDist = dist;
-                        bestBuilding = b;
-                    }
-                }
-            });
+            // A teia deve ficar fixada na parede (Z = 0.85)
+            webAnchor.z = 0.85;
 
-            if (bestBuilding) {
+            // Restringe para não passar do topo do prédio (Y = 38.0)
+            if (webAnchor.y > 38.0) {
+                const ratio = (38.0 - playerPos.y) / webDirection.y;
+                webAnchor.copy(playerPos).addScaledVector(webDirection, ratio);
+                webAnchor.z = 0.85;
+            }
+
+            // A teia só é válida se a âncora estiver acima da altura Y atual do jogador!
+            if (webAnchor.y > playerPos.y + 0.8) {
                 hasWeb = true;
-                targetWebBuilding = bestBuilding;
-                webAnchor.set(bestBuilding.x, bestBuilding.height, 0.0);
-                webRopeLength = playerPos.distanceTo(webAnchor);
+                isClimbingWeb = true;
+                webLength = playerPos.distanceTo(webAnchor);
 
                 som.playWebShoot();
-                spawnSparkExplosion(webAnchor, 0x00f0ff, 10);
+                spawnSparkExplosion(webAnchor, 0x00f0ff, 8);
 
-                // Cria o cabo visual
+                // Cria o cabo visual ciano
                 createWebLineGeometry();
+                som.startClimbingSound();
             }
         }
 
         function releaseWeb() {
             hasWeb = false;
-            targetWebBuilding = null;
+            isClimbingWeb = false;
             if (webLineMesh) {
                 scene.remove(webLineMesh);
                 webLineMesh = null;
             }
+            som.stopClimbingSound();
         }
 
         function createWebLineGeometry() {
             if (webLineMesh) scene.remove(webLineMesh);
 
             const path = new THREE.LineCurve3(playerPos, webAnchor);
-            const geo = new THREE.TubeGeometry(path, 16, 0.04, 6, false);
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0x00f0ff,
-                transparent: true,
-                opacity: 0.8
-            });
+            const geo = new THREE.TubeGeometry(path, 8, 0.035, 4, false);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
 
             webLineMesh = new THREE.Mesh(geo, mat);
             scene.add(webLineMesh);
@@ -1548,28 +1471,24 @@
 
         function updateWebLine() {
             if (!hasWeb || !webLineMesh) return;
-            // Atualiza a geometria da teia esticando-a do player até a âncora
             scene.remove(webLineMesh);
 
             const path = new THREE.LineCurve3(playerPos, webAnchor);
-            const geo = new THREE.TubeGeometry(path, 16, 0.04, 6, false);
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0x00f0ff,
-                transparent: true,
-                opacity: 0.95
-            });
+            const geo = new THREE.TubeGeometry(path, 8, 0.035, 4, false);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
 
             webLineMesh = new THREE.Mesh(geo, mat);
             scene.add(webLineMesh);
         }
 
         // ============================================================================
-        // 8. TECLADO E EVENTOS
+        // 8. TECLADO E INPUTS
         // ============================================================================
         function setupInput() {
             window.addEventListener('keydown', (e) => {
                 if (keys.hasOwnProperty(e.code)) {
                     keys[e.code] = true;
+                    // Evita scroll da tela
                     if (e.code.startsWith('Arrow') || e.code.startsWith('Key')) {
                         e.preventDefault();
                     }
@@ -1577,7 +1496,7 @@
 
                 if (e.code === 'Space') {
                     e.preventDefault();
-                    if (!hasWeb) {
+                    if (!hasWeb && !isFalling) {
                         triggerWeb();
                     }
                 }
@@ -1594,27 +1513,35 @@
                 }
             });
 
-            // Mobile binds
-            const btnLeftMobile = document.getElementById('btn-left-mobile');
-            const btnRightMobile = document.getElementById('btn-right-mobile');
-            const btnUpMobile = document.getElementById('btn-up-mobile');
-            const btnDownMobile = document.getElementById('btn-down-mobile');
-            const btnShootMobile = document.getElementById('btn-shoot-mobile');
+            // Mobile D-pad binds
+            const btnUp = document.getElementById('btn-u-mobile');
+            const btnDown = document.getElementById('btn-d-mobile');
+            const btnLeft = document.getElementById('btn-l-mobile');
+            const btnRight = document.getElementById('btn-r-mobile');
+            const btnNW = document.getElementById('btn-nw-mobile');
+            const btnNE = document.getElementById('btn-ne-mobile');
+            const btnShoot = document.getElementById('btn-shoot-mobile');
 
-            btnLeftMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
-            btnLeftMobile.addEventListener('touchend', () => { keys.ArrowLeft = false; });
+            btnUp.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowUp = true; });
+            btnUp.addEventListener('touchend', () => { keys.ArrowUp = false; });
             
-            btnRightMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
-            btnRightMobile.addEventListener('touchend', () => { keys.ArrowRight = false; });
+            btnDown.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowDown = true; });
+            btnDown.addEventListener('touchend', () => { keys.ArrowDown = false; });
 
-            btnUpMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowUp = true; });
-            btnUpMobile.addEventListener('touchend', () => { keys.ArrowUp = false; });
+            btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
+            btnLeft.addEventListener('touchend', () => { keys.ArrowLeft = false; });
 
-            btnDownMobile.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowDown = true; });
-            btnDownMobile.addEventListener('touchend', () => { keys.ArrowDown = false; });
+            btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
+            btnRight.addEventListener('touchend', () => { keys.ArrowRight = false; });
 
-            btnShootMobile.addEventListener('touchstart', (e) => { e.preventDefault(); triggerWeb(); });
-            btnShootMobile.addEventListener('touchend', (e) => { e.preventDefault(); releaseWeb(); });
+            btnNW.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; keys.ArrowUp = true; });
+            btnNW.addEventListener('touchend', () => { keys.ArrowLeft = false; keys.ArrowUp = false; });
+
+            btnNE.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; keys.ArrowUp = true; });
+            btnNE.addEventListener('touchend', () => { keys.ArrowRight = false; keys.ArrowUp = false; });
+
+            btnShoot.addEventListener('touchstart', (e) => { e.preventDefault(); triggerWeb(); });
+            btnShoot.addEventListener('touchend', (e) => { e.preventDefault(); releaseWeb(); });
 
             // Camera Mobile
             document.getElementById('btn-cam-rot-l').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyA = true; });
@@ -1658,9 +1585,8 @@
             damageFlash = 0.8;
             shakeCamera(0.4);
             som.playDamage();
-            spawnSparkExplosion(playerPos, 0xff003c, 20);
+            spawnSparkExplosion(playerPos, 0xff003c, 16);
 
-            // Solta a teia caso esteja pendurado
             releaseWeb();
 
             if (lives <= 0) {
@@ -1668,94 +1594,75 @@
                     gameOver();
                 }, 800);
             } else {
-                // Respawn seguro
+                // Respawn
                 setTimeout(() => {
-                    playerPos.set(playerPos.x - 3.0, 10.0, 0.0);
-                    playerVel.set(7.0, 0.0, 0.0);
                     isDead = false;
+                    isFalling = true; // Cai no ar
+                    playerPos.set(0.0, playerPos.y + 4.5, 0.85); // Nasce um pouco acima de onde caiu
+                    if (playerPos.y > 30.0) playerPos.y = 30.0;
+                    playerVel.set(0.0, 0.0, 0.0);
+                    som.playFalling();
                 }, 1000);
             }
         }
 
         // ============================================================================
-        // 9. COLISÕES DE DRONES, PROJÉTEIS E PRÉDIOS
+        // 9. COLISÕES E FISICA DE QUEDA
         // ============================================================================
         
         function checkCollisions() {
             if (isDead || gameState !== GAME_STATES.PLAYING) return;
 
-            // 1. Abismo / Queda na zona de plasma ácido Y <= 0.5
-            if (playerPos.y <= 0.6) {
+            // 1. Queda no chão (Morte por queda ao despencar no Y <= 1.0)
+            if (isFalling && playerPos.y <= 1.05) {
+                playerPos.y = 1.05;
+                isFalling = false;
                 triggerDamage();
                 return;
             }
 
-            // 2. Colisão lateral com Prédios
-            // O Spiderman não pode atravessar a parede do prédio
-            buildings.forEach(b => {
-                const bLeft = b.x - b.width / 2;
-                const bRight = b.x + b.width / 2;
-                const bTop = b.height;
-
-                // Se o jogador estiver entre as paredes laterais em X
-                if (playerPos.x >= bLeft - 0.35 && playerPos.x <= bRight + 0.35) {
-                    // E abaixo do topo do prédio
-                    if (playerPos.y < bTop) {
-                        // Bateu! Rebate a velocidade horizontal e dá dano
-                        if (playerVel.x > 0 && playerPos.x < b.x) {
-                            playerPos.x = bLeft - 0.36;
-                            playerVel.x = -playerVel.x * 0.45;
-                        } else if (playerVel.x < 0 && playerPos.x > b.x) {
-                            playerPos.x = bRight + 0.36;
-                            playerVel.x = -playerVel.x * 0.45;
-                        }
+            // 2. Colisão com Capangas (se o Spiderman passar perto de capanga ativo nas janelas)
+            capangas.forEach(cap => {
+                if (cap.isActive) {
+                    const dist = playerPos.distanceTo(cap.mesh.position);
+                    if (dist < 0.65) {
                         triggerDamage();
                     }
                 }
             });
 
-            // 3. Colisão com Aranhas Coletáveis (Itens)
-            for (let i = collectibles.length - 1; i >= 0; i--) {
-                const c = collectibles[i];
-                const dist = playerPos.distanceTo(c.mesh.position);
-                if (dist < 0.8) {
-                    spawnSparkExplosion(c.mesh.position, 0x39ff14, 8);
-                    scene.remove(c.mesh);
-                    collectibles.splice(i, 1);
+            // 3. Colisão com Bombas (Desarme)
+            for (let i = bombs.length - 1; i >= 0; i--) {
+                const b = bombs[i];
+                const dist = playerPos.distanceTo(b.mesh.position);
+                if (dist < 0.7) {
+                    // Desarma a bomba!
+                    spawnSparkExplosion(b.mesh.position, 0xff5e00, 10);
+                    scene.remove(b.mesh);
+                    bombs.splice(i, 1);
 
-                    score += 250;
+                    score += 150;
+                    webFluid = Math.min(100.0, webFluid + 22.0); // Recarrega fluido de teia
                     updateHUD();
                     som.playCollect();
                 }
             }
 
-            // 4. Colisão com Drones Inimigos
-            for (let i = enemyDrones.length - 1; i >= 0; i--) {
-                const d = enemyDrones[i];
-                const dist = playerPos.distanceTo(d.mesh.position);
-                if (dist < 0.95) {
-                    // Spiderman explode o drone se passar batendo rápido por cima
-                    spawnSparkExplosion(d.mesh.position, 0xff003c, 15);
-                    scene.remove(d.mesh);
-                    enemyDrones.splice(i, 1);
-
-                    score += 500;
-                    updateHUD();
-                    som.playExplosion();
-                    shakeCamera(0.25);
-                }
-            }
-
-            // 5. Colisão com lasers inimigos
-            for (let i = laserProjectiles.length - 1; i >= 0; i--) {
-                const l = laserProjectiles[i];
-                const dist = playerPos.distanceTo(l.mesh.position);
-                if (dist < 0.6) {
-                    scene.remove(l.mesh);
-                    laserProjectiles.splice(i, 1);
+            // 4. Colisão com Bombas do Duende Verde
+            for (let i = goblinBombs.length - 1; i >= 0; i--) {
+                const gb = goblinBombs[i];
+                const dist = playerPos.distanceTo(gb.mesh.position);
+                if (dist < 0.65) {
+                    scene.remove(gb.mesh);
+                    goblinBombs.splice(i, 1);
                     triggerDamage();
                     return;
                 }
+            }
+
+            // 5. Vitória (Alcançar o andaime superior/super bomba em Y >= 40.0)
+            if (playerPos.y >= 39.5) {
+                levelComplete();
             }
         }
 
@@ -1774,41 +1681,31 @@
             score = 0;
             lives = MAX_LIVES;
             distanceTraveled = 0.0;
+            webFluid = 100.0;
             isDead = false;
+            isFalling = false;
             damageFlash = 0.0;
 
-            nextBuildingX = -20.0;
-            droneSpawnTimer = 0.0;
-            collectibleSpawnTimer = 0.0;
+            capangaSpawnTimer = 0.0;
+            bombSpawnTimer = 0.0;
 
-            // Remove objetos anteriores da cena
-            buildings.forEach(b => scene.remove(b.mesh));
-            buildings = [];
+            // Remove capangas e bombas da cena
+            capangas.forEach(c => scene.remove(c.mesh));
+            capangas = [];
             
-            collectibles.forEach(c => scene.remove(c.mesh));
-            collectibles = [];
+            bombs.forEach(b => scene.remove(b.mesh));
+            bombs = [];
             
-            enemyDrones.forEach(d => scene.remove(d.mesh));
-            enemyDrones = [];
-            
-            laserProjectiles.forEach(l => scene.remove(l.mesh));
-            laserProjectiles = [];
+            goblinBombs.forEach(g => scene.remove(g.mesh));
+            goblinBombs = [];
 
-            // Spawn prédios iniciais
-            for (let i = 0; i < 9; i++) {
-                generateBuilding(nextBuildingX);
-                nextBuildingX += 11.5 + Math.random() * 4.5;
-            }
-
-            playerPos.set(-15.0, 7.5, 0.0);
-            playerVel.set(7.5, 0.0, 0.0);
+            playerPos.set(0.0, 1.2, 0.85);
+            playerVel.set(0.0, 0.0, 0.0);
             playerGroup.position.copy(playerPos);
             playerGroup.visible = true;
 
             releaseWeb();
             updateHUD();
-
-            som.startWind();
             gameState = GAME_STATES.PLAYING;
         }
 
@@ -1822,7 +1719,7 @@
             releaseWeb();
 
             document.getElementById('summary-score-win').innerText = score;
-            document.getElementById('summary-dist-win').innerText = Math.floor(distanceTraveled) + 'm';
+            document.getElementById('summary-dist-win').innerText = '40m';
             screenVictory.classList.remove('hidden');
         }
 
@@ -1840,6 +1737,7 @@
         function updateHUD() {
             hudScore.innerText = String(score).padStart(5, '0');
             hudDistance.innerText = Math.floor(distanceTraveled) + 'm';
+            webFluidBar.style.width = webFluid + '%';
 
             hudLives.innerHTML = '';
             for (let i = 0; i < MAX_LIVES; i++) {
@@ -1862,6 +1760,7 @@
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x0a061e, 0.024);
 
+            // Câmera 3D em perspectiva central focalizada verticalmente
             camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 1, 1000);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1876,44 +1775,38 @@
             const ambientLight = new THREE.AmbientLight(0x130e2b, 0.95);
             scene.add(ambientLight);
 
-            // Direcional Vermelha lateral
+            // Luz Direcional Vermelha (estilo pôr do sol cyberpunk)
             const dirLight1 = new THREE.DirectionalLight(0xff003c, 1.4);
-            dirLight1.position.set(-8, 15, 6);
+            dirLight1.position.set(-5, 10, 12);
             dirLight1.castShadow = true;
             scene.add(dirLight1);
 
-            // Direcional Azul oposta
-            const dirLight2 = new THREE.DirectionalLight(0x0066ff, 0.9);
-            dirLight2.position.set(8, 10, -6);
+            // Apoio ciano
+            const dirLight2 = new THREE.DirectionalLight(0x00f0ff, 0.9);
+            dirLight2.position.set(5, 8, -6);
             scene.add(dirLight2);
 
-            // Céu com estrelas
+            // Estrelas
             createStarfield();
 
             // Grade 3D vertical infinita no fundo com paralaxe
             bgGrid = new THREE.GridHelper(120, 30, 0xff003c, 0x1c0c3a);
             bgGrid.rotation.x = Math.PI / 2;
-            bgGrid.position.set(0, 5, -8.0);
+            bgGrid.position.set(0, 20, -10.0);
             bgGrid.material.transparent = true;
-            bgGrid.material.opacity = 0.28;
+            bgGrid.material.opacity = 0.22;
             scene.add(bgGrid);
 
-            // Mar de plasma ácido rosa no fundo (Y = 0)
-            const plasmaGeo = new THREE.PlaneGeometry(160, 20);
-            const plasmaMat = new THREE.MeshStandardMaterial({
-                color: 0xff007f,
-                emissive: 0x440022,
-                roughness: 0.1,
-                metalness: 0.8
-            });
-            const plasma = new THREE.Mesh(plasmaGeo, plasmaMat);
-            plasma.rotation.x = -Math.PI / 2;
-            plasma.position.set(0, 0, 0);
-            scene.add(plasma);
+            // Constrói Prédio único do Duende
+            initScenario();
 
-            // Spider-Drone do jogador
-            playerGroup = createSpiderDrone();
+            // Spiderman pixelado
+            playerGroup = createSpidermanAtari();
             scene.add(playerGroup);
+
+            // Duende Verde com planador
+            greenGoblinGroup = createGreenGoblin();
+            scene.add(greenGoblinGroup);
 
             // Remove a tela de loading
             setTimeout(() => {
@@ -1936,10 +1829,9 @@
                 const phi = Math.acos((Math.random() * 2) - 1);
 
                 positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 2;
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
                 positions[i * 3 + 2] = r * Math.cos(phi);
 
-                // Azul, Vermelho e Ciano
                 const rand = Math.random();
                 if (rand < 0.45) {
                     colors[i * 3] = 0.0; colors[i * 3 + 1] = 0.4; colors[i * 3 + 2] = 1.0;
@@ -1979,14 +1871,14 @@
             if (keys.KeyA) cameraAngleY += 1.8 * deltaTime;
             if (keys.KeyD) cameraAngleY -= 1.8 * deltaTime;
             
-            if (keys.KeyW) cameraZoom = Math.max(0.65, cameraZoom - 1.2 * deltaTime);
-            if (keys.KeyS) cameraZoom = Math.min(1.35, cameraZoom + 1.2 * deltaTime);
+            if (keys.KeyW) cameraZoom = Math.max(0.6, cameraZoom - 1.2 * deltaTime);
+            if (keys.KeyS) cameraZoom = Math.min(1.4, cameraZoom + 1.2 * deltaTime);
 
-            // A câmera foca no Spiderman com suavização e órbita
-            const radius = 17 * cameraZoom;
+            // A câmera foca no Spiderman com suavização vertical
+            const radius = 12 * cameraZoom;
             const targetCamX = playerPos.x + radius * Math.cos(cameraAngleY);
             const targetCamZ = playerPos.z + radius * Math.sin(cameraAngleY);
-            const targetCamY = playerPos.y + 1.5 * cameraZoom;
+            const targetCamY = playerPos.y + 1.2 * cameraZoom;
 
             camera.position.x += (targetCamX - camera.position.x) * 0.06;
             camera.position.z += (targetCamZ - camera.position.z) * 0.06;
@@ -2001,9 +1893,9 @@
                 if (shakeAmount < 0.01) shakeAmount = 0;
             }
 
-            camera.lookAt(playerPos.x + 3.0, playerPos.y + 0.5, playerPos.z);
+            camera.lookAt(playerPos.x * 0.5, playerPos.y + 1.0, 0);
 
-            // Efeito de flash vermelho de dano na tela (fog muda para vermelho temporariamente)
+            // Efeito de flash vermelho de dano na tela
             if (damageFlash > 0) {
                 damageFlash -= deltaTime * 2.5;
                 scene.fog.color.setHex(0x550011);
@@ -2015,139 +1907,198 @@
 
             // Paralaxe na grade de fundo
             if (bgGrid) {
-                bgGrid.position.x = playerPos.x * 0.7;
-                // Efeito infinito da grade no fundo
-                const gridOffset = bgGrid.position.x % 4.0;
-                bgGrid.position.x = playerPos.x - gridOffset;
+                bgGrid.position.y = playerPos.y * 0.7;
+                const gridOffset = bgGrid.position.y % 4.0;
+                bgGrid.position.y = playerPos.y - gridOffset;
             }
 
             if (gameState === GAME_STATES.PLAYING) {
                 
-                // 2. Física do Balanço
-                updatePhysics(deltaTime);
+                // 2. FÍSICA DE ESCALADA / TEIA / QUEDA
+                if (isDead) {
+                    // Sem movimento
+                } else if (hasWeb) {
+                    // Puxando-se na teia (Climbing)
+                    if (isClimbingWeb) {
+                        webFluid = Math.max(0.0, webFluid - WEB_FLUID_CONSUMPTION * deltaTime);
+                        updateHUD();
 
-                // Anima pernas da aranha baseando-se na velocidade horizontal
-                const speed = Math.abs(playerVel.x);
-                const animTime = Date.now() * 0.008;
-                
-                playerLegs.forEach(leg => {
-                    const movement = Math.sin(animTime + leg.phase) * Math.min(0.6, speed * 0.05);
-                    leg.pivot.rotation.z = leg.baseZRot + movement;
-                });
+                        if (webFluid <= 0.0) {
+                            releaseWeb();
+                        } else {
+                            // Move-se em direção à âncora
+                            const toAnchor = webAnchor.clone().sub(playerPos);
+                            const dist = toAnchor.length();
+
+                            if (dist > 0.4) {
+                                const climbStep = WEB_CLIMB_SPEED * deltaTime;
+                                playerPos.addScaledVector(webDirection, Math.min(dist - 0.2, climbStep));
+                            } else {
+                                // Chegou na âncora
+                                isClimbingWeb = false;
+                                som.stopClimbingSound();
+                            }
+                        }
+                    } else {
+                        // Está estático na teia
+                        som.stopClimbingSound();
+                    }
+
+                    // Se a teia for cortada por algum capanga
+                    capangas.forEach(cap => {
+                        if (cap.isActive) {
+                            // Se a coordenada Y do capanga cruzar a teia
+                            if (cap.y > playerPos.y && cap.y < webAnchor.y) {
+                                // E o capanga estiver na coluna X da teia correspondente
+                                const lerpRatio = (cap.y - playerPos.y) / (webAnchor.y - playerPos.y);
+                                const webXAtCapY = playerPos.x + lerpRatio * (webAnchor.x - playerPos.x);
+                                if (Math.abs(cap.x - webXAtCapY) < 0.6) {
+                                    // Cortou!
+                                    spawnSparkExplosion(cap.mesh.position, 0x00f0ff, 12);
+                                    releaseWeb();
+                                    isFalling = true;
+                                    som.playFalling();
+                                }
+                            }
+                        }
+                    });
+                } else if (isFalling) {
+                    // Despencando no ar
+                    playerVel.y = FALL_GRAVITY;
+                    playerPos.y += playerVel.y * deltaTime;
+
+                    // O jogador pode se segurar se tentar mover lateralmente/verticalmente na parede
+                    if (keys.ArrowUp || keys.ArrowLeft || keys.ArrowRight) {
+                        isFalling = false;
+                    }
+                } else {
+                    // Escalando a parede livremente (Movimento WASD/Setas)
+                    let moving = false;
+                    
+                    if (keys.ArrowLeft) {
+                        playerPos.x = Math.max(-3.5, playerPos.x - SPEED_X * deltaTime);
+                        moving = true;
+                    } else if (keys.ArrowRight) {
+                        playerPos.x = Math.min(3.5, playerPos.x + SPEED_X * deltaTime);
+                        moving = true;
+                    }
+
+                    if (keys.ArrowUp) {
+                        playerPos.y = Math.min(39.0, playerPos.y + SPEED_Y * deltaTime);
+                        moving = true;
+                    } else if (keys.ArrowDown) {
+                        playerPos.y = Math.max(1.05, playerPos.y - SPEED_Y * deltaTime);
+                        moving = true;
+                    }
+
+                    if (moving) {
+                        som.startClimbingSound();
+                    } else {
+                        som.stopClimbingSound();
+                    }
+                }
+
+                playerGroup.position.copy(playerPos);
+
+                // Anima pernas/braços do Spiderman pixelado
+                if (hasWeb && isClimbingWeb) {
+                    // Balança de leve
+                    playerGroup.rotation.z = Math.sin(Date.now() * 0.015) * 0.25;
+                } else if (isFalling) {
+                    // Gira em queda
+                    playerGroup.rotation.z += deltaTime * 8.0;
+                } else {
+                    // Rotação normal grudado na parede
+                    playerGroup.rotation.z = 0;
+                }
 
                 // Atualiza teia de cabo visual
                 updateWebLine();
 
                 if (!isDead) {
-                    distanceTraveled = Math.max(distanceTraveled, playerPos.x + 15.0);
-                    score += Math.floor(playerVel.x * deltaTime * 1.8);
+                    distanceTraveled = Math.max(distanceTraveled, playerPos.y);
                     updateHUD();
-
-                    // Ajusta intensidade sonora do vento de voo
-                    som.setWindIntensity(Math.min(1.0, speed / 25.0));
-
-                    if (distanceTraveled >= TOTAL_DISTANCE) {
-                        levelComplete();
-                    }
                 }
 
-                // 3. Spawners Infinitos de Prédios à Frente
-                if (nextBuildingX - playerPos.x < 35.0) {
-                    generateBuilding(nextBuildingX);
-                    nextBuildingX += 11.5 + Math.random() * 4.5;
+                // 3. Spawners de Capangas (Janelas)
+                capangaSpawnTimer -= deltaTime;
+                if (capangaSpawnTimer <= 0) {
+                    spawnCapanga();
+                    capangaSpawnTimer = 1.2 + Math.random() * 1.5;
                 }
 
-                // Remove prédios passados da memória
-                for (let i = buildings.length - 1; i >= 0; i--) {
-                    const b = buildings[i];
-                    if (b.x < playerPos.x - 22.0) {
-                        // Se não for a laje ativa da teia
-                        if (b !== targetWebBuilding) {
-                            scene.remove(b.mesh);
-                            buildings.splice(i, 1);
-                        }
-                    }
-                }
+                // Atualiza Capangas (saem e entram nas janelas)
+                for (let i = capangas.length - 1; i >= 0; i--) {
+                    const c = capangas[i];
+                    c.life -= deltaTime;
 
-                // 4. Spawners de Aranhas de Energia (Itens)
-                collectibleSpawnTimer -= deltaTime;
-                if (collectibleSpawnTimer <= 0) {
-                    spawnCollectible(playerPos.x + 28.0 + Math.random() * 6.0);
-                    collectibleSpawnTimer = 2.0 + Math.random() * 2.5;
-                }
-
-                // Remove itens passados
-                for (let i = collectibles.length - 1; i >= 0; i--) {
-                    const c = collectibles[i];
-                    
-                    // Pequena oscilação de levitação
-                    c.mesh.rotation.y += deltaTime * 2.0;
-                    c.mesh.position.y = c.y + Math.sin(Date.now() * 0.003 + c.phase) * 0.15;
-
-                    if (c.mesh.position.x < playerPos.x - 18.0) {
+                    if (c.life <= 0) {
                         scene.remove(c.mesh);
-                        collectibles.splice(i, 1);
+                        capangas.splice(i, 1);
+                    } else {
+                        // Efeito visual de sair e entrar (escala em Z)
+                        const scaleZ = Math.min(1.0, c.life * 1.8);
+                        c.mesh.scale.set(1.0, 1.0, scaleZ);
                     }
                 }
 
-                // 5. Spawner de Drones de Combate
-                droneSpawnTimer -= deltaTime;
-                if (droneSpawnTimer <= 0) {
-                    spawnDrone(playerPos.x + 30.0 + Math.random() * 8.0);
-                    droneSpawnTimer = 3.5 + Math.random() * 4.0;
+                // 4. Spawners de Bombas para desarmar
+                bombSpawnTimer -= deltaTime;
+                if (bombSpawnTimer <= 0) {
+                    spawnBomb();
+                    bombSpawnTimer = 1.8 + Math.random() * 2.2;
                 }
 
-                // Atualiza Drones (movimento senoidal e tiros)
-                for (let i = enemyDrones.length - 1; i >= 0; i--) {
-                    const d = enemyDrones[i];
+                // Faz as bombas piscarem
+                bombs.forEach(b => {
+                    b.pulseTime += deltaTime * 12;
+                    const pulse = Math.abs(Math.sin(b.pulseTime));
+                    b.material.emissiveIntensity = pulse * 1.6;
+                });
 
-                    // Oscila levemente
-                    d.mesh.position.y = d.y + Math.sin(Date.now() * 0.002 + d.phase) * 0.35;
-                    d.mesh.rotation.y += deltaTime * 1.5;
-
-                    // Lógica de ataque: Atira laser se o Spiderman estiver próximo
-                    const distToPlayer = playerPos.distanceTo(d.mesh.position);
-                    if (distToPlayer < 18.0 && !isDead) {
-                        d.shootTimer -= deltaTime;
-                        if (d.shootTimer <= 0) {
-                            // Cria feixe laser
-                            const laserGeo = new THREE.BoxGeometry(0.4, 0.08, 0.08);
-                            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff003c });
-                            const laser = new THREE.Mesh(laserGeo, laserMat);
-                            laser.position.copy(d.mesh.position);
-                            
-                            // Aponta em direção ao player
-                            const dirToPlayer = playerPos.clone().sub(d.mesh.position).normalize();
-                            
-                            scene.add(laser);
-                            laserProjectiles.push({
-                                mesh: laser,
-                                velocity: dirToPlayer.multiplyScalar(15.0)
-                            });
-
-                            som.playDroneLaser();
-                            d.shootTimer = 1.6 + Math.random() * 1.5;
-                        }
-                    }
-
-                    // Remove drones passados
-                    if (d.mesh.position.x < playerPos.x - 20.0) {
-                        scene.remove(d.mesh);
-                        enemyDrones.splice(i, 1);
+                // Remove bombas muito abaixo do jogador para economizar memória
+                for (let i = bombs.length - 1; i >= 0; i--) {
+                    const b = bombs[i];
+                    if (b.mesh.position.y < playerPos.y - 12.0) {
+                        scene.remove(b.mesh);
+                        bombs.splice(i, 1);
                     }
                 }
 
-                // 6. Atualiza Lasers Inimigos
-                for (let i = laserProjectiles.length - 1; i >= 0; i--) {
-                    const l = laserProjectiles[i];
-                    l.mesh.position.addScaledVector(l.velocity, deltaTime);
+                // 5. Controla o Duende Verde no Topo
+                // Fica em Y = 36.0 voando de um lado para o outro (X = -3.8 a 3.8)
+                const goblinTime = Date.now() * 0.0018;
+                const goblinX = Math.sin(goblinTime) * 3.6;
+                greenGoblinGroup.position.set(goblinX, 36.0, 1.0);
 
-                    // Alinha rotação com a direção do movimento
-                    l.mesh.lookAt(l.mesh.position.clone().add(l.velocity));
+                // Goblin joga bombas se o player estiver escalando
+                if (playerPos.y > 6.0 && playerPos.y < 35.0 && !isDead) {
+                    // Spawna bomba dependendo do tempo
+                    if (Math.random() < 0.015 && goblinBombs.length < 3) {
+                        const bombGeo = new THREE.SphereGeometry(0.16, 8, 8);
+                        const bombMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+                        const bomb = new THREE.Mesh(bombGeo, bombMat);
+                        bomb.position.copy(greenGoblinGroup.position);
+                        scene.add(bomb);
 
-                    if (l.mesh.position.distanceTo(playerPos) > 30.0) {
-                        scene.remove(l.mesh);
-                        laserProjectiles.splice(i, 1);
+                        goblinBombs.push({
+                            mesh: bomb,
+                            vy: -5.0 // Cai verticalmente
+                        });
+                    }
+                }
+
+                // 6. Atualiza Bombas do Goblin
+                for (let i = goblinBombs.length - 1; i >= 0; i--) {
+                    const gb = goblinBombs[i];
+                    gb.mesh.position.y += gb.vy * deltaTime;
+                    gb.mesh.rotation.x += deltaTime * 4;
+
+                    // Remove se atingir o chão do cenário
+                    if (gb.mesh.position.y <= 0.6) {
+                        spawnSparkExplosion(gb.mesh.position, 0xff00ff, 6);
+                        scene.remove(gb.mesh);
+                        goblinBombs.splice(i, 1);
                     }
                 }
 
@@ -2172,7 +2123,7 @@
         }
 
         // ============================================================================
-        // 13. INICIALIZAÇÃO DO LOOP
+        // 13. INICIALIZAÇÃO INICIAL
         // ============================================================================
         function init() {
             init3D();
