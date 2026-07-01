@@ -1326,7 +1326,18 @@
             // Decidimos aleatoriamente entre Rocha de Cristal Laranja ou Mina Terrestre Vermelha
             const isMina = Math.random() < 0.45;
             const spawnX = 22.0; // Spawn à direita fora da tela de visão comum
-            const height = Math.sin(spawnX * 0.14) * 0.42 + Math.sin(spawnX * 0.32) * 0.16;
+
+            // Acha a altura Y da laje de solo física sob a coordenada spawnX
+            let height = 0.0;
+            for (let i = 0; i < groundSegments.length; i++) {
+                const seg = groundSegments[i];
+                if (spawnX >= seg.x - 1.05 && spawnX <= seg.x + 1.05) {
+                    if (!seg.isCratera) {
+                        height = seg.y;
+                    }
+                    break;
+                }
+            }
 
             if (isMina) {
                 // Mina Laser Vermelha (Objeto cônico que pisca)
@@ -1997,11 +2008,6 @@
                 for (let i = obstacles.length - 1; i >= 0; i--) {
                     const obs = obstacles[i];
                     obs.mesh.position.x -= currentScrollSpeed * deltaTime;
-
-                    // Atualiza a altura Y da rocha/mina baseando-se nas colinas
-                    const obsX = obs.mesh.position.x;
-                    const obsHeight = Math.sin(obsX * 0.14) * 0.42 + Math.sin(obsX * 0.32) * 0.16;
-                    obs.mesh.position.y = obsHeight + obs.yOffset;
 
                     // Se for mina, ela pulsa o emissivo laser vermelho
                     if (obs.type === 'mina') {
