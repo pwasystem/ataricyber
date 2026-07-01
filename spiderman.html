@@ -1204,9 +1204,9 @@
             const bDepth = 1.4;
 
             const bMat = new THREE.MeshStandardMaterial({
-                color: 0x06050e,
-                roughness: 0.8,
-                metalness: 0.1
+                color: 0x0f0b24, // Roxo escuro cyberpunk para destaque
+                roughness: 0.7,
+                metalness: 0.3
             });
 
             buildingMesh = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), bMat);
@@ -1223,6 +1223,15 @@
             const borderR = borderL.clone();
             borderR.position.x = bWidth / 2 + 0.06;
             buildingMesh.add(borderR);
+
+            // Linhas horizontais neon azul dividindo os andares para destacar a estrutura
+            for (let y = 1.9; y <= 37.0; y += 2.2) {
+                const floorLineGeo = new THREE.BoxGeometry(bWidth, 0.04, 0.04);
+                const floorLineMat = new THREE.MeshBasicMaterial({ color: 0x0066ff });
+                const floorLine = new THREE.Mesh(floorLineGeo, floorLineMat);
+                floorLine.position.set(0, y, 0.85);
+                scene.add(floorLine);
+            }
 
             // Linha de Andaime/Gantry no topo (Super Bomba)
             const gantryMat = new THREE.MeshStandardMaterial({
@@ -1250,22 +1259,27 @@
             superBomb.position.set(0, bHeight / 2 + 1.6, 0.5);
             scene.add(superBomb);
 
-            // 5. Janelas em Grid
-            // X: -3.0 a 3.0 (5 colunas: -3.0, -1.5, 0.0, 1.5, 3.0)
-            // Y: 2.0 a 36.0 (passos de 2.0)
-            // As janelas são recortes/placas pretas/azuis brilhantes
+            // 5. Janelas em Grid com Moldura Neon Ciano
             const winMatClosed = new THREE.MeshStandardMaterial({
-                color: 0x0c0b24,
-                roughness: 0.9,
-                metalness: 0.1
+                color: 0x070c22,
+                emissive: 0x04081c,
+                roughness: 0.1
             });
 
             for (let y = 3.0; y <= 35.0; y += 2.2) {
                 for (let x = -3.0; x <= 3.0; x += 1.5) {
-                    const winMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.1), winMatClosed);
-                    // Ligeiramente destacado da fachada do prédio
-                    winMesh.position.set(x, y, 0.851);
-                    scene.add(winMesh);
+                    // Moldura Neon Ciano
+                    const frameGeo = new THREE.BoxGeometry(0.85, 1.05, 0.02);
+                    const frameMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+                    const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+                    frameMesh.position.set(x, y, 0.85);
+                    scene.add(frameMesh);
+
+                    // Vidro de janela reflexivo escuro
+                    const glassGeo = new THREE.PlaneGeometry(0.77, 0.97);
+                    const glassMesh = new THREE.Mesh(glassGeo, winMatClosed);
+                    glassMesh.position.set(x, y, 0.852);
+                    scene.add(glassMesh);
                 }
             }
         }
