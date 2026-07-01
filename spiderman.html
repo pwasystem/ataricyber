@@ -814,6 +814,27 @@
                 osc.stop(t + 0.23);
             }
 
+            // Explosão do planador
+            playExplosion() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, t);
+                osc.frequency.linearRampToValueAtTime(10, t + 0.5);
+
+                gain.gain.setValueAtTime(0.35, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.52);
+            }
+
             // Queda livre
             playFalling() {
                 if (!this.ctx || this.muted) return;
@@ -1014,6 +1035,8 @@
         let isDead = false;
         let isFalling = false; // Se o jogador está despencando sem teia
         let damageFlash = 0.0;
+        let isGoblinDead = false;
+        let webClungToGoblin = false;
 
         // Animação e Spawns
         let capangaSpawnTimer = 0.0;
@@ -1539,16 +1562,33 @@
 
             webDirection.set(Math.cos(theta), Math.sin(theta), 0.0).normalize();
 
-            // A teia avança verticalmente até grudar no teto ou limite do prédio (ex: Y = 38.5)
-            // Para simular a fixação, traçamos um raio na direção desejada
-            // e determinamos a ancoragem no topo do prédio ou em um ponto da parede acima
-            // No Atari, a teia gruda no prédio. Ela simplesmente estende-se até um limite (máximo 14.0 unidades)
-            const maxLength = 13.0;
-            
-            // Ponto de âncora final da teia
-            webAnchor.copy(playerPos).addScaledVector(webDirection, maxLength);
+            // 1. Verifica primeiro se a teia cruza com o Duende Verde em movimento
+            if (!isGoblinDead) {
+                const goblinPos = greenGoblinGroup.position;
+                const toGoblin = goblinPos.clone().sub(playerPos);
+                const projection = toGoblin.dot(webDirection);
+                if (projection > 0 && projection < 15.0) {
+                    const closestPoint = playerPos.clone().addScaledVector(webDirection, projection);
+                    const distToGoblin = closestPoint.distanceTo(goblinPos);
+                    if (distToGoblin < 1.1) {
+                        hasWeb = true;
+                        isClimbingWeb = true;
+                        webClungToGoblin = true;
+                        webAnchor.copy(goblinPos);
+                        webLength = playerPos.distanceTo(webAnchor);
 
-            // A teia deve ficar fixada na parede (Z = 0.85)
+                        som.playWebShoot();
+                        spawnSparkExplosion(webAnchor, 0x39ff14, 10);
+                        createWebLineGeometry();
+                        som.startClimbingSound();
+                        return; // Teia grudada no Goblin! Pula fixação no prédio.
+                    }
+                }
+            }
+
+            // 2. Disparo normal na parede do prédio
+            const maxLength = 13.0;
+            webAnchor.copy(playerPos).addScaledVector(webDirection, maxLength);
             webAnchor.z = 0.85;
 
             // Restringe para não passar do topo do prédio (Y = 38.0)
@@ -1562,6 +1602,7 @@
             if (webAnchor.y > playerPos.y + 0.8) {
                 hasWeb = true;
                 isClimbingWeb = true;
+                webClungToGoblin = false;
                 webLength = playerPos.distanceTo(webAnchor);
 
                 som.playWebShoot();
@@ -1573,9 +1614,11 @@
             }
         }
 
+        // Solta a teia
         function releaseWeb() {
             hasWeb = false;
             isClimbingWeb = false;
+            webClungToGoblin = false;
             if (webLineMesh) {
                 scene.remove(webLineMesh);
                 webLineMesh = null;
@@ -1746,7 +1789,29 @@
                 return;
             }
 
-            // 2. Colisão com Capangas (se o Spiderman passar perto de capanga ativo nas janelas)
+            // 2. Colisão com o Duende Verde (Planador)
+            if (!isGoblinDead) {
+                const distGoblin = playerPos.distanceTo(greenGoblinGroup.position);
+                if (distGoblin < 1.1) {
+                    isGoblinDead = true;
+                    spawnSparkExplosion(greenGoblinGroup.position, 0x39ff14, 30);
+                    spawnSparkExplosion(greenGoblinGroup.position, 0xaa00ff, 20);
+                    scene.remove(greenGoblinGroup);
+
+                    score += 2000;
+                    updateHUD();
+                    som.playExplosion();
+                    shakeCamera(0.6);
+                    releaseWeb();
+
+                    setTimeout(() => {
+                        levelComplete();
+                    }, 1200);
+                    return;
+                }
+            }
+
+            // 2b. Colisão com Capangas (se o Spiderman passar perto de capanga ativo nas janelas)
             capangas.forEach(cap => {
                 if (cap.isActive) {
                     const dist = playerPos.distanceTo(cap.mesh.position);
@@ -1810,6 +1875,13 @@
             isDead = false;
             isFalling = false;
             damageFlash = 0.0;
+            isGoblinDead = false;
+            webClungToGoblin = false;
+            if (greenGoblinGroup) {
+                scene.remove(greenGoblinGroup);
+                scene.add(greenGoblinGroup);
+                greenGoblinGroup.scale.set(1.0, 1.0, 1.0);
+            }
 
             capangaSpawnTimer = 0.0;
             bombSpawnTimer = 0.0;
@@ -2044,6 +2116,11 @@
                     // Sem movimento
                 } else if (hasWeb) {
                     // Puxando-se na teia (Climbing)
+                    if (webClungToGoblin && !isGoblinDead) {
+                        webAnchor.copy(greenGoblinGroup.position);
+                        webDirection.copy(webAnchor).sub(playerPos).normalize();
+                    }
+
                     if (isClimbingWeb) {
                         webFluid = Math.max(0.0, webFluid - WEB_FLUID_CONSUMPTION * deltaTime);
                         updateHUD();
