@@ -1612,9 +1612,9 @@
             webAnchor.copy(playerPos).addScaledVector(webDirection, maxLength);
             webAnchor.z = 0.85;
 
-            // Restringe para não passar do topo do prédio (Y = 38.0)
-            if (webAnchor.y > 38.0) {
-                const ratio = (38.0 - playerPos.y) / webDirection.y;
+            // Restringe para não passar do topo do prédio (Y = buildingHeight - 4.0)
+            if (webAnchor.y > buildingHeight - 4.0) {
+                const ratio = ((buildingHeight - 4.0) - playerPos.y) / webDirection.y;
                 webAnchor.copy(playerPos).addScaledVector(webDirection, ratio);
                 webAnchor.z = 0.85;
             }
@@ -1788,7 +1788,7 @@
                     isDead = false;
                     isFalling = true; // Cai no ar
                     playerPos.set(0.0, playerPos.y + 4.5, 0.85); // Nasce um pouco acima de onde caiu
-                    if (playerPos.y > 30.0) playerPos.y = 30.0;
+                    if (playerPos.y > buildingHeight - 12.0) playerPos.y = buildingHeight - 12.0;
                     playerVel.set(0.0, 0.0, 0.0);
                     som.playFalling();
                 }, 1000);
@@ -2270,7 +2270,7 @@
                     }
 
                     if (keys.ArrowUp) {
-                        playerPos.y = Math.min(39.0, playerPos.y + SPEED_Y * deltaTime);
+                        playerPos.y = Math.min(buildingHeight - 3.0, playerPos.y + SPEED_Y * deltaTime);
                         moving = true;
                     } else if (keys.ArrowDown) {
                         playerPos.y = Math.max(1.05, playerPos.y - SPEED_Y * deltaTime);
