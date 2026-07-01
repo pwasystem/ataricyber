@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Tron 3D - Light Cycles Arena</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-orange: #ff5e00;
+            --neon-yellow: #ffff00;
+            --dark-bg: #020206;
+            --glass-bg: rgba(6, 4, 16, 0.76);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --cyan-glow: 0 0 10px rgba(0, 240, 255, 0.5);
+            --pink-glow: 0 0 10px rgba(255, 0, 127, 0.5);
+            --green-glow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* CRT Scanlines e Efeito de Vinheta */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.9);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HUD Superior */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.08);
+        }
+
+        .hud-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8fa3;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .hud-value.cyan {
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        .hud-value.pink {
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #8a8fa3;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            color: #ffffff;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        .hud-btn.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        /* Controles Virtuais Mobile */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            touch-action: manipulation;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            transform: scale(0.95);
+        }
+
+        /* Botões de Direção */
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+
+        .camera-controls-mobile {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .cam-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+
+        /* Overlays (Telas) */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: radial-gradient(circle, rgba(10, 5, 22, 0.88) 0%, rgba(3, 1, 8, 0.99) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            background: rgba(15, 6, 28, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 35px 45px;
+            width: 90%;
+            max-width: 550px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.03);
+            border-top: 3px solid var(--neon-cyan);
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 6px 0;
+            background: linear-gradient(135deg, #ffffff 10%, var(--neon-cyan) 50%, var(--neon-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+
+        .game-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-pink);
+            letter-spacing: 4px;
+            margin-bottom: 22px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: var(--pink-glow);
+        }
+
+        .instructions {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #afb3c9;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 5px;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            color: #0b0314;
+            border: none;
+            padding: 14px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 240, 255, 0.45);
+            filter: brightness(1.15);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .score-summary {
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 18px 0 22px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .score-row .label {
+            color: #8a8fa3;
+        }
+
+        .score-row .value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .score-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+            font-size: 16px;
+        }
+
+        .score-row.total .value {
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        /* Tela de Carregamento */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s ease-in-out infinite;
+            box-shadow: var(--cyan-glow);
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+            text-shadow: var(--cyan-glow);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            .hud-panel {
+                padding: 8px 12px;
+                gap: 12px;
+            }
+            .hud-value {
+                font-size: 16px;
+            }
+            .hud-btn {
+                padding: 6px 8px;
+                font-size: 9px;
+            }
+            .menu-card {
+                padding: 24px;
+            }
+            .game-title {
+                font-size: 24px;
+                letter-spacing: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">INICIALIZANDO RASTRO DE LUZ TRON...</div>
+    </div>
+
+    <!-- Canvas do Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD Superior -->
+    <div id="hud">
+        <div class="hud-panel">
+            <div class="hud-group">
+                <div class="hud-label">USER (Ciano)</div>
+                <div id="hud-score-player" class="hud-value cyan">0</div>
+            </div>
+            <div style="font-family: 'Orbitron', sans-serif; font-size: 16px; color: #4b4b5e; font-weight: bold;">VS</div>
+            <div class="hud-group">
+                <div class="hud-label">GRID IA (Rosa)</div>
+                <div id="hud-score-cpu" class="hud-value pink">0</div>
+            </div>
+        </div>
+
+        <div class="hud-panel" style="gap: 15px;">
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-sound" class="hud-btn active" title="Mudar som">
+                    🔊 Som
+                </button>
+                <a href="index.html" class="hud-btn" style="text-decoration: none;">
+                    🚪 Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Virtuais Mobile -->
+    <div id="mobile-controls">
+        <div class="dpad-container">
+            <button id="btn-up" class="mobile-btn">▲</button>
+            <button id="btn-left" class="mobile-btn">◀</button>
+            <button id="btn-right" class="mobile-btn">▶</button>
+            <button id="btn-down" class="mobile-btn">▼</button>
+        </div>
+        <div class="camera-controls-mobile">
+            <button id="btn-cam-rot-l" class="mobile-btn cam-btn">⟲</button>
+            <button id="btn-cam-rot-r" class="mobile-btn cam-btn">⟳</button>
+            <button id="btn-cam-zoom-in" class="mobile-btn cam-btn">＋</button>
+            <button id="btn-cam-zoom-out" class="mobile-btn cam-btn">－</button>
+        </div>
+    </div>
+
+    <!-- Menu Inicial -->
+    <div id="screen-menu" class="overlay-screen">
+        <div class="menu-card">
+            <h1 class="game-title">CYBER TRON 3D</h1>
+            <div class="game-subtitle">Combate de Grade Eletromagnética</div>
+
+            <div class="instructions">
+                <h3>Diretrizes Táticas:</h3>
+                <ul>
+                    <li>Pilote seu **Light Cycle** (Moto) e force a CPU a colidir contra as barreiras.</li>
+                    <li>Ao se mover, sua moto deixa uma **parede sólida de luz**. Colidir com qualquer parede ou com a borda da arena é fatal!</li>
+                    <li>Não é possível realizar curvas imediatas de 180° (voltar sobre o próprio rastro).</li>
+                    <li>Vence a partida quem alcançar **5 vitórias** primeiro.</li>
+                    <li><strong>Controles da Moto:</strong> Use as **Setas do Teclado** para mudar a direção (curvas de 90°).</li>
+                    <li><strong>Controle de Câmera:</strong> Use as teclas **A** / **D** para órbita e **W** / **S** para zoom.</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="btn-primary">Conectar à Grade</button>
+        </div>
+    </div>
+
+    <!-- Game Over (Derrota) -->
+    <div id="screen-gameover" class="overlay-screen hidden">
+        <div class="menu-card" style="border-top-color: var(--neon-pink);">
+            <h1 class="game-title" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">DESCONEXÃO DA GRADE</h1>
+            <div class="game-subtitle">Seu rastro energético foi extinto</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Suas Vitórias:</span>
+                    <span id="summary-score-player-lost" class="value cyan">0</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Vitórias da CPU:</span>
+                    <span id="summary-score-cpu-lost" class="value pink">5</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">STATUS:</span>
+                    <span class="value" style="color: var(--neon-pink); text-shadow: var(--pink-glow);">DESINTEGRADO</span>
+                </div>
+            </div>
+
+            <button id="btn-restart-lost" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-pink), var(--neon-orange));">Reinicializar Conexão</button>
+        </div>
+    </div>
+
+    <!-- Vitória -->
+    <div id="screen-victory" class="overlay-screen hidden">
+        <div class="menu-card" style="border-top-color: var(--neon-cyan);">
+            <h1 class="game-title" style="color: var(--neon-cyan); text-shadow: var(--cyan-glow);">DOMÍNIO DA GRADE</h1>
+            <div class="game-subtitle">Núcleo da IA adversária desativado</div>
+
+            <div class="score-summary">
+                <div class="score-row">
+                    <span class="label">Suas Vitórias:</span>
+                    <span id="summary-score-player-win" class="value cyan">5</span>
+                </div>
+                <div class="score-row">
+                    <span class="label">Vitórias da CPU:</span>
+                    <span id="summary-score-cpu-win" class="value pink">0</span>
+                </div>
+                <div class="score-row total">
+                    <span class="label">STATUS:</span>
+                    <span class="value" style="color: var(--neon-cyan); text-shadow: var(--cyan-glow);">OPERADOR MESTRE</span>
+                </div>
+            </div>
+
+            <button id="btn-restart-win" class="btn-primary" style="background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));">Novo Combate</button>
+        </div>
+    </div>
+
+    <!-- Biblioteca Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================================================
+        // 1. SINTETIZADOR DE ÁUDIO PROCEDURAL (Web Audio API)
+        // ============================================================================
+        class SomTron {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.sfxGain = null;
+                this.muted = false;
+
+                // Motores contínuos das motos
+                this.enginePlayer = null;
+                this.engineCpu = null;
+                this.enginePlayerGain = null;
+                this.engineCpuGain = null;
+
+                // Sequenciador Synthwave
+                this.musicActive = false;
+                this.musicInterval = null;
+                this.musicBeat = 0;
+            }
+
+            init() {
+                if (this.ctx) {
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    return;
+                }
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContextClass();
+
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                this.masterGain.connect(this.ctx.destination);
+
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                this.sfxGain.connect(this.masterGain);
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (!this.ctx) return this.muted;
+                
+                if (this.muted) {
+                    this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                } else {
+                    this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                }
+                return this.muted;
+            }
+
+            // Inicializa osciladores contínuos dos motores
+            startEngines() {
+                this.init();
+                if (!this.ctx || this.muted) return;
+                this.stopEngines();
+
+                const t = this.ctx.currentTime;
+
+                // Motor do Player
+                this.enginePlayer = this.ctx.createOscillator();
+                this.enginePlayer.type = 'sawtooth';
+                this.enginePlayer.frequency.setValueAtTime(65, t); // Baixo zumbido
+                
+                // Filtro para suavizar
+                const filterP = this.ctx.createBiquadFilter();
+                filterP.type = 'lowpass';
+                filterP.frequency.setValueAtTime(140, t);
+
+                this.enginePlayerGain = this.ctx.createGain();
+                this.enginePlayerGain.gain.setValueAtTime(0.12, t);
+
+                this.enginePlayer.connect(filterP);
+                filterP.connect(this.enginePlayerGain);
+                this.enginePlayerGain.connect(this.sfxGain);
+                this.enginePlayer.start(t);
+
+                // Motor da CPU
+                this.engineCpu = this.ctx.createOscillator();
+                this.engineCpu.type = 'sawtooth';
+                this.engineCpu.frequency.setValueAtTime(60, t);
+
+                const filterC = this.ctx.createBiquadFilter();
+                filterC.type = 'lowpass';
+                filterC.frequency.setValueAtTime(130, t);
+
+                this.engineCpuGain = this.ctx.createGain();
+                this.engineCpuGain.gain.setValueAtTime(0.1, t);
+
+                this.engineCpu.connect(filterC);
+                filterC.connect(this.engineCpuGain);
+                this.engineCpuGain.connect(this.sfxGain);
+                this.engineCpu.start(t);
+            }
+
+            stopEngines() {
+                if (this.enginePlayer) {
+                    try { this.enginePlayer.stop(); } catch(e){}
+                    this.enginePlayer = null;
+                }
+                if (this.engineCpu) {
+                    try { this.engineCpu.stop(); } catch(e){}
+                    this.engineCpu = null;
+                }
+            }
+
+            // Som rápido de aceleração durante curva
+            playTurnSfx(isPlayer) {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+                
+                const engine = isPlayer ? this.enginePlayer : this.engineCpu;
+                const baseFreq = isPlayer ? 65 : 60;
+                
+                if (engine) {
+                    // Sobe a frequência do motor rapidamente e volta
+                    engine.frequency.setValueAtTime(baseFreq, t);
+                    engine.frequency.exponentialRampToValueAtTime(baseFreq * 2.8, t + 0.06);
+                    engine.frequency.exponentialRampToValueAtTime(baseFreq, t + 0.2);
+                }
+
+                // Som de bipe sintetizado da curva (chicote de luz)
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, t);
+                osc.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+
+                gain.gain.setValueAtTime(0.08, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 0.11);
+            }
+
+            // Som de explosão ao colidir
+            playExplosion() {
+                if (!this.ctx || this.muted) return;
+                const t = this.ctx.currentTime;
+
+                // 1. Ruído branco explosivo
+                const bufferSize = this.ctx.sampleRate * 0.45;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(320, t);
+                filter.frequency.linearRampToValueAtTime(50, t + 0.45);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.45, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+                noise.start(t);
+                noise.stop(t + 0.46);
+
+                // 2. Ondulação grave de baixo
+                const sub = this.ctx.createOscillator();
+                const subGain = this.ctx.createGain();
+                sub.type = 'sine';
+                sub.frequency.setValueAtTime(100, t);
+                sub.frequency.linearRampToValueAtTime(30, t + 0.35);
+
+                subGain.gain.setValueAtTime(0.3, t);
+                subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+                sub.connect(subGain);
+                subGain.connect(this.sfxGain);
+                sub.start(t);
+                sub.stop(t + 0.36);
+            }
+
+            // Música de Fundo (Synthwave Industrial Eletrizante)
+            startMusic() {
+                this.init();
+                if (this.musicActive) return;
+                this.musicActive = true;
+                this.musicBeat = 0;
+
+                const step = 0.13; // BPM ~115 (Agressivo)
+                let nextTick = this.ctx.currentTime;
+
+                const tickLoop = () => {
+                    const t = nextTick;
+
+                    if (this.musicActive && !this.muted) {
+                        // Bassline Synthwave (Agressiva/Marcante)
+                        const notes = [
+                            58.27, 58.27, 58.27, 58.27,
+                            69.30, 69.30, 69.30, 69.30,
+                            51.91, 51.91, 51.91, 51.91,
+                            43.65, 43.65, 48.99, 51.91
+                        ];
+                        const freqNota = notes[this.musicBeat % notes.length];
+
+                        const osc = this.ctx.createOscillator();
+                        const filter = this.ctx.createBiquadFilter();
+                        const gain = this.ctx.createGain();
+
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freqNota, t);
+
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(220, t);
+
+                        gain.gain.setValueAtTime(0.12, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + step * 1.5);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.start(t);
+                        osc.stop(t + step * 1.6);
+
+                        // Kick (Bumbo) no tempo 0 e 4
+                        if (this.musicBeat % 4 === 0) {
+                            const kick = this.ctx.createOscillator();
+                            const kickGain = this.ctx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(120, t);
+                            kick.frequency.exponentialRampToValueAtTime(45, t + 0.1);
+
+                            kickGain.gain.setValueAtTime(0.24, t);
+                            kickGain.gain.linearRampToValueAtTime(0.001, t + 0.1);
+
+                            kick.connect(kickGain);
+                            kickGain.connect(this.masterGain);
+                            kick.start(t);
+                            kick.stop(t + 0.11);
+                        }
+
+                        // Hihat metálico no contra-tempo
+                        if (this.musicBeat % 2 === 1) {
+                            const hhOsc = this.ctx.createOscillator();
+                            const hhGain = this.ctx.createGain();
+                            hhOsc.type = 'square';
+                            hhOsc.frequency.setValueAtTime(9000, t);
+
+                            const hhFilter = this.ctx.createBiquadFilter();
+                            hhFilter.type = 'highpass';
+                            hhFilter.frequency.setValueAtTime(6000, t);
+
+                            hhGain.gain.setValueAtTime(0.015, t);
+                            hhGain.gain.linearRampToValueAtTime(0.001, t + 0.04);
+
+                            hhOsc.connect(hhFilter);
+                            hhFilter.connect(hhGain);
+                            hhGain.connect(this.masterGain);
+                            hhOsc.start(t);
+                            hhOsc.stop(t + 0.05);
+                        }
+                    }
+
+                    this.musicBeat++;
+                    nextTick += step;
+
+                    if (this.musicActive) {
+                        const diff = nextTick - this.ctx.currentTime;
+                        this.musicInterval = setTimeout(tickLoop, Math.max(0, diff * 1000));
+                    }
+                };
+
+                tickLoop();
+            }
+
+            stopMusic() {
+                this.musicActive = false;
+                if (this.musicInterval) {
+                    clearTimeout(this.musicInterval);
+                    this.musicInterval = null;
+                }
+            }
+
+            playVictory() {
+                this.stopMusic();
+                this.stopEngines();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const arpeggio = [293.66, 349.23, 440.00, 587.33, 698.46, 880.00, 1174.66];
+                
+                arpeggio.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.07);
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(900, t);
+
+                    gain.gain.setValueAtTime(0.12, t + idx * 0.07);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.07 + 0.35);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(t + idx * 0.07);
+                    osc.stop(t + idx * 0.07 + 0.38);
+                });
+            }
+
+            playDefeatMusic() {
+                this.stopMusic();
+                this.stopEngines();
+                if (!this.ctx || this.muted) return;
+
+                const t = this.ctx.currentTime;
+                const notas = [220.00, 196.00, 174.61, 146.83, 110.00];
+                
+                notas.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(250, t + idx * 0.18);
+
+                    osc.frequency.setValueAtTime(freq, t + idx * 0.18);
+                    gain.gain.setValueAtTime(0.15, t + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.18 + 0.5);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(t + idx * 0.18);
+                    osc.stop(t + idx * 0.18 + 0.55);
+                });
+            }
+        }
+
+        const som = new SomTron();
+
+        // ============================================================================
+        // 2. MOTOR DO JOGO E AMBIENTE (Three.js)
+        // ============================================================================
+        let scene, camera, renderer, lastTime = 0;
+        let starfield;
+
+        // Entidades do Jogo
+        let cyclePlayer;
+        let cycleCpu;
+        let staticWalls = []; // Segmentos de barreiras de luz estáticas (AABB para colisão)
+        let particles = [];   // Partículas de explosão
+
+        // Referências das paredes de luz ativas (as que estão crescendo)
+        let activeWallPlayer = null;
+        let activeWallCpu = null;
+        let playerWallStart = null;
+        let cpuWallStart = null;
+
+        // Estados Globais
+        const GAME_STATES = { MENU: 0, ROUND_PLAYING: 1, ROUND_END: 2, VICTORY: 3, GAMEOVER: 4 };
+        let gameState = GAME_STATES.MENU;
+
+        let scorePlayer = 0;
+        let scoreCpu = 0;
+        const WIN_SCORE = 5;
+
+        // Dimensões da Arena (Grade)
+        const ARENA_SIZE = 48.0; // Mesa de 48 x 48 (limites -24 a 24)
+        const HALF_ARENA = ARENA_SIZE / 2;
+        const CYCLE_SPEED = 14.5; // Velocidade de movimentação
+
+        // Vetores direcionais absolutos
+        const DIRS = {
+            UP: new THREE.Vector3(0, 0, -1),
+            DOWN: new THREE.Vector3(0, 0, 1),
+            LEFT: new THREE.Vector3(-1, 0, 0),
+            RIGHT: new THREE.Vector3(1, 0, 0)
+        };
+
+        // Estados de Movimentação do Player e CPU
+        let playerDir = DIRS.RIGHT;
+        let playerNextDir = DIRS.RIGHT;
+        let playerPos = new THREE.Vector3();
+        let playerIsDead = false;
+
+        let cpuDir = DIRS.LEFT;
+        let cpuNextDir = DIRS.LEFT;
+        let cpuPos = new THREE.Vector3();
+        let cpuIsDead = false;
+
+        // Variáveis de Câmera
+        let cameraAngleY = Math.PI / 2;
+        let cameraZoom = 1.0;
+        let shakeAmount = 0.0;
+
+        // Controles de Teclado
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
+        let isTouchDevice = false;
+
+        // Elementos DOM
+        const hudScorePlayer = document.getElementById('hud-score-player');
+        const hudScoreCpu = document.getElementById('hud-score-cpu');
+        const btnSound = document.getElementById('btn-sound');
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGameover = document.getElementById('screen-gameover');
+        const screenVictory = document.getElementById('screen-victory');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestartLost = document.getElementById('btn-restart-lost');
+        const btnRestartWin = document.getElementById('btn-restart-win');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        // ============================================================================
+        // 3. MODELAGEM PROCEDURAL 3D
+        // ============================================================================
+        
+        // Cria Light Cycle voxelizada futurista
+        function createLightCycle(colorHex) {
+            const group = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0x12121e,
+                roughness: 0.3,
+                metalness: 0.8
+            });
+
+            const glowMat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                emissive: colorHex,
+                emissiveIntensity: 0.9,
+                roughness: 0.1
+            });
+
+            // Chassi Principal aerodinâmico
+            const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 1.4), bodyMat);
+            chassis.position.y = 0.22;
+            group.add(chassis);
+
+            // Cockpit (Vidro translúcido neon)
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.6), glowMat);
+            cabin.position.set(0, 0.42, -0.05);
+            group.add(cabin);
+
+            // Rodas de luz neon integradas no chassi (Cilindros)
+            const wheelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.46, 16);
+            wheelGeo.rotateZ(Math.PI / 2);
+            
+            const frontWheel = new THREE.Mesh(wheelGeo, glowMat);
+            frontWheel.position.set(0, 0.24, -0.5);
+            
+            const backWheel = frontWheel.clone();
+            backWheel.position.z = 0.5;
+            group.add(frontWheel, backWheel);
+
+            // Detalhes / Aletas laterais neon
+            const wingGeo = new THREE.BoxGeometry(0.58, 0.08, 0.5);
+            const wings = new THREE.Mesh(wingGeo, glowMat);
+            wings.position.set(0, 0.25, 0.15);
+            group.add(wings);
+
+            group.castShadow = true;
+            group.receiveShadow = true;
+
+            return group;
+        }
+
+        // Cria uma caixa para representar a barreira de luz ativa
+        function createActiveWall(colorHex) {
+            const mat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                emissive: colorHex,
+                emissiveIntensity: 0.7,
+                transparent: true,
+                opacity: 0.78,
+                roughness: 0.2,
+                metalness: 0.5
+            });
+            const geo = new THREE.BoxGeometry(0.06, 0.52, 0.06); // Altura de 0.52
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.y = 0.26;
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // ============================================================================
+        // 4. CONSTRUÇÃO DA ARENA
+        // ============================================================================
+        function buildArena() {
+            // 1. Chão (Grade Reflexiva escura com linhas de neon apagadas)
+            const floorGeo = new THREE.PlaneGeometry(ARENA_SIZE, ARENA_SIZE);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x030309,
+                roughness: 0.6,
+                metalness: 0.4
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Grade de Laser decorativa no chão
+            const gridHelper = new THREE.GridHelper(ARENA_SIZE, 30, 0x00f0ff, 0x14142a);
+            gridHelper.position.y = 0.005;
+            // Torna as linhas translúcidas
+            gridHelper.material.transparent = true;
+            gridHelper.material.opacity = 0.22;
+            scene.add(gridHelper);
+
+            // 2. Paredes de Contenção Laser
+            const wallMat = new THREE.MeshStandardMaterial({
+                color: 0x080812,
+                roughness: 0.4,
+                metalness: 0.9
+            });
+
+            // 4 Paredes ao redor
+            const segmentL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.6, ARENA_SIZE), wallMat);
+            segmentL.position.set(-HALF_ARENA - 0.15, 0.3, 0);
+            
+            const segmentR = segmentL.clone();
+            segmentR.position.x = HALF_ARENA + 0.15;
+            
+            const segmentF = new THREE.Mesh(new THREE.BoxGeometry(ARENA_SIZE + 0.6, 0.6, 0.3), wallMat);
+            segmentF.position.set(0, 0.3, -HALF_ARENA - 0.15);
+            
+            const segmentB = segmentF.clone();
+            segmentB.position.z = HALF_ARENA + 0.15;
+
+            scene.add(segmentL, segmentR, segmentF, segmentB);
+
+            // Linhas laser neon no topo das barreiras externas (Azul e Rosa intercaladas)
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const laserL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, ARENA_SIZE), laserMat);
+            laserL.position.set(-HALF_ARENA - 0.15, 0.62, 0);
+            const laserR = laserL.clone();
+            laserR.position.x = HALF_ARENA + 0.15;
+            
+            const laserMat2 = new THREE.MeshBasicMaterial({ color: 0xff007f });
+            const laserF = new THREE.Mesh(new THREE.BoxGeometry(ARENA_SIZE, 0.05, 0.05), laserMat2);
+            laserF.position.set(0, 0.62, -HALF_ARENA - 0.15);
+            const laserB = laserF.clone();
+            laserB.position.z = HALF_ARENA + 0.15;
+
+            scene.add(laserL, laserR, laserF, laserB);
+        }
+
+        // ============================================================================
+        // 5. SISTEMA DE PARTÍCULAS
+        // ============================================================================
+        function spawnExplosion(position, colorHex, count = 28) {
+            const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+            const mat = new THREE.MeshBasicMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity: 1.0
+            });
+
+            for (let i = 0; i < count; i++) {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.copy(position);
+
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 6.5,
+                    (Math.random() * 4.5) + 1.0,
+                    (Math.random() - 0.5) * 6.5
+                );
+
+                scene.add(mesh);
+                particles.push({
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: (Math.random() * 1.5) + 1.2
+                });
+            }
+        }
+
+        // ============================================================================
+        // 6. ENTRADAS DE TECLADO E CONTROLES
+        // ============================================================================
+        function setupInput() {
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = true;
+                }
+
+                if (gameState !== GAME_STATES.ROUND_PLAYING || playerIsDead) return;
+
+                // Transição de direção 90 graus
+                // Impede 180° imediatos
+                if (e.code === 'ArrowUp' && playerDir !== DIRS.DOWN) {
+                    playerNextDir = DIRS.UP;
+                } else if (e.code === 'ArrowDown' && playerDir !== DIRS.UP) {
+                    playerNextDir = DIRS.DOWN;
+                } else if (e.code === 'ArrowLeft' && playerDir !== DIRS.RIGHT) {
+                    playerNextDir = DIRS.LEFT;
+                } else if (e.code === 'ArrowRight' && playerDir !== DIRS.LEFT) {
+                    playerNextDir = DIRS.RIGHT;
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = false;
+                }
+            });
+
+            // Controles Mobile
+            const triggerMobileCurve = (dir) => {
+                if (gameState !== GAME_STATES.ROUND_PLAYING || playerIsDead) return;
+                
+                if (dir === 'up' && playerDir !== DIRS.DOWN) playerNextDir = DIRS.UP;
+                else if (dir === 'down' && playerDir !== DIRS.UP) playerNextDir = DIRS.DOWN;
+                else if (dir === 'left' && playerDir !== DIRS.RIGHT) playerNextDir = DIRS.LEFT;
+                else if (dir === 'right' && playerDir !== DIRS.LEFT) playerNextDir = DIRS.RIGHT;
+            };
+
+            document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); triggerMobileCurve('up'); });
+            document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); triggerMobileCurve('down'); });
+            document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); triggerMobileCurve('left'); });
+            document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); triggerMobileCurve('right'); });
+
+            // Câmera Mobile
+            document.getElementById('btn-cam-rot-l').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyA = true; });
+            document.getElementById('btn-cam-rot-l').addEventListener('touchend', () => { keys.KeyA = false; });
+            document.getElementById('btn-cam-rot-r').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyD = true; });
+            document.getElementById('btn-cam-rot-r').addEventListener('touchend', () => { keys.KeyD = false; });
+            document.getElementById('btn-cam-zoom-in').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyW = true; });
+            document.getElementById('btn-cam-zoom-in').addEventListener('touchend', () => { keys.KeyW = false; });
+            document.getElementById('btn-cam-zoom-out').addEventListener('touchstart', (e) => { e.preventDefault(); keys.KeyS = true; });
+            document.getElementById('btn-cam-zoom-out').addEventListener('touchend', () => { keys.KeyS = false; });
+
+            btnStart.addEventListener('click', startGame);
+            btnRestartLost.addEventListener('click', restartGame);
+            btnRestartWin.addEventListener('click', restartGame);
+
+            btnSound.addEventListener('click', () => {
+                const isMuted = som.toggleMute();
+                if (isMuted) {
+                    btnSound.classList.remove('active');
+                    btnSound.innerText = '🔇 Mudo';
+                    som.stopEngines();
+                } else {
+                    btnSound.classList.add('active');
+                    btnSound.innerText = '🔊 Som';
+                    if (gameState === GAME_STATES.ROUND_PLAYING) {
+                        som.startEngines();
+                    }
+                }
+            });
+
+            window.addEventListener('touchstart', function onFirstTouch() {
+                isTouchDevice = true;
+                document.getElementById('mobile-controls').style.display = 'flex';
+                window.removeEventListener('touchstart', onFirstTouch);
+            });
+        }
+
+        // ============================================================================
+        // 7. MECÂNICA DE RASTRIS DE LUZ E COLISÃO
+        // ============================================================================
+        
+        // Finaliza a parede ativa atual e salva na lista de colisores estáticos
+        function finalizeActiveWall(isPlayer) {
+            const wallMesh = isPlayer ? activeWallPlayer : activeWallCpu;
+            const startPt = isPlayer ? playerWallStart : cpuWallStart;
+            const endPt = isPlayer ? playerPos.clone() : cpuPos.clone();
+            
+            if (!wallMesh) return;
+
+            // Salva os limites AABB da parede estática para detecção rápida de colisão
+            // A parede é uma Box3 no Three.js
+            const colBox = new THREE.Box3().setFromObject(wallMesh);
+            
+            // Adiciona uma pequena folga vertical
+            colBox.min.y = 0.0;
+            colBox.max.y = 0.6;
+            
+            // Adiciona na lista com referência de propriedade
+            staticWalls.push({
+                box: colBox,
+                mesh: wallMesh,
+                isPlayer: isPlayer
+            });
+
+            // Reinicializa a nova parede ativa no ponto da curva
+            if (isPlayer) {
+                playerWallStart = endPt;
+                activeWallPlayer = createActiveWall(0x00f0ff);
+            } else {
+                cpuWallStart = endPt;
+                activeWallCpu = createActiveWall(0xff007f);
+            }
+        }
+
+        // Atualiza a escala e posição da parede ativa de acordo com o curso da moto
+        function updateActiveWall(isPlayer) {
+            const wallMesh = isPlayer ? activeWallPlayer : activeWallCpu;
+            const startPt = isPlayer ? playerWallStart : cpuWallStart;
+            const currentPt = isPlayer ? playerPos : cpuPos;
+            const dir = isPlayer ? playerDir : cpuDir;
+
+            if (!wallMesh) return;
+
+            // Calcula o ponto médio entre o início do rastro e a moto
+            const midPoint = new THREE.Vector3().addVectors(startPt, currentPt).multiplyScalar(0.5);
+            
+            // Calcula a distância
+            const dist = startPt.distanceTo(currentPt);
+
+            // Ajusta posição
+            wallMesh.position.set(midPoint.x, 0.26, midPoint.z);
+
+            // Ajusta dimensões da caixa do rastro baseado no vetor direcional
+            // Eixo X ou Z
+            if (Math.abs(dir.x) > 0.5) {
+                wallMesh.scale.set(dist / 0.06, 1.0, 1.0); // Estica em X
+            } else {
+                wallMesh.scale.set(1.0, 1.0, dist / 0.06); // Estica em Z
+            }
+        }
+
+        // ============================================================================
+        // 8. LÓGICA DE LOOP E MOVIMENTO
+        // ============================================================================
+        
+        function resetRound() {
+            // Limpa as paredes de luz anteriores da cena
+            staticWalls.forEach(w => scene.remove(w.mesh));
+            staticWalls = [];
+
+            if (activeWallPlayer) scene.remove(activeWallPlayer);
+            if (activeWallCpu) scene.remove(activeWallCpu);
+
+            // Posiciona Player
+            playerPos.set(-HALF_ARENA + 6.0, 0, 0);
+            playerDir = DIRS.RIGHT;
+            playerNextDir = DIRS.RIGHT;
+            playerIsDead = false;
+            cyclePlayer.position.copy(playerPos);
+            cyclePlayer.rotation.y = -Math.PI / 2; // Virado para a direita
+            cyclePlayer.visible = true;
+
+            // Posiciona CPU
+            cpuPos.set(HALF_ARENA - 6.0, 0, 0);
+            cpuDir = DIRS.LEFT;
+            cpuNextDir = DIRS.LEFT;
+            cpuIsDead = false;
+            cycleCpu.position.copy(cpuPos);
+            cycleCpu.rotation.y = Math.PI / 2; // Virado para a esquerda
+            cycleCpu.visible = true;
+
+            // Inicia novas paredes de luz
+            playerWallStart = playerPos.clone();
+            activeWallPlayer = createActiveWall(0x00f0ff);
+
+            cpuWallStart = cpuPos.clone();
+            activeWallCpu = createActiveWall(0xff007f);
+
+            som.startEngines();
+            gameState = GAME_STATES.ROUND_PLAYING;
+        }
+
+        function triggerRoundEnd(playerDied, cpuDied) {
+            gameState = GAME_STATES.ROUND_END;
+            shakeCamera(0.4);
+            som.playExplosion();
+
+            if (playerDied) {
+                playerIsDead = true;
+                cyclePlayer.visible = false;
+                spawnExplosion(playerPos, 0x00f0ff, 28);
+            }
+            if (cpuDied) {
+                cpuIsDead = true;
+                cycleCpu.visible = false;
+                spawnExplosion(cpuPos, 0xff007f, 28);
+            }
+
+            som.stopEngines();
+
+            // Atualiza placar
+            // Se os dois bateram no mesmo frame, é empate (nenhum pontua ou ambos dependendo do gosto, vamos dar empate)
+            if (playerDied && !cpuDied) {
+                scoreCpu++;
+            } else if (cpuDied && !playerDied) {
+                scorePlayer++;
+            }
+            
+            updateHUD();
+
+            // Checa condição de fim de jogo
+            setTimeout(() => {
+                if (scorePlayer >= WIN_SCORE) {
+                    endGame(true);
+                } else if (scoreCpu >= WIN_SCORE) {
+                    endGame(false);
+                } else {
+                    resetRound();
+                }
+            }, 1800);
+        }
+
+        // Inteligência Artificial da CPU (Desvio rápido em grid)
+        function processCpuAI(deltaTime) {
+            // Projetamos uma caixa de colisão ou rastro futuro à frente da CPU
+            // CPU move-se a CYCLE_SPEED. Ela olha 4.5 unidades à frente
+            const lookAheadDist = 4.5;
+            const nextPos = cpuPos.clone().addScaledVector(cpuDir, lookAheadDist);
+            
+            // Cria caixa delimitadora futura provisória da CPU
+            const futureBox = new THREE.Box3(
+                new THREE.Vector3(nextPos.x - 0.25, 0, nextPos.z - 0.25),
+                new THREE.Vector3(nextPos.x + 0.25, 0.6, nextPos.z + 0.25)
+            );
+
+            // Verifica se baterá em algo com essa projeção
+            let willCollide = false;
+
+            // 1. Paredes externas
+            if (Math.abs(nextPos.x) >= HALF_ARENA || Math.abs(nextPos.z) >= HALF_ARENA) {
+                willCollide = true;
+            }
+
+            // 2. Barreiras estáticas
+            if (!willCollide) {
+                for (let i = 0; i < staticWalls.length; i++) {
+                    if (futureBox.intersectsBox(staticWalls[i].box)) {
+                        willCollide = true;
+                        break;
+                    }
+                }
+            }
+
+            // 3. Barreiras ativas atuais
+            if (!willCollide) {
+                // Checa com a barreira atual da própria CPU (exclui a vizinhança da moto)
+                const distSelf = cpuWallStart.distanceTo(cpuPos);
+                if (distSelf > 1.5) {
+                    const selfActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
+                    if (futureBox.intersectsBox(selfActiveBox)) {
+                        willCollide = true;
+                    }
+                }
+
+                // Checa com a barreira ativa do Player
+                const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
+                if (futureBox.intersectsBox(playerActiveBox)) {
+                    willCollide = true;
+                }
+            }
+
+            // Se for colidir à frente ou aleatoriamente com chance baixa, faz a curva
+            const randomTurn = Math.random() < 0.007;
+
+            if (willCollide || randomTurn) {
+                // Decide se vira à esquerda ou à direita relativo à direção atual
+                // Direções de fuga candidatas:
+                let candidates = [];
+                if (Math.abs(cpuDir.z) > 0.5) { // Movendo-se em Z, pode virar em X (LEFT ou RIGHT)
+                    candidates = [DIRS.LEFT, DIRS.RIGHT];
+                } else { // Movendo-se em X, pode virar em Z (UP ou DOWN)
+                    candidates = [DIRS.UP, DIRS.DOWN];
+                }
+
+                // Avalia candidatos para ver qual está livre
+                let bestDir = null;
+                let maxFreeDist = -1;
+
+                candidates.forEach(cDir => {
+                    // Checa quão livre está essa direção projetando 8 unidades
+                    let freeDist = 8.0;
+                    for (let d = 1.0; d <= 8.0; d += 1.0) {
+                        const testPos = cpuPos.clone().addScaledVector(cDir, d);
+                        
+                        // Limites da arena
+                        if (Math.abs(testPos.x) >= HALF_ARENA || Math.abs(testPos.z) >= HALF_ARENA) {
+                            freeDist = d - 1.0;
+                            break;
+                        }
+
+                        // Colisão com barreiras
+                        const testBox = new THREE.Box3(
+                            new THREE.Vector3(testPos.x - 0.2, 0, testPos.z - 0.2),
+                            new THREE.Vector3(testPos.x + 0.2, 0.6, testPos.z + 0.2)
+                        );
+
+                        let hit = false;
+                        for (let i = 0; i < staticWalls.length; i++) {
+                            if (testBox.intersectsBox(staticWalls[i].box)) { hit = true; break; }
+                        }
+                        if (hit) { freeDist = d - 1.0; break; }
+                    }
+
+                    if (freeDist > maxFreeDist) {
+                        maxFreeDist = freeDist;
+                        bestDir = cDir;
+                    }
+                });
+
+                // Se houver uma direção minimamente segura, vira nela
+                if (bestDir && maxFreeDist > 1.2) {
+                    cpuNextDir = bestDir;
+                }
+            }
+        }
+
+        // Verifica colisões físicas de todas as motos no frame atual
+        function checkCollisions() {
+            if (gameState !== GAME_STATES.ROUND_PLAYING) return;
+
+            // Caixa delimitadora do Player
+            const playerBox = new THREE.Box3(
+                new THREE.Vector3(playerPos.x - 0.22, 0.05, playerPos.z - 0.22),
+                new THREE.Vector3(playerPos.x + 0.22, 0.5, playerPos.z + 0.22)
+            );
+
+            // Caixa delimitadora da CPU
+            const cpuBox = new THREE.Box3(
+                new THREE.Vector3(cpuPos.x - 0.22, 0.05, cpuPos.z - 0.22),
+                new THREE.Vector3(cpuPos.x + 0.22, 0.5, cpuPos.z + 0.22)
+            );
+
+            let playerDied = false;
+            let cpuDied = false;
+
+            // 1. Colisão com os Limites Externos da Arena
+            if (Math.abs(playerPos.x) >= HALF_ARENA - 0.1 || Math.abs(playerPos.z) >= HALF_ARENA - 0.1) {
+                playerDied = true;
+            }
+            if (Math.abs(cpuPos.x) >= HALF_ARENA - 0.1 || Math.abs(cpuPos.z) >= HALF_ARENA - 0.1) {
+                cpuDied = true;
+            }
+
+            // 2. Colisão com as Barreiras Estáticas
+            staticWalls.forEach(w => {
+                if (playerBox.intersectsBox(w.box)) {
+                    playerDied = true;
+                }
+                if (cpuBox.intersectsBox(w.box)) {
+                    cpuDied = true;
+                }
+            });
+
+            // 3. Colisão com os Rastros Ativos Atuais
+            // Para evitar colisões falsas com a própria "traseira" da moto no mesmo rastro,
+            // só checamos o rastro ativo se o comprimento dele for maior que 1.5 unidades.
+            const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
+            const cpuActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
+
+            // Colisão Player vs Trilha Ativa CPU
+            if (playerBox.intersectsBox(cpuActiveBox)) {
+                playerDied = true;
+            }
+
+            // Colisão CPU vs Trilha Ativa Player
+            if (cpuBox.intersectsBox(playerActiveBox)) {
+                cpuDied = true;
+            }
+
+            // Colisão consigo mesma (Se o rastro for grande)
+            if (playerWallStart.distanceTo(playerPos) > 1.5) {
+                if (playerBox.intersectsBox(playerActiveBox)) {
+                    playerDied = true;
+                }
+            }
+            if (cpuWallStart.distanceTo(cpuPos) > 1.5) {
+                if (cpuBox.intersectsBox(cpuActiveBox)) {
+                    cpuDied = true;
+                }
+            }
+
+            // Colisão Direta entre as duas motos
+            if (playerBox.intersectsBox(cpuBox)) {
+                playerDied = true;
+                cpuDied = true;
+            }
+
+            if (playerDied || cpuDied) {
+                triggerRoundEnd(playerDied, cpuDied);
+            }
+        }
+
+        // ============================================================================
+        // 9. CONTROLE DE ESTADOS DO FLUXO DO JOGO
+        // ============================================================================
+        
+        function startGame() {
+            som.init();
+            som.startMusic();
+            
+            screenMenu.classList.add('hidden');
+            screenGameover.classList.add('hidden');
+            screenVictory.classList.add('hidden');
+
+            scorePlayer = 0;
+            scoreCpu = 0;
+            updateHUD();
+
+            resetRound();
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function endGame(playerWon) {
+            gameState = playerWon ? GAME_STATES.VICTORY : GAME_STATES.GAMEOVER;
+            som.stopEngines();
+
+            if (playerWon) {
+                som.playVictory();
+                document.getElementById('summary-score-player-win').innerText = scorePlayer;
+                document.getElementById('summary-score-cpu-win').innerText = scoreCpu;
+                screenVictory.classList.remove('hidden');
+            } else {
+                som.playDefeatMusic();
+                document.getElementById('summary-score-player-lost').innerText = scorePlayer;
+                document.getElementById('summary-score-cpu-lost').innerText = scoreCpu;
+                screenGameover.classList.remove('hidden');
+            }
+        }
+
+        function updateHUD() {
+            hudScorePlayer.innerText = scorePlayer;
+            hudScoreCpu.innerText = scoreCpu;
+        }
+
+        function shakeCamera(amount) {
+            shakeAmount = amount;
+        }
+
+        // ============================================================================
+        // 10. INICIALIZAÇÃO DA CENA 3D E ILUMINAÇÃO
+        // ============================================================================
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020206, 0.024);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // ILUMINAÇÃO
+            const ambientLight = new THREE.AmbientLight(0x0f0b24, 0.95);
+            scene.add(ambientLight);
+
+            // Luz direcional rosa
+            const dirLight1 = new THREE.DirectionalLight(0xff007f, 1.2);
+            dirLight1.position.set(-15, 15, 10);
+            dirLight1.castShadow = true;
+            dirLight1.shadow.mapSize.width = 1024;
+            dirLight1.shadow.mapSize.height = 1024;
+            scene.add(dirLight1);
+
+            // Luz ciano
+            const dirLight2 = new THREE.DirectionalLight(0x00f0ff, 0.9);
+            dirLight2.position.set(15, 10, -10);
+            scene.add(dirLight2);
+
+            buildArena();
+
+            // Motos de Luz
+            cyclePlayer = createLightCycle(0x00f0ff);
+            scene.add(cyclePlayer);
+
+            cycleCpu = createLightCycle(0xff007f);
+            scene.add(cycleCpu);
+
+            createStarfield();
+
+            setTimeout(() => {
+                loadingScreen.style.opacity = 0;
+                setTimeout(() => loadingScreen.style.display = 'none', 500);
+            }, 800);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createStarfield() {
+            const starsCount = 400;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(starsCount * 3);
+            const colors = new Float32Array(starsCount * 3);
+
+            for (let i = 0; i < starsCount; i++) {
+                const r = 85 + Math.random() * 45;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 4;
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                const rand = Math.random();
+                if (rand < 0.45) {
+                    colors[i * 3] = 0.0; colors[i * 3 + 1] = 0.94; colors[i * 3 + 2] = 1.0;
+                } else if (rand < 0.8) {
+                    colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.0; colors[i * 3 + 2] = 0.5;
+                } else {
+                    colors[i * 3] = 0.7; colors[i * 3 + 1] = 0.2; colors[i * 3 + 2] = 1.0;
+                }
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const mat = new THREE.PointsMaterial({
+                size: 0.8,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            starfield = new THREE.Points(geo, mat);
+            scene.add(starfield);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================================
+        // 11. LOOP DE ATUALIZAÇÃO (TICK/UPDATE)
+        // ============================================================================
+        
+        function update(deltaTime) {
+            // 1. Controles de Câmera pelas teclas A/D (Rotação) e W/S (Zoom)
+            if (keys.KeyA) cameraAngleY += 1.8 * deltaTime;
+            if (keys.KeyD) cameraAngleY -= 1.8 * deltaTime;
+            
+            if (keys.KeyW) cameraZoom = Math.max(0.45, cameraZoom - 1.2 * deltaTime);
+            if (keys.KeyS) cameraZoom = Math.min(1.4, cameraZoom + 1.2 * deltaTime);
+
+            // A câmera orbital foca no centro da arena de combate
+            const radius = 28 * cameraZoom;
+            const targetCamX = radius * Math.cos(cameraAngleY);
+            const targetCamZ = radius * Math.sin(cameraAngleY) + 2;
+            const targetCamY = 16 * cameraZoom;
+
+            camera.position.x += (targetCamX - camera.position.x) * 0.05;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.05;
+            camera.position.y += (targetCamY - camera.position.y) * 0.05;
+
+            // Camera Shake
+            if (shakeAmount > 0) {
+                camera.position.x += (Math.random() - 0.5) * shakeAmount;
+                camera.position.y += (Math.random() - 0.5) * shakeAmount;
+                camera.position.z += (Math.random() - 0.5) * shakeAmount;
+                shakeAmount *= 0.86;
+                if (shakeAmount < 0.01) shakeAmount = 0;
+            }
+
+            camera.lookAt(0, 0, 0);
+
+            // 2. Movimentação dos Veículos
+            if (gameState === GAME_STATES.ROUND_PLAYING) {
+                
+                // Processa IA da CPU
+                processCpuAI(deltaTime);
+
+                // --- MOVIMENTO DO PLAYER ---
+                // Verifica se fez curva de 90°
+                if (playerNextDir !== playerDir) {
+                    finalizeActiveWall(true);
+                    playerDir = playerNextDir;
+                    som.playTurnSfx(true);
+
+                    // Rotaciona moto
+                    if (playerDir === DIRS.RIGHT) cyclePlayer.rotation.y = -Math.PI / 2;
+                    else if (playerDir === DIRS.LEFT) cyclePlayer.rotation.y = Math.PI / 2;
+                    else if (playerDir === DIRS.UP) cyclePlayer.rotation.y = 0;
+                    else if (playerDir === DIRS.DOWN) cyclePlayer.rotation.y = Math.PI;
+                }
+
+                // Avança no eixo X e Z
+                playerPos.addScaledVector(playerDir, CYCLE_SPEED * deltaTime);
+                cyclePlayer.position.copy(playerPos);
+                updateActiveWall(true);
+
+                // --- MOVIMENTO DA CPU ---
+                if (cpuNextDir !== cpuDir) {
+                    finalizeActiveWall(false);
+                    cpuDir = cpuNextDir;
+                    som.playTurnSfx(false);
+
+                    // Rotaciona moto
+                    if (cpuDir === DIRS.RIGHT) cycleCpu.rotation.y = -Math.PI / 2;
+                    else if (cpuDir === DIRS.LEFT) cycleCpu.rotation.y = Math.PI / 2;
+                    else if (cpuDir === DIRS.UP) cycleCpu.rotation.y = 0;
+                    else if (cpuDir === DIRS.DOWN) cycleCpu.rotation.y = Math.PI;
+                }
+
+                cpuPos.addScaledVector(cpuDir, CYCLE_SPEED * deltaTime);
+                cycleCpu.position.copy(cpuPos);
+                updateActiveWall(false);
+
+                // Modulação dos motores (Sawtooth pitch suave senoidal)
+                const pitchTime = Date.now() * 0.003;
+                if (som.enginePlayer) {
+                    som.enginePlayer.frequency.setValueAtTime(65 + Math.sin(pitchTime) * 3, som.ctx.currentTime);
+                }
+                if (som.engineCpu) {
+                    som.engineCpu.frequency.setValueAtTime(60 + Math.sin(pitchTime * 0.8) * 3, som.ctx.currentTime);
+                }
+
+                // Checa Colisões
+                checkCollisions();
+            }
+
+            // 3. Atualiza Partículas de Explosão
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.addScaledVector(p.velocity, deltaTime);
+                p.velocity.y -= 9.8 * deltaTime;
+
+                p.life -= p.decay * deltaTime;
+                p.mesh.material.opacity = p.life;
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        // ============================================================================
+        // 12. INICIALIZAÇÃO INICIAL
+        // ============================================================================
+        function init() {
+            init3D();
+            setupInput();
+            
+            const loop = (timestamp) => {
+                if (lastTime === 0) lastTime = timestamp;
+                const deltaTime = Math.min(0.08, (timestamp - lastTime) / 1000);
+                lastTime = timestamp;
+
+                update(deltaTime);
+                renderer.render(scene, camera);
+
+                requestAnimationFrame(loop);
+            };
+            requestAnimationFrame(loop);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
