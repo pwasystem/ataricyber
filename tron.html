@@ -1273,7 +1273,8 @@
             staticWalls.push({
                 box: colBox,
                 mesh: wallMesh,
-                isPlayer: isPlayer
+                isPlayer: isPlayer,
+                endPoint: endPt
             });
 
             // Reinicializa a nova parede ativa no ponto da curva
@@ -1427,16 +1428,7 @@
 
             // 3. Barreiras ativas atuais
             if (!willCollide) {
-                // Checa com a barreira atual da própria CPU (exclui a vizinhança da moto)
-                const distSelf = cpuWallStart.distanceTo(cpuPos);
-                if (distSelf > 1.5) {
-                    const selfActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
-                    if (futureBox.intersectsBox(selfActiveBox)) {
-                        willCollide = true;
-                    }
-                }
-
-                // Checa com a barreira ativa do Player
+                // Checa com a barreira ativa do Player (a CPU não colide com o seu próprio rastro ativo)
                 const distPlayer = playerWallStart.distanceTo(playerPos);
                 if (distPlayer > 0.5) {
                     const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
@@ -1501,6 +1493,15 @@
             }
         }
 
+        function getLastStaticSegment(isPlayer) {
+            for (let i = staticWalls.length - 1; i >= 0; i--) {
+                if (staticWalls[i].isPlayer === isPlayer) {
+                    return staticWalls[i];
+                }
+            }
+            return null;
+        }
+
         // Verifica colisões físicas de todas as motos no frame atual
         function checkCollisions() {
             if (gameState !== GAME_STATES.ROUND_PLAYING) return;
@@ -1530,6 +1531,20 @@
 
             // 2. Colisão com as Barreiras Estáticas
             staticWalls.forEach(w => {
+                // Se a barreira pertence ao próprio jogador e é a sua barreira estática mais recente,
+                // nós só checamos se ele já se distanciou o suficiente do vértice de curva.
+                if (w.isPlayer) {
+                    const lastP = getLastStaticSegment(true);
+                    if (w === lastP && playerPos.distanceTo(w.endPoint) < 1.4) {
+                        return; // Ignora colisão com o próprio rastro recente
+                    }
+                } else {
+                    const lastC = getLastStaticSegment(false);
+                    if (w === lastC && cpuPos.distanceTo(w.endPoint) < 1.4) {
+                        return; // Ignora colisão com o próprio rastro recente
+                    }
+                }
+
                 if (playerBox.intersectsBox(w.box)) {
                     playerDied = true;
                 }
@@ -1539,8 +1554,7 @@
             });
 
             // 3. Colisão com os Rastros Ativos Atuais
-            // Para evitar colisões falsas no spawn e com a traseira da moto,
-            // checamos o rastro do rival se ele já andou mais de 0.5, e consigo mesmo mais de 1.5.
+            // Checa a colisão apenas com a trilha ativa do RIVAL (cada moto nunca colide com o seu próprio rastro ativo)
             const playerDist = playerWallStart.distanceTo(playerPos);
             const cpuDist = cpuWallStart.distanceTo(cpuPos);
 
@@ -1556,20 +1570,6 @@
             if (playerDist > 0.5) {
                 const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
                 if (cpuBox.intersectsBox(playerActiveBox)) {
-                    cpuDied = true;
-                }
-            }
-
-            // Colisão consigo mesma (Se o rastro for grande)
-            if (playerDist > 1.5) {
-                const playerActiveBox = new THREE.Box3().setFromObject(activeWallPlayer);
-                if (playerBox.intersectsBox(playerActiveBox)) {
-                    playerDied = true;
-                }
-            }
-            if (cpuDist > 1.5) {
-                const cpuActiveBox = new THREE.Box3().setFromObject(activeWallCpu);
-                if (cpuBox.intersectsBox(cpuActiveBox)) {
                     cpuDied = true;
                 }
             }
